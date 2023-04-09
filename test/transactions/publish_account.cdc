@@ -1,7 +1,7 @@
 #allowAccountLinking
 
-import ReadOnlyChildAccount from "ReadOnlyChildAccount"
-import MetadataViews from "MetadataViews"
+import "ReadOnlyChildAccount"
+import "MetadataViews"
 
 transaction(parent: Address, name: String, description: String, thumbnail: String) {
     let authAccountCap: Capability<&AuthAccount>

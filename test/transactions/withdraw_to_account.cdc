@@ -1,9 +1,9 @@
-import ReadOnlyChildAccount from "ReadOnlyChildAccount"
+import "ReadOnlyChildAccount"
 
-import NonFungibleToken from "NonFungibleToken"
-import MetadataViews from "MetadataViews"
+import "NonFungibleToken"
+import "MetadataViews"
 
-import ExampleNFT from "ExampleNFT"
+import "ExampleNFT"
 
 transaction(childName: String, id: UInt64) {
     let provider: &{NonFungibleToken.Provider}

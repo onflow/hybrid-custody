@@ -1,5 +1,5 @@
-import ReadOnlyChildAccount from "ReadOnlyChildAccount"
-import MetadataViews from "MetadataViews"
+import "ReadOnlyChildAccount"
+import "MetadataViews"
 
 pub fun main(addr: Address, childAddress: Address, name: String): Bool {
     let acct = getAuthAccount(addr)

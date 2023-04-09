@@ -1,5 +1,5 @@
-import NonFungibleToken from "NonFungibleToken"
-import MetadataViews from "MetadataViews"
+import "NonFungibleToken"
+import "MetadataViews"
 
 import ExampleNFT from "ExampleNFT"
 

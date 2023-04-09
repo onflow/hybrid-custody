@@ -1,5 +1,5 @@
-import ReadOnlyChildAccount from "ReadOnlyChildAccount"
-import MetadataViews from "MetadataViews"
+import "ReadOnlyChildAccount"
+import "MetadataViews"
 
 transaction(childAddress: Address) {
   let managerRef: &ReadOnlyChildAccount.Manager
