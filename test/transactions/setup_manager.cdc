@@ -6,5 +6,8 @@ transaction {
             let m <- RestrictedChildAccount.createManager()
             acct.save(<-m, to: RestrictedChildAccount.StoragePath)
         }
+
+        acct.unlink(RestrictedChildAccount.PublicPath)
+        acct.link<&RestrictedChildAccount.Manager{RestrictedChildAccount.ManagerPublic}>(RestrictedChildAccount.PublicPath, target: RestrictedChildAccount.StoragePath)
     }
 }
