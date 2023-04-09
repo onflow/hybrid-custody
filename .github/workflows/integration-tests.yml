@@ -1,0 +1,25 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+
+jobs:
+  tests:
+    name: Flow CLI Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: "true"
+    - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+    - name: Install Flow CLI
+      run: sh -ci "$(curl -fsSL https://raw.githubusercontent.com/onflow/flow-cli/master/install.sh)" -- v0.48.0
+    - name: Run tests
+      run: sh ./test.sh
