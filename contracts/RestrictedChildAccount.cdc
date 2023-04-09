@@ -7,6 +7,8 @@ import "ViewResolver"
 import "AddressUtils"
 import "StringUtils"
 
+import "CapabilityProxy"
+
 /*
 RestrictedChildAccount is a contract to help manage child accounts in the scenario
 where an application wants to permit their user's to withdraw nfts from their custodial
@@ -82,6 +84,7 @@ pub contract RestrictedChildAccount {
         pub fun check(): Bool
         pub fun getAccountAddress(): Address
         pub fun getStoredCollectionTypes(): {Type: StoragePath}
+        pub fun borrowProxyPublicCap(type: Type): Capability?
     }
 
     // RestrictedAccount is a wrapper around an AuthAccount capability. With this 
@@ -95,6 +98,7 @@ pub contract RestrictedChildAccount {
     // they would bear too much a burden to make permitting linking feasible or realistic.
     pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic {
         access(self) let acctCap: Capability<&AuthAccount>
+        access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
 
         access(contract) var name: String
         access(contract) var thumbnail: AnyStruct{MetadataViews.File}
@@ -224,11 +228,34 @@ pub contract RestrictedChildAccount {
         
         // ---------- End helper mutation methods
 
-        init(_ acctCap: Capability<&AuthAccount>, _ name: String, _ thumbnail: AnyStruct{MetadataViews.File}, _ description: String) {
+        pub fun borrowProxyPublicCap(type: Type): Capability? {
+            if !self.proxy.check() {
+                return nil
+            }
+
+            return self.proxy.borrow()!.getPublicCapability(type)
+        }
+
+        pub fun borrowProxy(): &CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}? {
+            if !self.proxy.check() {
+                return nil
+            }
+
+            return self.proxy.borrow()
+        }
+
+        init(
+            _ acctCap: Capability<&AuthAccount>, 
+            _ name: String, 
+            _ thumbnail: AnyStruct{MetadataViews.File}, 
+            _ description: String, 
+            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
+        ) {
             self.acctCap = acctCap
             self.name = name
             self.thumbnail = thumbnail
             self.description = description
+            self.proxy = proxy
         }
     }
 
@@ -438,9 +465,16 @@ pub contract RestrictedChildAccount {
         acctCap: Capability<&AuthAccount>,
         name: String,
         thumbnail: AnyStruct{MetadataViews.File},
-        description: String
+        description: String,
+        proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
     ): @RestrictedAccount {
-        return <- create RestrictedAccount(acctCap, name, thumbnail, description)
+        pre {
+            acctCap.check(): "invalid auth account capability"
+            proxy.check(): "invalid proxy capability"
+        }
+
+        assert(acctCap.borrow()!.address == proxy.borrow()!.owner!.address, message: "proxy and auth account cap must be owned by the same address")
+        return <- create RestrictedAccount(acctCap, name, thumbnail, description, proxy)
     }
 
     pub fun wrapAccount(_ a: @RestrictedAccount): @SharedAccount {

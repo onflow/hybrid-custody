@@ -17,6 +17,7 @@
 	},
 	"contracts": {
 		"RestrictedChildAccount": "./contracts/RestrictedChildAccount.cdc",
+		"CapabilityProxy": "./contracts/CapabilityProxy.cdc",
 		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
@@ -85,6 +86,7 @@
 				"StringUtils",
 				"ArrayUtils",
 				"RestrictedChildAccount",
+				"CapabilityProxy",
 				"ExampleNFT"
 			],
 			"emulator-ft": [
