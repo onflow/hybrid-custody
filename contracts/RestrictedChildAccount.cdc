@@ -106,16 +106,6 @@ pub contract RestrictedChildAccount {
         access(contract) var thumbnail: AnyStruct{MetadataViews.File}
         access(contract) var description: String
 
-        // TODO: a list of collections which should not be accessible. Ideally we can avoid this, 
-        // but dapper wallet has a deny list of collections which marketplaces are not permitted to use unless
-        // they are given permission. As such, we may need to add this functionality for Dapper wallet to
-        // adopt this contract/approach, unless they plan to remove that policy altogether which seems unlikely.
-
-        // TODO: a mechanism to share additional capabiltities from the child to the parent
-        // in case there are additional pieces of functionality the app is willing to expose
-        // this needs to be something entirely owned by the app, the parent account should have
-        // no say in how this works
-
         pub fun getCollectionPublicCap(path: CapabilityPath): Capability<&{NonFungibleToken.CollectionPublic}> {
             return self.getAcct().getCapability<&{NonFungibleToken.CollectionPublic}>(path)
         }
