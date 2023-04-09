@@ -7,6 +7,8 @@ import "ViewResolver"
 import "AddressUtils"
 import "StringUtils"
 
+import "CapabilityProxy"
+
 /*
 RestrictedChildAccount is a contract to help manage child accounts in the scenario
 where an application wants to permit their user's to withdraw nfts from their custodial
@@ -54,6 +56,7 @@ pub contract RestrictedChildAccount {
     // which means we have to be able to store it in a resource we put into a capability.
     pub resource SharedAccount {
         access(self) var acct: @RestrictedAccount?
+        access(self) var proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>?
 
         // when redeeming from your inbox, you will read a capability to this SharedAccount resource
         // then call pop() to get the actual underlying RestrictedAccount
@@ -67,8 +70,9 @@ pub contract RestrictedChildAccount {
             return <- acct
         }
 
-        init (_ acct: @RestrictedAccount) {
+        init (_ acct: @RestrictedAccount, proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>?) {
             self.acct <- acct
+            self.proxy = proxy
         }
 
         destroy () {
@@ -443,8 +447,8 @@ pub contract RestrictedChildAccount {
         return <- create RestrictedAccount(acctCap, name, thumbnail, description)
     }
 
-    pub fun wrapAccount(_ a: @RestrictedAccount): @SharedAccount {
-        let s <- create SharedAccount(<- a)
+    pub fun wrapAccount(_ a: @RestrictedAccount, proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>?): @SharedAccount {
+        let s <- create SharedAccount(<- a, proxy: proxy)
         return <- s
     }
 

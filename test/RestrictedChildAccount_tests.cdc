@@ -71,6 +71,7 @@ pub fun testParentWithdrawNFT() {
 pub fun setup() {
     // main contract account being tested
     let restrictedChildAccount = blockchain.createAccount()
+    let capabilityProxyAccount = blockchain.createAccount()
 
     // flow-utils lib contracts
     let arrayUtils = blockchain.createAccount()
@@ -97,6 +98,7 @@ pub fun setup() {
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
         "RestrictedChildAccount": restrictedChildAccount,
+        "CapabilityProxy": capabilityProxyAccount,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -115,6 +117,7 @@ pub fun setup() {
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
         "RestrictedChildAccount": accounts["RestrictedChildAccount"]!.address,
+        "CapabilityProxy": accounts["CapabilityProxy"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -133,6 +136,7 @@ pub fun setup() {
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
+    deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
     deploy("RestrictedChildAccount", accounts["RestrictedChildAccount"]!, "../contracts/RestrictedChildAccount.cdc")
 }
 
