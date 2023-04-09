@@ -2,6 +2,8 @@
 
 import "RestrictedChildAccount"
 import "CapabilityProxy"
+import "CapabilityFilter"
+
 import "MetadataViews"
 
 transaction(parent: Address, name: String, description: String, thumbnail: String) {
@@ -15,6 +17,7 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
             self.authAccountCap = acct.getCapability<&AuthAccount>(RestrictedChildAccount.AuthAccountCapabilityPath)
         }
 
+        // ------------ BEGIN Setup CapabilityProxy
         if acct.borrow<&CapabilityProxy>(from: CapabilityProxy.StoragePath) == nil {
             let proxy <- CapabilityProxy.createProxy()
             acct.save(<-proxy, to: CapabilityProxy.StoragePath)
@@ -30,13 +33,30 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
 
         acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic}>(CapabilityProxy.PublicPath, target: CapabilityProxy.StoragePath)
         acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath, target: CapabilityProxy.StoragePath)
+        // ------------ END Setup CapabilityProxy
+
+        // ------------ BEGIN Setup CapabilityFilter
+        if acct.borrow<&{CapabilityFilter.Filter}>(from: CapabilityFilter.StoragePath) == nil {
+            let filter <- CapabilityFilter.create(Type<@CapabilityFilter.AllowAllFilter>())
+            acct.save(<-filter, to: CapabilityFilter.StoragePath)
+        }
+
+        if !acct.getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check() {
+            acct.unlink(CapabilityFilter.PublicPath)
+            acct.link<&CapabilityFilter.AllowAllFilter{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath, target: CapabilityFilter.StoragePath)
+        }
+
+        let filterCap = acct.getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        assert(filterCap.check(), message: "failed to configure capability filter")
+        // ------------ END Setup CapabilityFilter
 
         let a <- RestrictedChildAccount.createRestrictedAccount(
             acctCap: self.authAccountCap,
             name: name,
             thumbnail: MetadataViews.HTTPFile(url: thumbnail),
             description: description,
-            proxy: proxy
+            proxy: proxy,
+            filter: filterCap
         )
 
         let s <- RestrictedChildAccount.wrapAccount(<- a)

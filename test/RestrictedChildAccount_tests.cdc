@@ -72,6 +72,7 @@ pub fun setup() {
     // main contract account being tested
     let restrictedChildAccount = blockchain.createAccount()
     let capabilityProxyAccount = blockchain.createAccount()
+    let capabilityFilterAccount = blockchain.createAccount()
 
     // flow-utils lib contracts
     let arrayUtils = blockchain.createAccount()
@@ -99,6 +100,7 @@ pub fun setup() {
         "ViewResolver": viewResolver,
         "RestrictedChildAccount": restrictedChildAccount,
         "CapabilityProxy": capabilityProxyAccount,
+        "CapabilityFilter": capabilityFilterAccount,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -118,6 +120,7 @@ pub fun setup() {
         "AddressUtils": accounts["AddressUtils"]!.address,
         "RestrictedChildAccount": accounts["RestrictedChildAccount"]!.address,
         "CapabilityProxy": accounts["CapabilityProxy"]!.address,
+        "CapabilityFilter": accounts["CapabilityFilter"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -137,6 +140,7 @@ pub fun setup() {
 
     // our main contract is last
     deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
+    deploy("CapabilityFilter", accounts["CapabilityFilter"]!, "../contracts/CapabilityFilter.cdc")
     deploy("RestrictedChildAccount", accounts["RestrictedChildAccount"]!, "../contracts/RestrictedChildAccount.cdc")
 }
 
