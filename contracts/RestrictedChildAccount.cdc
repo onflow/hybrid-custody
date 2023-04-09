@@ -8,6 +8,7 @@ import "AddressUtils"
 import "StringUtils"
 
 import "CapabilityProxy"
+import "CapabilityFilter"
 
 /*
 RestrictedChildAccount is a contract to help manage child accounts in the scenario
@@ -99,27 +100,24 @@ pub contract RestrictedChildAccount {
     pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic {
         access(self) let acctCap: Capability<&AuthAccount>
         access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
+        access(contract) let filter: Capability<&{CapabilityFilter.Filter}>?
 
         access(contract) var name: String
         access(contract) var thumbnail: AnyStruct{MetadataViews.File}
         access(contract) var description: String
-
-        // TODO: a list of collections which should not be accessible. Ideally we can avoid this, 
-        // but dapper wallet has a deny list of collections which marketplaces are not permitted to use unless
-        // they are given permission. As such, we may need to add this functionality for Dapper wallet to
-        // adopt this contract/approach, unless they plan to remove that policy altogether which seems unlikely.
-
-        // TODO: a mechanism to share additional capabiltities from the child to the parent
-        // in case there are additional pieces of functionality the app is willing to expose
-        // this needs to be something entirely owned by the app, the parent account should have
-        // no say in how this works
 
         pub fun getCollectionPublicCap(path: CapabilityPath): Capability<&{NonFungibleToken.CollectionPublic}> {
             return self.getAcct().getCapability<&{NonFungibleToken.CollectionPublic}>(path)
         }
 
         pub fun getCollectionProviderCap(path: PrivatePath): Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}> {
-            return self.getAcct().getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(path)
+            let cap = self.getAcct().getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(path)
+
+            if self.filter != nil {
+                assert(self.filter!.borrow()!.allowed(cap: cap), message: "requested is not allowed by CapabilityFilter resource")
+            }
+
+            return cap
         }
 
         // fillFlowVault
@@ -249,13 +247,15 @@ pub contract RestrictedChildAccount {
             _ name: String, 
             _ thumbnail: AnyStruct{MetadataViews.File}, 
             _ description: String, 
-            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
+            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
+            _ filter: Capability<&{CapabilityFilter.Filter}>?
         ) {
             self.acctCap = acctCap
             self.name = name
             self.thumbnail = thumbnail
             self.description = description
             self.proxy = proxy
+            self.filter = filter
         }
     }
 
@@ -330,7 +330,7 @@ pub contract RestrictedChildAccount {
         }
 
         pub fun getProviderCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>? {
-            let acct = self.borrowAccountForType(type: type)
+            var acct = self.borrowAccountForType(type: type)
             if acct == nil {
                 return nil
             }
@@ -466,15 +466,17 @@ pub contract RestrictedChildAccount {
         name: String,
         thumbnail: AnyStruct{MetadataViews.File},
         description: String,
-        proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
+        proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
+        filter: Capability<&{CapabilityFilter.Filter}>?
     ): @RestrictedAccount {
         pre {
             acctCap.check(): "invalid auth account capability"
             proxy.check(): "invalid proxy capability"
+            filter == nil || filter!.check(): "capability filter must be nil or valid"
         }
 
         assert(acctCap.borrow()!.address == proxy.borrow()!.owner!.address, message: "proxy and auth account cap must be owned by the same address")
-        return <- create RestrictedAccount(acctCap, name, thumbnail, description, proxy)
+        return <- create RestrictedAccount(acctCap, name, thumbnail, description, proxy, filter)
     }
 
     pub fun wrapAccount(_ a: @RestrictedAccount): @SharedAccount {

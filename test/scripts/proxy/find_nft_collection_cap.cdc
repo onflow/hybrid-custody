@@ -10,8 +10,8 @@ pub fun main(addr: Address): Bool {
         acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic}>(CapabilityProxy.PublicPath).borrow()
         ?? panic("could not borrow proxy")
 
-    let desiredType = Type<&{ExampleNFT.ExampleNFTCollectionPublic}>()
-    let foundType = proxy.findPublicType(desiredType) ?? panic("no type found")
+    let desiredType = Type<Capability<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic}>>()
+    let foundType = proxy.findFirstPublicType(desiredType) ?? panic("no type found")
     
     let nakedCap = proxy.getPublicCapability(foundType) ?? panic("requested capability type was not found")
 

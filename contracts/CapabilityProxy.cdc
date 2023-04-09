@@ -27,7 +27,8 @@ pub contract CapabilityProxy {
             }
         }
 
-        pub fun findPrivateType(_ type: Type): Type?
+        pub fun findFirstPrivateType(_ type: Type): Type?
+        pub fun getAllPrivate(): [Capability]
     }
 
     pub resource interface GetterPublic {
@@ -37,7 +38,8 @@ pub contract CapabilityProxy {
             }
         }
 
-        pub fun findPublicType(_ type: Type): Type?
+        pub fun findFirstPublicType(_ type: Type): Type?
+        pub fun getAllPublic(): [Capability]
     }
 
     pub resource Proxy: GetterPublic, GetterPrivate {
@@ -53,11 +55,17 @@ pub contract CapabilityProxy {
             return self.privateCapabilities[type]
         }
 
-        pub fun findPublicType(_ type: Type): Type? {
+        pub fun getAllPublic(): [Capability] {
+            return self.publicCapabilities.values
+        }
+
+        pub fun getAllPrivate(): [Capability] {
+            return self.publicCapabilities.values
+        }
+
+        pub fun findFirstPublicType(_ type: Type): Type? {
             for t in self.publicCapabilities.keys {
-                let cap = self.publicCapabilities[t]!
-                let borrowed = cap.borrow<&AnyResource>()
-                if type.isSubtype(of: borrowed.getType()) {
+                if t.isSubtype(of: type) {
                     return t
                 }
             }
@@ -65,11 +73,9 @@ pub contract CapabilityProxy {
             return nil
         }
 
-        pub fun findPrivateType(_ type: Type): Type? {
+        pub fun findFirstPrivateType(_ type: Type): Type? {
             for t in self.privateCapabilities.keys {
-                let cap = self.privateCapabilities[t]!
-                let borrowed = cap.borrow<&AnyResource>()
-                if type.isSubtype(of: borrowed.getType()) {
+                if t.isSubtype(of: type) {
                     return t
                 }
             }
@@ -109,3 +115,4 @@ pub contract CapabilityProxy {
         self.PublicPath = PublicPath(identifier: identifier)!
     }
 }
+ 
