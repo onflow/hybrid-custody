@@ -70,7 +70,7 @@ pub fun testParentWithdrawNFT() {
 
 pub fun setup() {
     // main contract account being tested
-    let readonlyChildAccount = blockchain.createAccount()
+    let restrictedChildAccount = blockchain.createAccount()
 
     // flow-utils lib contracts
     let arrayUtils = blockchain.createAccount()
@@ -96,7 +96,7 @@ pub fun setup() {
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
-        "ReadOnlyChildAccount": readonlyChildAccount,
+        "RestrictedChildAccount": restrictedChildAccount,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -114,7 +114,7 @@ pub fun setup() {
         "ArrayUtils": accounts["ArrayUtils"]!.address,
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
-        "ReadOnlyChildAccount": accounts["ReadOnlyChildAccount"]!.address,
+        "RestrictedChildAccount": accounts["RestrictedChildAccount"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -133,7 +133,7 @@ pub fun setup() {
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
-    deploy("ReadOnlyChildAccount", accounts["ReadOnlyChildAccount"]!, "../contracts/ReadOnlyChildAccount.cdc")
+    deploy("RestrictedChildAccount", accounts["RestrictedChildAccount"]!, "../contracts/RestrictedChildAccount.cdc")
 }
 
 // BEGIN SECTION: Helper functions. All of the following were taken from

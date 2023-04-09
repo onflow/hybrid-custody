@@ -1,3 +1,3 @@
 #!/bin/bash
 
-flow test ./test/ReadOnlyChildAccount_tests.cdc
+flow test ./test/RestrictedChildAccount_tests.cdc

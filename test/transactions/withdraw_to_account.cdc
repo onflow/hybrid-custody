@@ -1,4 +1,4 @@
-import "ReadOnlyChildAccount"
+import "RestrictedChildAccount"
 
 import "NonFungibleToken"
 import "MetadataViews"
@@ -12,7 +12,7 @@ transaction(childName: String, id: UInt64) {
     prepare(acct: AuthAccount) {
         let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-        let manager = acct.borrow<&ReadOnlyChildAccount.Manager>(from: ReadOnlyChildAccount.StoragePath) ?? panic("manager not found")
+        let manager = acct.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) ?? panic("manager not found")
         let account = manager.borrowByName(name: childName) ?? panic("child account not found")
         self.provider = account.getCollectionProviderCap(path: d.providerPath).borrow() ?? panic("provider not found")
 

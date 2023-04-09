@@ -8,7 +8,7 @@ import "AddressUtils"
 import "StringUtils"
 
 /*
-ReadOnlyChildAccount is a contract to help manage child accounts in the scenario
+RestrictedChildAccount is a contract to help manage child accounts in the scenario
 where an application wants to permit their user's to withdraw nfts from their custodial
 accounts, but doesn't want to let full ownership of the child account go to the user. There
 are many attack vectors that could come from an app giving full custody out to users, including:
@@ -17,12 +17,12 @@ are many attack vectors that could come from an app giving full custody out to u
     - Storing things in an account the app does not want (fungible tokens, for example)
     - Siphoning flow tokens from which the app has to maintain on an account to keep it functioning
 
-This contract is maintained by two main components. The `Manager` resource, and the `ReadOnlyAccount` resource.
-The `Manager` is a wrapper around many `ReadOnlyAccount`'s and helps add new ones/borrow the ones you already have.
+This contract is maintained by two main components. The `Manager` resource, and the `RestrictedAccount` resource.
+The `Manager` is a wrapper around many `RestrictedAccount`'s and helps add new ones/borrow the ones you already have.
 It has helper methods to route NFTs to the right child account, and assistance in borrowing NFTs collections
 so you can know what a parent account "owns".
 
-The `ReadOnlyAccount` is a wrapper around an `AuthAccount` Capability. Accounts shared through the ReadOnlyAccount
+The `RestrictedAccount` is a wrapper around an `AuthAccount` Capability. Accounts shared through the RestrictedAccount
 resource will be safe from the following mutating operators with one exception:
     - save
     - link
@@ -33,13 +33,13 @@ That is, you cannot modify the state of the shared account in ways that the app 
 is that there is a helper method to ensure that collection's are setup to the NFT standard. It will configure public and provider
 paths for a collection which is **already stored** in the shared account.
 */
-pub contract ReadOnlyChildAccount {
+pub contract RestrictedChildAccount {
 
     pub event ManagerCreated(id: UInt64)
     pub event AccountAdded(parent: Address, child: Address, id: UInt64, name: String, thumbnail: String)
     pub event AccountRemoved(parent: Address, child: Address, id: UInt64, name: String, thumbnail: String)
 
-    pub event SharedAccountPopped(addr: Address, id: UInt64, readOnlyAccountID: UInt64)
+    pub event SharedAccountPopped(addr: Address, id: UInt64, RestrictedAccountID: UInt64)
 
     pub let StoragePath: StoragePath
     pub let PublicPath: PublicPath
@@ -49,25 +49,25 @@ pub contract ReadOnlyChildAccount {
 
     pub let InboxName: String
 
-    // SharedAccount - A wrapper resource used to store ReadOnlyAccount resources
+    // SharedAccount - A wrapper resource used to store RestrictedAccount resources
     // to publish them. We need to be able to fully redeem the SharedAccount resource,
     // which means we have to be able to store it in a resource we put into a capability.
     pub resource SharedAccount {
-        access(self) var acct: @ReadOnlyAccount?
+        access(self) var acct: @RestrictedAccount?
 
         // when redeeming from your inbox, you will read a capability to this SharedAccount resource
-        // then call pop() to get the actual underlying ReadOnlyAccount
-        pub fun pop(): @ReadOnlyAccount {
-            var tmp: @ReadOnlyAccount? <- nil
+        // then call pop() to get the actual underlying RestrictedAccount
+        pub fun pop(): @RestrictedAccount {
+            var tmp: @RestrictedAccount? <- nil
             tmp <-> self.acct
 
             let acct <- tmp ?? panic("acct is nil")
 
-            emit SharedAccountPopped(addr: self.owner!.address, id: self.uuid, readOnlyAccountID: acct.uuid)
+            emit SharedAccountPopped(addr: self.owner!.address, id: self.uuid, RestrictedAccountID: acct.uuid)
             return <- acct
         }
 
-        init (_ acct: @ReadOnlyAccount) {
+        init (_ acct: @RestrictedAccount) {
             self.acct <- acct
         }
 
@@ -76,7 +76,7 @@ pub contract ReadOnlyChildAccount {
         }
     }
 
-    pub resource interface ReadOnlyAccountPublic {
+    pub resource interface RestrictedAccountPublic {
         pub fun getCollectionPublicCap(path: CapabilityPath): Capability<&{NonFungibleToken.CollectionPublic}>
         pub fun fillFlowVault(v: @FungibleToken.Vault)
         pub fun check(): Bool
@@ -84,7 +84,7 @@ pub contract ReadOnlyChildAccount {
         pub fun getStoredCollectionTypes(): {Type: StoragePath}
     }
 
-    // ReadOnlyAccount is a wrapper around an AuthAccount capability. With this 
+    // RestrictedAccount is a wrapper around an AuthAccount capability. With this 
     // kind of hybrid custody, a parent account cannot save, unlink, or load ANY
     // resources on the child account, and can only link accounts according to the nft standard
     // and only to paths which are not already configured. 
@@ -93,7 +93,7 @@ pub contract ReadOnlyChildAccount {
     // give their users more functionality to let their nfts being used, without having to worry
     // about malicious actors messing with or altering their accounts in such a way that 
     // they would bear too much a burden to make permitting linking feasible or realistic.
-    pub resource ReadOnlyAccount: MetadataViews.Resolver, ReadOnlyAccountPublic {
+    pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic {
         access(self) let acctCap: Capability<&AuthAccount>
 
         access(contract) var name: String
@@ -233,8 +233,8 @@ pub contract ReadOnlyChildAccount {
     }
 
     pub resource interface ManagerPublic {
-        pub fun borrowAccountPublic(id: UInt64): &ReadOnlyAccount{ReadOnlyAccountPublic, MetadataViews.Resolver}?
-        pub fun borrowByNamePublic(name: String): &ReadOnlyAccount{ReadOnlyAccountPublic, MetadataViews.Resolver}?
+        pub fun borrowAccountPublic(id: UInt64): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
+        pub fun borrowByNamePublic(name: String): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
         pub fun getIDs(): [UInt64]
         pub fun cleanupInvalidAccount(id: UInt64)
         pub fun getPublicCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic}>?
@@ -244,7 +244,7 @@ pub contract ReadOnlyChildAccount {
     // it facilitates adding a new account capabilities, and lets us borrow ones that
     // already exist
     pub resource Manager: ManagerPublic {
-        access(self) let accounts: @{UInt64: ReadOnlyAccount}
+        access(self) let accounts: @{UInt64: RestrictedAccount}
         pub let namesToID: {String: UInt64}
 
         // maintain a mapping of type -> child account id so that the manager
@@ -256,7 +256,7 @@ pub contract ReadOnlyChildAccount {
 
         // Adds a new account to the manager. Saving its name so we can easily reference it in
         // various helper methods
-        pub fun registerAccount(_ a: @ReadOnlyAccount) {
+        pub fun registerAccount(_ a: @RestrictedAccount) {
             assert(self.namesToID[a.name] == nil, message: "name is already taken")
             self.namesToID[a.name] = a.uuid
 
@@ -279,11 +279,11 @@ pub contract ReadOnlyChildAccount {
             destroy a
         }
 
-        pub fun borrowAccount(id: UInt64): &ReadOnlyAccount? {
-            return &self.accounts[id] as &ReadOnlyAccount?
+        pub fun borrowAccount(id: UInt64): &RestrictedAccount? {
+            return &self.accounts[id] as &RestrictedAccount?
         }
 
-        pub fun borrowByName(name: String): &ReadOnlyAccount? {
+        pub fun borrowByName(name: String): &RestrictedAccount? {
             let id = self.namesToID[name]
             if id == nil {
                 return nil
@@ -292,7 +292,7 @@ pub contract ReadOnlyChildAccount {
             return self.borrowAccount(id: id!)
         }
         
-        pub fun borrowAccountForType(type: Type): &ReadOnlyAccount? {
+        pub fun borrowAccountForType(type: Type): &RestrictedAccount? {
             let id = self.typeToAccountID[type]
             if id == nil {
                 return nil
@@ -320,7 +320,7 @@ pub contract ReadOnlyChildAccount {
         }
 
         // mapAccountStoredPaths
-        // helper method to map a ReadOnlyAccount's stored collections to the manager so that we know how to route them.
+        // helper method to map a RestrictedAccount's stored collections to the manager so that we know how to route them.
         //
         // NOTE: This could be dangerous. What if someone phishes a users and gets them to route all NFTs to the wrong account?
         // We will need to think about how to handle this.
@@ -336,7 +336,7 @@ pub contract ReadOnlyChildAccount {
         }
 
         // helper method to rename a shared account. This has to be done on the manager so that we can maintain our mapping
-        // of name -> id. If we allow the id to be changed on the ReadOnlyAccount itself, our mapping will be lost.
+        // of name -> id. If we allow the id to be changed on the RestrictedAccount itself, our mapping will be lost.
         pub fun renameAccount(id: UInt64, name: String) {
             pre {
                 self.namesToID[name] == nil : "name is already in use"
@@ -351,11 +351,11 @@ pub contract ReadOnlyChildAccount {
 
         // ------------------------- End private methods ------------------------
 
-        pub fun borrowAccountPublic(id: UInt64): &ReadOnlyAccount{ReadOnlyAccountPublic, MetadataViews.Resolver}? {
-            return &self.accounts[id] as &ReadOnlyAccount{ReadOnlyAccountPublic, MetadataViews.Resolver}?
+        pub fun borrowAccountPublic(id: UInt64): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}? {
+            return &self.accounts[id] as &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
         }
 
-        pub fun borrowByNamePublic(name: String): &ReadOnlyAccount{ReadOnlyAccountPublic, MetadataViews.Resolver}? {
+        pub fun borrowByNamePublic(name: String): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}? {
             let id = self.namesToID[name]
             if id == nil {
                 return nil
@@ -434,22 +434,22 @@ pub contract ReadOnlyChildAccount {
         return <- m
     }
 
-    pub fun createReadOnlyAccount(
+    pub fun createRestrictedAccount(
         acctCap: Capability<&AuthAccount>,
         name: String,
         thumbnail: AnyStruct{MetadataViews.File},
         description: String
-    ): @ReadOnlyAccount {
-        return <- create ReadOnlyAccount(acctCap, name, thumbnail, description)
+    ): @RestrictedAccount {
+        return <- create RestrictedAccount(acctCap, name, thumbnail, description)
     }
 
-    pub fun wrapAccount(_ a: @ReadOnlyAccount): @SharedAccount {
+    pub fun wrapAccount(_ a: @RestrictedAccount): @SharedAccount {
         let s <- create SharedAccount(<- a)
         return <- s
     }
 
     init() {
-        let identifier = "ReadOnlyChildAccount".concat(self.account.address.toString())
+        let identifier = "RestrictedChildAccount".concat(self.account.address.toString())
 
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
@@ -462,7 +462,7 @@ pub contract ReadOnlyChildAccount {
         let authAccountIdentifier = identifier.concat("AuthAccount")
         self.AuthAccountCapabilityPath = PrivatePath(identifier: authAccountIdentifier)!
 
-        self.InboxName = "ReadOnlyChildAccount"
+        self.InboxName = "RestrictedChildAccount"
     }
 }
  

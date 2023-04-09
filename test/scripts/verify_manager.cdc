@@ -1,7 +1,7 @@
-import "ReadOnlyChildAccount"
+import "RestrictedChildAccount"
 
 pub fun main(addr: Address): Bool {
-    if let m = getAuthAccount(addr).borrow<&ReadOnlyChildAccount.Manager>(from: ReadOnlyChildAccount.StoragePath) {
+    if let m = getAuthAccount(addr).borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) {
         return true
     }
 

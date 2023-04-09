@@ -1,32 +1,32 @@
-import "ReadOnlyChildAccount"
+import "RestrictedChildAccount"
 import "MetadataViews"
 
 transaction(childAddress: Address) {
-  let managerRef: &ReadOnlyChildAccount.Manager
-  let sharedAccount: &ReadOnlyChildAccount.SharedAccount
+  let managerRef: &RestrictedChildAccount.Manager
+  let sharedAccount: &RestrictedChildAccount.SharedAccount
 
   prepare(signer: AuthAccount) {
-    if signer.borrow<&ReadOnlyChildAccount.Manager>(from: ReadOnlyChildAccount.StoragePath) == nil {
-      signer.save(<-ReadOnlyChildAccount.createManager(), to: ReadOnlyChildAccount.StoragePath)
+    if signer.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) == nil {
+      signer.save(<-RestrictedChildAccount.createManager(), to: RestrictedChildAccount.StoragePath)
     }
 
-    if !signer.getCapability<&ReadOnlyChildAccount.Manager{ReadOnlyChildAccount.ManagerPublic}>(ReadOnlyChildAccount.PublicPath).check() {
-        signer.unlink(ReadOnlyChildAccount.PublicPath)
-        signer.link<&ReadOnlyChildAccount.Manager{ReadOnlyChildAccount.ManagerPublic}>(
-            ReadOnlyChildAccount.PublicPath,
-            target: ReadOnlyChildAccount.StoragePath
+    if !signer.getCapability<&RestrictedChildAccount.Manager{RestrictedChildAccount.ManagerPublic}>(RestrictedChildAccount.PublicPath).check() {
+        signer.unlink(RestrictedChildAccount.PublicPath)
+        signer.link<&RestrictedChildAccount.Manager{RestrictedChildAccount.ManagerPublic}>(
+            RestrictedChildAccount.PublicPath,
+            target: RestrictedChildAccount.StoragePath
         )
     }
 
-    self.managerRef = signer.borrow<&ReadOnlyChildAccount.Manager>(from: ReadOnlyChildAccount.StoragePath)!
-    let cap = signer.inbox.claim<&ReadOnlyChildAccount.SharedAccount>(
-        ReadOnlyChildAccount.InboxName,
+    self.managerRef = signer.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath)!
+    let cap = signer.inbox.claim<&RestrictedChildAccount.SharedAccount>(
+        RestrictedChildAccount.InboxName,
         provider: childAddress
       ) ?? panic(
         "No SharedAccount Capability available from given provider"
         .concat(childAddress.toString())
         .concat(" with name ")
-        .concat(ReadOnlyChildAccount.InboxName)
+        .concat(RestrictedChildAccount.InboxName)
       )
     assert(cap.check(), message: "Published capability check failed")
 
