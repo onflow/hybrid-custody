@@ -16,7 +16,7 @@
 		}
 	},
 	"contracts": {
-		"ReadOnlyChildAccount": "./contracts/ReadOnlyChildAccount.cdc",
+		"RestrictedChildAccount": "./contracts/RestrictedChildAccount.cdc",
 		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
@@ -84,7 +84,7 @@
 				"AddressUtils",
 				"StringUtils",
 				"ArrayUtils",
-				"ReadOnlyChildAccount",
+				"RestrictedChildAccount",
 				"ExampleNFT"
 			],
 			"emulator-ft": [

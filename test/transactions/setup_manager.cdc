@@ -1,10 +1,10 @@
-import "ReadOnlyChildAccount"
+import "RestrictedChildAccount"
 
 transaction {
     prepare(acct: AuthAccount) {
-        if acct.borrow<&ReadOnlyChildAccount.Manager>(from: ReadOnlyChildAccount.StoragePath) == nil {
-            let m <- ReadOnlyChildAccount.createManager()
-            acct.save(<-m, to: ReadOnlyChildAccount.StoragePath)
+        if acct.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) == nil {
+            let m <- RestrictedChildAccount.createManager()
+            acct.save(<-m, to: RestrictedChildAccount.StoragePath)
         }
     }
 }
