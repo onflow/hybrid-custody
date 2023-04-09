@@ -23,29 +23,21 @@ pub contract CapabilityProxy {
     pub resource interface GetterPrivate {
         pub fun getPrivateCapability(_ type: Type): Capability? {
             post {
-                result == nil || result.getType() == type: "incorrect returned capability type"
+                result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type"
             }
         }
 
-        pub fun findPrivateType(_ type: Type): Type? {
-            post {
-                result == nil || type.isSubtype(of: type): "requested type must be a subtype the returned type"
-            }   
-        }
+        pub fun findPrivateType(_ type: Type): Type?
     }
 
     pub resource interface GetterPublic {
         pub fun getPublicCapability(_ type: Type): Capability? {
             post {
-                result == nil || result.getType() == type: "incorrect returned capability type"
+                result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type "
             }
         }
 
-        pub fun findPublicType(_ type: Type): Type? {
-            post {
-                result == nil || type.isSubtype(of: type): "requested type must be a subtype the returned type"
-            }   
-        }
+        pub fun findPublicType(_ type: Type): Type?
     }
 
     pub resource Proxy: GetterPublic, GetterPrivate {
@@ -63,7 +55,9 @@ pub contract CapabilityProxy {
 
         pub fun findPublicType(_ type: Type): Type? {
             for t in self.publicCapabilities.keys {
-                if type.isSubtype(of: t) {
+                let cap = self.publicCapabilities[t]!
+                let borrowed = cap.borrow<&AnyResource>()
+                if type.isSubtype(of: borrowed.getType()) {
                     return t
                 }
             }
@@ -73,7 +67,9 @@ pub contract CapabilityProxy {
 
         pub fun findPrivateType(_ type: Type): Type? {
             for t in self.privateCapabilities.keys {
-                if type.isSubtype(of: t) {
+                let cap = self.privateCapabilities[t]!
+                let borrowed = cap.borrow<&AnyResource>()
+                if type.isSubtype(of: borrowed.getType()) {
                     return t
                 }
             }
@@ -83,6 +79,7 @@ pub contract CapabilityProxy {
         // ------- End Getter methods
 
         pub fun addCapability(cap: Capability, isPublic: Bool) {
+            assert(cap.borrow<&AnyResource>() != nil, message: "capability could not be borrowed")
             if isPublic {
                 self.publicCapabilities[cap.getType()] = cap
             } else {

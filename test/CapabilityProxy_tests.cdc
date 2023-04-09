@@ -11,59 +11,23 @@ pub enum ErrorType: UInt8 {
 }
 
 pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-logo.jpeg"
-pub let childAccountName = "child1 account"
 
 // BEGIN SECTION - Test Cases
-pub fun testManagerSetup() {
-    let txCode = loadCode("setup_manager.cdc", "transactions")
-    let signer = accounts["parent"]!
-    setupManager(signer)
 
-    let isSetup = scriptExecutor("verify_manager.cdc", [signer.address])! as! Bool
-    assert(isSetup, message: "setupFailed")
+pub fun testSetupProxy() {
+    let signer = accounts["creator"]!
+    setupProxy(signer)
 }
 
-pub fun testShareAccount() {
-    let child = accounts["child1"]!
-    let parent = accounts["parent"]!
-    let name = childAccountName
-    let description = "lorem ipsum"
-    let thumbnail = flowtyThumbnail
+pub fun testShareExampleNFTCollectionPublic() {
+    let signer = accounts["creator"]!
+    setupProxy(signer)
 
-    publishSharedAccount(child, parent, name, description, thumbnail)
-    claimSharedAccount(parent, child: child)
+    setupNFTCollection(signer)
 
-    hasChildAccount(parent, child, name: name)
-}
-
-pub fun testParentBorrowCollection() {
-    let minter = accounts["ExampleNFT"]!
-    let child = accounts["child1"]!
-    let parent = accounts["parent"]!
-
-    setupNFTCollection(child)
-    mintNFTDefault(minter, receiver: child)
-
-    // Test that we can borrow successfully. This is just for discoverability
-    canBorrowCollectionPublic(parent, childAccountName)
-}
-
-pub fun testParentWithdrawNFT() {
-    let minter = accounts["ExampleNFT"]!
-    let child = accounts["child1"]!
-    let parent = accounts["parent"]!
-
-    setupNFTCollection(parent)
-
-    let nftIDs = getNftIDs(child)
-    assert(nftIDs.length > 0, message: "no nfts to withdraw")
-    let withdrawID = nftIDs[0]
-
-    let code = loadCode("withdraw_to_account.cdc", "transactions")
-    txExecutor(code, [parent], [childAccountName, withdrawID], nil, nil)
-    
-    let parentIDs = getNftIDs(parent)
-    assert(parentIDs.contains(withdrawID), message: "parent does not have expected nft id")
+    sharePublicExampleNFT(signer)
+    getExampleNFTCollectionFromProxy(signer)
+    findExampleNFTCollectionType(signer)
 }
 
 // END SECTION - Test Cases
@@ -88,24 +52,21 @@ pub fun setup() {
     let exampleNFT = blockchain.createAccount()
     
     // actual test accounts
-    let parent = blockchain.createAccount()
-    let child1 = blockchain.createAccount()
-    let child2 = blockchain.createAccount()
+    let creator = blockchain.createAccount()
+    let receiver = blockchain.createAccount()
 
     accounts = {
         "FungibleToken": fungibleToken,
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
-        "RestrictedChildAccount": restrictedChildAccount,
         "CapabilityProxy": capabilityProxyAccount,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
         "ExampleNFT": exampleNFT,
-        "parent": parent,
-        "child1": child1,
-        "child2": child2
+        "creator": creator,
+        "receiver": receiver
     }
 
     blockchain.useConfiguration(Test.Configuration({
@@ -116,7 +77,6 @@ pub fun setup() {
         "ArrayUtils": accounts["ArrayUtils"]!.address,
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
-        "RestrictedChildAccount": accounts["RestrictedChildAccount"]!.address,
         "CapabilityProxy": accounts["CapabilityProxy"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
@@ -137,7 +97,6 @@ pub fun setup() {
 
     // our main contract is last
     deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
-    deploy("RestrictedChildAccount", accounts["RestrictedChildAccount"]!, "../contracts/RestrictedChildAccount.cdc")
 }
 
 // BEGIN SECTION: Helper functions. All of the following were taken from
@@ -223,33 +182,14 @@ pub fun loadCode(_ fileName: String, _ baseDirectory: String): String {
 // END SECTION - Helper functions
 
 // BEGIN SECTION - transactions used in tests
-
-pub fun setupManager(_ signer: Test.Account) {
-    let txCode = loadCode("setup_manager.cdc", "transactions")
-
-    txExecutor(txCode, [signer], [], nil, nil)
-
-    let isSetup = scriptExecutor("verify_manager.cdc", [signer.address])! as! Bool
-    assert(isSetup, message: "setupFailed")
+pub fun setupProxy(_ acct: Test.Account) {
+    let txCode = loadCode("proxy/setup.cdc", "transactions")
+    txExecutor(txCode, [acct], [], nil, nil)
 }
 
-pub fun publishSharedAccount(_ child: Test.Account, _ parent: Test.Account, _ name: String, _ description: String, _ thumbnail: String) {
-    let txCode = loadCode("publish_account.cdc", "transactions")
-    txExecutor(txCode, [child], [parent.address, name, description, thumbnail], nil, nil)
-}
-
-pub fun claimSharedAccount(_ parent: Test.Account, child: Test.Account) {
-    let txCode = loadCode("claim_account.cdc", "transactions")
-    txExecutor(txCode, [parent], [child.address], nil, nil)
-}
-
-pub fun shareAndClaim_Default(_ parent: Test.Account, _ child: Test.Account) {
-    let name = "child1 account"
-    let description = "lorem ipsum"
-    let thumbnail = flowtyThumbnail
-
-    publishSharedAccount(child, parent, name, description, thumbnail)
-    claimSharedAccount(parent, child: child)
+pub fun sharePublicExampleNFT(_ acct: Test.Account) {
+    let txCode = loadCode("proxy/add_public_nft_collection.cdc", "transactions")
+    txExecutor(txCode, [acct], [], nil, nil)
 }
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
@@ -271,21 +211,14 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 
 // BEGIN SECTION - scripts used in tests
 
-pub fun hasChildAccount(_ parent: Test.Account, _ child: Test.Account, name: String) {
-    let scriptCode = loadCode("has_child_account.cdc", "scripts")
-
-    let hasAccount = scriptExecutor("has_child_account.cdc", [parent.address, child.address, name])! as! Bool
-    assert(hasAccount, message: "failed to match child account")
+pub fun getExampleNFTCollectionFromProxy(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("proxy/get_nft_collection.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow proxy")
 }
 
-pub fun canBorrowCollectionPublic(_ parent: Test.Account, _ childName: String) {
-    let borrowed = scriptExecutor("borrow_collection.cdc", [parent.address, childName])! as! Bool
-    assert(borrowed, message: "failed to borrow public nft collection from child account manager")
-}
-
-pub fun getNftIDs(_ account: Test.Account): [UInt64] {
-    let ids = scriptExecutor("example-nft/get_ids.cdc", [account.address])! as! [UInt64]
-    return ids
+pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("proxy/find_nft_collection_cap.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow proxy")
 }
 
 // END SECTION - scripts used in tests

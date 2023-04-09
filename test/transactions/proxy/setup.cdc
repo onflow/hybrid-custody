@@ -2,7 +2,7 @@ import "CapabilityProxy"
 
 transaction {
     prepare(acct: AuthAccount) {
-        if acct.borrow<&CapabilityProxy>(from: CapabilityProxy.StoragePath) == nil {
+        if acct.borrow<&CapabilityProxy.Proxy>(from: CapabilityProxy.StoragePath) == nil {
             let proxy <- CapabilityProxy.createProxy()
             acct.save(<-proxy, to: CapabilityProxy.StoragePath)
         }
