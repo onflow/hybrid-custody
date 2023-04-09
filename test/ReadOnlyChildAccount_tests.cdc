@@ -275,7 +275,7 @@ pub fun hasChildAccount(_ parent: Test.Account, _ child: Test.Account, name: Str
 }
 
 pub fun canBorrowCollectionPublic(_ parent: Test.Account, _ childName: String) {
-    let borrowed = scriptExecutor("example-nft/borrow_collection.cdc", [parent.address, childName])! as! Bool
+    let borrowed = scriptExecutor("borrow_collection.cdc", [parent.address, childName])! as! Bool
     assert(borrowed, message: "failed to borrow public nft collection from child account manager")
 }
 
