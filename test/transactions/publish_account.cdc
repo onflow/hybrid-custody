@@ -15,13 +15,6 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
             self.authAccountCap = acct.getCapability<&AuthAccount>(RestrictedChildAccount.AuthAccountCapabilityPath)
         }
 
-        let a <- RestrictedChildAccount.createRestrictedAccount(
-            acctCap: self.authAccountCap,
-            name: name,
-            thumbnail: MetadataViews.HTTPFile(url: thumbnail),
-            description: description
-        )
-
         if acct.borrow<&CapabilityProxy>(from: CapabilityProxy.StoragePath) == nil {
             let proxy <- CapabilityProxy.createProxy()
             acct.save(<-proxy, to: CapabilityProxy.StoragePath)
@@ -38,7 +31,15 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
         acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic}>(CapabilityProxy.PublicPath, target: CapabilityProxy.StoragePath)
         acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath, target: CapabilityProxy.StoragePath)
 
-        let s <- RestrictedChildAccount.wrapAccount(<- a, proxy: proxy)
+        let a <- RestrictedChildAccount.createRestrictedAccount(
+            acctCap: self.authAccountCap,
+            name: name,
+            thumbnail: MetadataViews.HTTPFile(url: thumbnail),
+            description: description,
+            proxy: proxy
+        )
+
+        let s <- RestrictedChildAccount.wrapAccount(<- a)
 
         // we need to save the wrapped account so that our parent can redeem it
         acct.save(<-s, to: RestrictedChildAccount.SharedAccountStoragePath)
