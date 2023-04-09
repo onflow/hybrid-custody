@@ -1,4 +1,4 @@
-import ReadOnlyChildAccount from "ReadOnlyChildAccount"
+import "ReadOnlyChildAccount"
 
 transaction {
     prepare(acct: AuthAccount) {

@@ -1,4 +1,4 @@
-import ExampleNFT from "ExampleNFT"
+import "ExampleNFT"
 
 pub fun main(addr: Address): [UInt64] {
     let acct = getAuthAccount(addr)

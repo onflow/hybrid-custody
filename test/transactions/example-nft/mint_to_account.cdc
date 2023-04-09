@@ -1,7 +1,7 @@
-import NonFungibleToken from "NonFungibleToken"
-import MetadataViews from "MetadataViews"
+import "NonFungibleToken"
+import "MetadataViews"
 
-import ExampleNFT from "ExampleNFT"
+import "ExampleNFT"
 
 transaction(receiver: Address, name: String, description: String, thumbnail: String) {
     let minter: &ExampleNFT.NFTMinter

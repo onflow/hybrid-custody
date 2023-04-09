@@ -1,11 +1,11 @@
-import FungibleToken from "FungibleToken"
+import "FungibleToken"
 
-import NonFungibleToken from "NonFungibleToken"
-import MetadataViews from "MetadataViews"
-import ViewResolver from "ViewResolver"
+import "NonFungibleToken"
+import "MetadataViews"
+import "ViewResolver"
 
-import AddressUtils from "AddressUtils"
-import StringUtils from "StringUtils"
+import "AddressUtils"
+import "StringUtils"
 
 /*
 ReadOnlyChildAccount is a contract to help manage child accounts in the scenario
@@ -460,3 +460,4 @@ pub contract ReadOnlyChildAccount {
         self.InboxName = "ReadOnlyChildAccount"
     }
 }
+ 
