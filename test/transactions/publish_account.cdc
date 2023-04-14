@@ -6,7 +6,7 @@ import "CapabilityFilter"
 
 import "MetadataViews"
 
-transaction(parent: Address, name: String, description: String, thumbnail: String) {
+transaction(parent: Address, name: String, description: String, thumbnail: String, factoryAddress: Address) {
     let authAccountCap: Capability<&AuthAccount>
 
     prepare(acct: AuthAccount) {
@@ -49,6 +49,12 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
         let filterCap = acct.getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
         assert(filterCap.check(), message: "failed to configure capability filter")
         // ------------ END Setup CapabilityFilter
+
+        // ------------ BEGIN Load Capability Factory
+
+        
+
+        // ------------ END Load Capability Factory
 
         let a <- RestrictedChildAccount.createRestrictedAccount(
             acctCap: self.authAccountCap,

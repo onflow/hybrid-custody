@@ -19,6 +19,10 @@
 		"RestrictedChildAccount": "./contracts/RestrictedChildAccount.cdc",
 		"CapabilityProxy": "./contracts/CapabilityProxy.cdc",
 		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
+		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
+		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
+		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
+		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
 		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
@@ -89,6 +93,10 @@
 				"RestrictedChildAccount",
 				"CapabilityProxy",
 				"CapabilityFilter",
+				"CapabilityFactory",
+				"NFTProviderFactory",
+				"NFTProviderAndCollectionFactory",
+				"NFTCollectionPublicFactory",
 				"ExampleNFT"
 			],
 			"emulator-ft": [

@@ -9,6 +9,7 @@ import "StringUtils"
 
 import "CapabilityProxy"
 import "CapabilityFilter"
+import "CapabilityFactory"
 
 /*
 RestrictedChildAccount is a contract to help manage child accounts in the scenario
@@ -101,6 +102,7 @@ pub contract RestrictedChildAccount {
         access(self) let acctCap: Capability<&AuthAccount>
         access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
         access(contract) let filter: Capability<&{CapabilityFilter.Filter}>?
+        access(contract) let factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>?
 
         access(contract) var name: String
         access(contract) var thumbnail: AnyStruct{MetadataViews.File}
@@ -248,7 +250,8 @@ pub contract RestrictedChildAccount {
             _ thumbnail: AnyStruct{MetadataViews.File}, 
             _ description: String, 
             _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
-            _ filter: Capability<&{CapabilityFilter.Filter}>?
+            _ filter: Capability<&{CapabilityFilter.Filter}>?,
+            _ factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>
         ) {
             self.acctCap = acctCap
             self.name = name
@@ -256,6 +259,7 @@ pub contract RestrictedChildAccount {
             self.description = description
             self.proxy = proxy
             self.filter = filter
+            self.factoryManager = factoryManager
         }
     }
 
@@ -284,6 +288,8 @@ pub contract RestrictedChildAccount {
         // Adds a new account to the manager. Saving its name so we can easily reference it in
         // various helper methods
         pub fun registerAccount(_ a: @RestrictedAccount) {
+            assert(false, message: "address is ".concat(a.getAccountAddress().toString()))
+
             assert(self.namesToID[a.name] == nil, message: "name is already taken")
             self.namesToID[a.name] = a.uuid
 
@@ -327,6 +333,23 @@ pub contract RestrictedChildAccount {
 
             let acct = self.borrowAccount(id: id!)
             return acct
+        }
+
+        pub fun getCollectionPublicCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic}>? {
+            var acct = self.borrowAccountForType(type: type)
+            if acct == nil {
+                return nil
+            }
+
+            // this will only work for collections which implement the ViewResolver interface.
+            let segments = StringUtils.split(type.identifier, ".")
+            let addr = AddressUtils.parseAddress(segments[1]) ?? panic("invalid collection type")
+            let name = segments[2]
+
+            let borrowedContract = getAccount(addr).contracts.borrow<&ViewResolver>(name: name) ?? panic("contract ViewResolver could not be borrowed")
+            let view = borrowedContract.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
+
+            return acct!.getCollectionPublicCap(path: view.publicPath)
         }
 
         pub fun getProviderCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>? {
@@ -461,13 +484,18 @@ pub contract RestrictedChildAccount {
         return <- m
     }
 
+    pub fun createFactoryManager(): @FactoryManager {
+        return <- create FactoryManager()
+    }
+
     pub fun createRestrictedAccount(
         acctCap: Capability<&AuthAccount>,
         name: String,
         thumbnail: AnyStruct{MetadataViews.File},
         description: String,
         proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
-        filter: Capability<&{CapabilityFilter.Filter}>?
+        filter: Capability<&{CapabilityFilter.Filter}>?,
+        factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>
     ): @RestrictedAccount {
         pre {
             acctCap.check(): "invalid auth account capability"
@@ -476,7 +504,7 @@ pub contract RestrictedChildAccount {
         }
 
         assert(acctCap.borrow()!.address == proxy.borrow()!.owner!.address, message: "proxy and auth account cap must be owned by the same address")
-        return <- create RestrictedAccount(acctCap, name, thumbnail, description, proxy, filter)
+        return <- create RestrictedAccount(acctCap, name, thumbnail, description, proxy, filter, factoryManager)
     }
 
     pub fun wrapAccount(_ a: @RestrictedAccount): @SharedAccount {
@@ -494,9 +522,12 @@ pub contract RestrictedChildAccount {
         self.SharedAccountPrivatePath = PrivatePath(identifier: sharedAccountIdentifier)!
         self.SharedAccountStoragePath = StoragePath(identifier: sharedAccountIdentifier)!
 
-
         let authAccountIdentifier = identifier.concat("AuthAccount")
         self.AuthAccountCapabilityPath = PrivatePath(identifier: authAccountIdentifier)!
+
+        let factoryManagerIdentifier = identifier.concat("AuthAccount")
+        self.FactoryManagerStoragePath = StoragePath(identifier: factoryManagerIdentifier)!
+        self.FactoryManagerPrivatePath = PrivatePath(identifier: factoryManagerIdentifier)!
 
         self.InboxName = "RestrictedChildAccount"
     }
