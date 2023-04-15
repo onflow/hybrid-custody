@@ -82,11 +82,6 @@ pub contract RestrictedChildAccount {
         pub fun borrowProxyPublicCap(type: Type): Capability?
     }
 
-    pub resource interface RestrictedAccountPrivate {
-        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
-    }
-
     // RestrictedAccount is a wrapper around an AuthAccount capability. With this 
     // kind of hybrid custody, a parent account cannot save, unlink, or load ANY
     // resources on the child account, and can only link accounts according to the nft standard
@@ -110,10 +105,6 @@ pub contract RestrictedChildAccount {
             return self.getCapability(path: path, type: type)
         }
 
-        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability? {
-            return self.getCapability(path: path, type: type)
-        }
-
         pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
             if !self.factoryManager.check() {
                 return nil
@@ -126,8 +117,10 @@ pub contract RestrictedChildAccount {
 
             let cap = factory!.getCapability(acct: self.getAcct(), path: path)
 
-            if self.filter != nil && self.filter!.check() {
-                assert(self.filter!.borrow()!.allowed(cap: cap), message: "capability is not permitted")
+            if path.isInstance(Type<PrivatePath>()) {
+                if self.filter != nil && self.filter!.check() {
+                    assert(self.filter!.borrow()!.allowed(cap: cap), message: "capability is not permitted")
+                }
             }
 
             return cap
