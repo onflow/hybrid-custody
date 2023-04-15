@@ -76,12 +76,15 @@ pub contract RestrictedChildAccount {
 
     pub resource interface RestrictedAccountPublic {
         pub fun getPublicCap(path: PublicPath, type: Type): Capability?
-        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun check(): Bool
         pub fun getAccountAddress(): Address
         pub fun getStoredTypes(_ t: Type): {Type: StoragePath}
         pub fun borrowProxyPublicCap(type: Type): Capability?
+    }
+
+    pub resource interface RestrictedAccountPrivate {
+        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
     }
 
     // RestrictedAccount is a wrapper around an AuthAccount capability. With this 
