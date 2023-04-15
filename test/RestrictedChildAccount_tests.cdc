@@ -83,6 +83,7 @@ pub fun testParentWithdrawNFT() {
 
 pub fun setup() {
     // main contract account being tested
+    let linkedAccount = blockchain.createAccount()
     let restrictedChildAccount = blockchain.createAccount()
     let capabilityProxyAccount = blockchain.createAccount()
     let capabilityFilterAccount = blockchain.createAccount()
@@ -121,6 +122,7 @@ pub fun setup() {
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
+        "LinkedAccount": linkedAccount,
         "RestrictedChildAccount": restrictedChildAccount,
         "CapabilityProxy": capabilityProxyAccount,
         "CapabilityFilter": capabilityFilterAccount,
@@ -146,6 +148,7 @@ pub fun setup() {
         "ArrayUtils": accounts["ArrayUtils"]!.address,
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
+        "LinkedAccount": accounts["LinkedAccount"]!.address,
         "RestrictedChildAccount": accounts["RestrictedChildAccount"]!.address,
         "CapabilityProxy": accounts["CapabilityProxy"]!.address,
         "CapabilityFilter": accounts["CapabilityFilter"]!.address,
@@ -177,6 +180,7 @@ pub fun setup() {
     deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("LinkedAccount", accounts["LinkedAccount"]!, "../contracts/LinkedAccount.cdc")
     deploy("RestrictedChildAccount", accounts["RestrictedChildAccount"]!, "../contracts/RestrictedChildAccount.cdc")
 }
 

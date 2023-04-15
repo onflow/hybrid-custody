@@ -1,9 +1,6 @@
 import "MetadataViews"
-import "ViewResolver"
 
-import "AddressUtils"
-import "StringUtils"
-
+import "LinkedAccount"
 import "CapabilityProxy"
 import "CapabilityFilter"
 import "CapabilityFactory"
@@ -79,12 +76,15 @@ pub contract RestrictedChildAccount {
 
     pub resource interface RestrictedAccountPublic {
         pub fun getPublicCap(path: PublicPath, type: Type): Capability?
-        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun check(): Bool
         pub fun getAccountAddress(): Address
         pub fun getStoredTypes(_ t: Type): {Type: StoragePath}
         pub fun borrowProxyPublicCap(type: Type): Capability?
+    }
+
+    pub resource interface RestrictedAccountPrivate {
+        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
     }
 
     // RestrictedAccount is a wrapper around an AuthAccount capability. With this 
@@ -96,7 +96,7 @@ pub contract RestrictedChildAccount {
     // give their users more functionality to let their nfts being used, without having to worry
     // about malicious actors messing with or altering their accounts in such a way that 
     // they would bear too much a burden to make permitting linking feasible or realistic.
-    pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic {
+    pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic, LinkedAccount.Account {
         access(self) let acctCap: Capability<&AuthAccount>
         access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
         access(contract) let filter: Capability<&{CapabilityFilter.Filter}>?
