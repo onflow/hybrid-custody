@@ -124,8 +124,13 @@ pub contract RestrictedChildAccount {
                 return nil
             }
 
-            let fm = factory!.getCapability(acct: self.getAcct(), path: path)
-            return fm
+            let cap = factory!.getCapability(acct: self.getAcct(), path: path)
+
+            if self.filter != nil && self.filter!.check() {
+                assert(self.filter!.borrow()!.allowed(cap: cap), message: "capability is not permitted")
+            }
+
+            return cap
         }
 
         // deleates to the actual auth account capability to see if it is still valid.
