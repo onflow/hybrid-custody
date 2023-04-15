@@ -1,9 +1,6 @@
 import "MetadataViews"
-import "ViewResolver"
 
-import "AddressUtils"
-import "StringUtils"
-
+import "LinkedAccount"
 import "CapabilityProxy"
 import "CapabilityFilter"
 import "CapabilityFactory"
@@ -96,7 +93,7 @@ pub contract RestrictedChildAccount {
     // give their users more functionality to let their nfts being used, without having to worry
     // about malicious actors messing with or altering their accounts in such a way that 
     // they would bear too much a burden to make permitting linking feasible or realistic.
-    pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic {
+    pub resource RestrictedAccount: MetadataViews.Resolver, RestrictedAccountPublic, LinkedAccount.Account {
         access(self) let acctCap: Capability<&AuthAccount>
         access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
         access(contract) let filter: Capability<&{CapabilityFilter.Filter}>?
