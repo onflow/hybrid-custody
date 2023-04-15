@@ -49,35 +49,35 @@ pub fun testShareAccount() {
     hasChildAccount(parent, child, name: name)
 }
 
-// pub fun testParentBorrowCollection() {
-//     let minter = accounts["ExampleNFT"]!
-//     let child = accounts["child1"]!
-//     let parent = accounts["parent"]!
+pub fun testParentBorrowCollection() {
+    let minter = accounts["ExampleNFT"]!
+    let child = accounts["child1"]!
+    let parent = accounts["parent"]!
 
-//     setupNFTCollection(child)
-//     mintNFTDefault(minter, receiver: child)
+    setupNFTCollection(child)
+    mintNFTDefault(minter, receiver: child)
 
-//     // Test that we can borrow successfully. This is just for discoverability
-//     canBorrowCollectionPublic(parent, childAccountName)
-// }
-// 
-// pub fun testParentWithdrawNFT() {
-//     let minter = accounts["ExampleNFT"]!
-//     let child = accounts["child1"]!
-//     let parent = accounts["parent"]!
+    // Test that we can borrow successfully. This is just for discoverability
+    canBorrowCollectionPublic(parent, childAccountName)
+}
 
-//     setupNFTCollection(parent)
+pub fun testParentWithdrawNFT() {
+    let minter = accounts["ExampleNFT"]!
+    let child = accounts["child1"]!
+    let parent = accounts["parent"]!
 
-//     let nftIDs = getNftIDs(child)
-//     assert(nftIDs.length > 0, message: "no nfts to withdraw")
-//     let withdrawID = nftIDs[0]
+    setupNFTCollection(parent)
 
-//     let code = loadCode("withdraw_to_account.cdc", "transactions")
-//     txExecutor(code, [parent], [childAccountName, withdrawID], nil, nil)
+    let nftIDs = getNftIDs(child)
+    assert(nftIDs.length > 0, message: "no nfts to withdraw")
+    let withdrawID = nftIDs[0]
+
+    let code = loadCode("withdraw_to_account.cdc", "transactions")
+    txExecutor(code, [parent], [childAccountName, withdrawID], nil, nil)
     
-//     let parentIDs = getNftIDs(parent)
-//     assert(parentIDs.contains(withdrawID), message: "parent does not have expected nft id")
-// }
+    let parentIDs = getNftIDs(parent)
+    assert(parentIDs.contains(withdrawID), message: "parent does not have expected nft id")
+}
 
 // END SECTION - Test Cases
 

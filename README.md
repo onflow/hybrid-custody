@@ -63,10 +63,11 @@ nft type being looked for
 import "RestrictedChildAccount"
 import "CapabilityProxy"
 import "CapabilityFilter"
+import "CapabilityFactory"
 
 import "MetadataViews"
 
-transaction(parent: Address, name: String, description: String, thumbnail: String) {
+transaction(parent: Address, name: String, description: String, thumbnail: String, factoryAddress: Address) {
     let authAccountCap: Capability<&AuthAccount>
 
     prepare(acct: AuthAccount) {
@@ -110,13 +111,20 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
         assert(filterCap.check(), message: "failed to configure capability filter")
         // ------------ END Setup CapabilityFilter
 
+        // ------------ BEGIN Load Capability Factory
+
+        let factoryManagerCap = getAccount(factoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+
+        // ------------ END Load Capability Factory
+
         let a <- RestrictedChildAccount.createRestrictedAccount(
             acctCap: self.authAccountCap,
             name: name,
             thumbnail: MetadataViews.HTTPFile(url: thumbnail),
             description: description,
             proxy: proxy,
-            filter: filterCap
+            filter: filterCap,
+            factoryManager: factoryManagerCap
         )
 
         let s <- RestrictedChildAccount.wrapAccount(<- a)
@@ -130,6 +138,7 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
         acct.inbox.publish(cap, name: RestrictedChildAccount.InboxName, recipient: parent)
     }
 }
+ 
 ```
 
 ### Setup Manager
@@ -211,7 +220,9 @@ transaction(childName: String, id: UInt64) {
 
         let manager = acct.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) ?? panic("manager not found")
         let account = manager.borrowByName(name: childName) ?? panic("child account not found")
-        self.provider = account.getCollectionProviderCap(path: d.providerPath).borrow() ?? panic("provider not found")
+        let cap = account.getPrivateCap(path: d.providerPath, type: Type<&{NonFungibleToken.Provider}>()) ?? panic("no cap found")
+        let providerCap = cap as! Capability<&{NonFungibleToken.Provider}>
+        self.provider = providerCap.borrow() ?? panic("provider not found")
 
         self.receiver = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: d.storagePath) ?? panic("collection not found")
     }

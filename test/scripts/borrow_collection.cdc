@@ -13,8 +13,10 @@ pub fun main(parent: Address, childName: String): Bool {
         ?? panic("Manager not found")
 
     let child = m.borrowByNamePublic(name: childName) ?? panic("account not found with given name: ".concat(childName))
-
-    let collection = child.getCollectionPublicCap(path: d.publicPath).borrow()
+    let cap = child.getCapability(path: d.publicPath, type: Type<&{NonFungibleToken.CollectionPublic}>()) ?? panic("Capability not found") 
+    let cpCap = cap as! Capability<&{NonFungibleToken.CollectionPublic}>
+ 
+    let collection = cpCap.borrow()
         ?? panic("could not borrow public collection")
 
     return true

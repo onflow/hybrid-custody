@@ -14,7 +14,9 @@ transaction(childName: String, id: UInt64) {
 
         let manager = acct.borrow<&RestrictedChildAccount.Manager>(from: RestrictedChildAccount.StoragePath) ?? panic("manager not found")
         let account = manager.borrowByName(name: childName) ?? panic("child account not found")
-        self.provider = account.getCollectionProviderCap(path: d.providerPath).borrow() ?? panic("provider not found")
+        let cap = account.getPrivateCap(path: d.providerPath, type: Type<&{NonFungibleToken.Provider}>()) ?? panic("no cap found")
+        let providerCap = cap as! Capability<&{NonFungibleToken.Provider}>
+        self.provider = providerCap.borrow() ?? panic("provider not found")
 
         self.receiver = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: d.storagePath) ?? panic("collection not found")
     }
