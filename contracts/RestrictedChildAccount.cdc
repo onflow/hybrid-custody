@@ -1,6 +1,3 @@
-import "FungibleToken"
-
-import "NonFungibleToken"
 import "MetadataViews"
 import "ViewResolver"
 
@@ -81,11 +78,12 @@ pub contract RestrictedChildAccount {
     }
 
     pub resource interface RestrictedAccountPublic {
-        pub fun getCollectionPublicCap(path: CapabilityPath): Capability<&{NonFungibleToken.CollectionPublic}>
-        pub fun fillFlowVault(v: @FungibleToken.Vault)
+        pub fun getPublicCap(path: PublicPath, type: Type): Capability?
+        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability?
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun check(): Bool
         pub fun getAccountAddress(): Address
-        pub fun getStoredCollectionTypes(): {Type: StoragePath}
+        pub fun getStoredTypes(_ t: Type): {Type: StoragePath}
         pub fun borrowProxyPublicCap(type: Type): Capability?
     }
 
@@ -102,32 +100,32 @@ pub contract RestrictedChildAccount {
         access(self) let acctCap: Capability<&AuthAccount>
         access(self) let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>
         access(contract) let filter: Capability<&{CapabilityFilter.Filter}>?
-        access(contract) let factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>?
+        access(contract) let factoryManager: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
 
         access(contract) var name: String
         access(contract) var thumbnail: AnyStruct{MetadataViews.File}
         access(contract) var description: String
 
-        pub fun getCollectionPublicCap(path: CapabilityPath): Capability<&{NonFungibleToken.CollectionPublic}> {
-            return self.getAcct().getCapability<&{NonFungibleToken.CollectionPublic}>(path)
+        pub fun getPublicCap(path: PublicPath, type: Type): Capability? {
+            return self.getCapability(path: path, type: type)
         }
 
-        pub fun getCollectionProviderCap(path: PrivatePath): Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}> {
-            let cap = self.getAcct().getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(path)
+        pub fun getPrivateCap(path: PrivatePath, type: Type): Capability? {
+            return self.getCapability(path: path, type: type)
+        }
 
-            if self.filter != nil {
-                assert(self.filter!.borrow()!.allowed(cap: cap), message: "requested is not allowed by CapabilityFilter resource")
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
+            if !self.factoryManager.check() {
+                return nil
             }
 
-            return cap
-        }
+            let factory = self.factoryManager.borrow()!.getFactory(type)
+            if factory == nil {
+                return nil
+            }
 
-        // fillFlowVault
-        //
-        // A one-way method to let anyone give flow tokens to this vault for storage. This might not be allowed,
-        // we will need to consult with apps about this piece.
-        pub fun fillFlowVault(v: @FungibleToken.Vault) {
-            self.getAcct().borrow<&{FungibleToken.Receiver}>(from: /storage/flowTokenVault)!.deposit(from: <-v)
+            let fm = factory!.getCapability(acct: self.getAcct(), path: path)
+            return fm
         }
 
         // deleates to the actual auth account capability to see if it is still valid.
@@ -145,46 +143,17 @@ pub contract RestrictedChildAccount {
         //
         // NOTE: This doesn't handle cases where the same type is stored in multiple place
         // which is technically valid but not common
-        pub fun getStoredCollectionTypes(): {Type: StoragePath} {
+        pub fun getStoredTypes(_ t: Type): {Type: StoragePath} {
             let storedTypes: {Type: StoragePath} = {}
             let acct = self.getAcct()
             acct.forEachStored(fun (path: StoragePath, type: Type): Bool {
-                if type.isSubtype(of: Type<@NonFungibleToken.Collection>()) {
+                if type.isSubtype(of: t) {
                     storedTypes[type] = path
                 }
                 return true
             })
 
             return storedTypes
-        }
-
-        // reads an NFT collection from the given storage path, and sets it up according to the
-        // NFTCollectionData metadata view. If there is nothing in the given path, or if the resource stored is
-        // NOT an NFT, this will fail.
-        //
-        // NOTE: We cannot fully configure collection types here. All we can do is setup NFT-standard interface types.
-        pub fun setupStoredCollection(storagePath: StoragePath) {
-            let acct = self.getAcct()
-            let collection = acct.borrow<&NonFungibleToken.Collection>(from: storagePath)
-                ?? panic("no nft collection found in provided storage path")
-
-            // there is a collection here, now we need to borrow its view resolver on the contract
-            // to learn how to set it up. We have to do this because there might not be an nft to borrow
-            // and resolve this view from. To keep rules consistent, we will use the contract, instead.
-            //
-            // TODO: we might need a new metadata view for if/when we allow multiple collections to be defined in the same contract
-            let segments = StringUtils.split(collection.getType().identifier, ".")
-            let addr = AddressUtils.parseAddress(segments[1]) ?? panic("invalid collection type")
-            let name = segments[2]
-
-            let borrowedContract = getAccount(addr).contracts.borrow<&ViewResolver>(name: name) ?? panic("contract ViewResolver could not be borrowed")
-            let view = borrowedContract.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
-
-            // we will not unlink anything, only link paths which should exist.
-            // if they do not, the link will be added. If they do, we will not make any alterations,
-            // even the collection is improperly configured.
-            acct.link<&{NonFungibleToken.CollectionPublic}>(view.publicPath, target: storagePath)
-            acct.link<&{NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(view.providerPath, target: storagePath)
         }
 
         // returns the stored auth account, this is neccessary for storage iteration, and for
@@ -251,7 +220,7 @@ pub contract RestrictedChildAccount {
             _ description: String, 
             _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>?,
-            _ factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>
+            _ factoryManager: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
         ) {
             self.acctCap = acctCap
             self.name = name
@@ -268,7 +237,6 @@ pub contract RestrictedChildAccount {
         pub fun borrowByNamePublic(name: String): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
         pub fun getIDs(): [UInt64]
         pub fun cleanupInvalidAccount(id: UInt64)
-        pub fun getPublicCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic}>?
     }
 
     // Manager - A resource which manages the child accounts given to it
@@ -288,8 +256,6 @@ pub contract RestrictedChildAccount {
         // Adds a new account to the manager. Saving its name so we can easily reference it in
         // various helper methods
         pub fun registerAccount(_ a: @RestrictedAccount) {
-            assert(false, message: "address is ".concat(a.getAccountAddress().toString()))
-
             assert(self.namesToID[a.name] == nil, message: "name is already taken")
             self.namesToID[a.name] = a.uuid
 
@@ -333,56 +299,6 @@ pub contract RestrictedChildAccount {
 
             let acct = self.borrowAccount(id: id!)
             return acct
-        }
-
-        pub fun getCollectionPublicCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic}>? {
-            var acct = self.borrowAccountForType(type: type)
-            if acct == nil {
-                return nil
-            }
-
-            // this will only work for collections which implement the ViewResolver interface.
-            let segments = StringUtils.split(type.identifier, ".")
-            let addr = AddressUtils.parseAddress(segments[1]) ?? panic("invalid collection type")
-            let name = segments[2]
-
-            let borrowedContract = getAccount(addr).contracts.borrow<&ViewResolver>(name: name) ?? panic("contract ViewResolver could not be borrowed")
-            let view = borrowedContract.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
-
-            return acct!.getCollectionPublicCap(path: view.publicPath)
-        }
-
-        pub fun getProviderCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>? {
-            var acct = self.borrowAccountForType(type: type)
-            if acct == nil {
-                return nil
-            }
-
-            // this will only work for collections which implement the ViewResolver interface.
-            let segments = StringUtils.split(type.identifier, ".")
-            let addr = AddressUtils.parseAddress(segments[1]) ?? panic("invalid collection type")
-            let name = segments[2]
-
-            let borrowedContract = getAccount(addr).contracts.borrow<&ViewResolver>(name: name) ?? panic("contract ViewResolver could not be borrowed")
-            let view = borrowedContract.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
-
-            return acct!.getCollectionProviderCap(path: view.providerPath)
-        }
-
-        // mapAccountStoredPaths
-        // helper method to map a RestrictedAccount's stored collections to the manager so that we know how to route them.
-        //
-        // NOTE: This could be dangerous. What if someone phishes a users and gets them to route all NFTs to the wrong account?
-        // We will need to think about how to handle this.
-        pub fun mapAccountStoredPaths(id: UInt64) {
-            let acct = self.borrowAccount(id: id) ?? panic("account not found")
-
-            let storedTypes = acct.getStoredCollectionTypes()
-            for t in storedTypes.keys {
-                if self.typeToAccountID[t] == nil {
-                    self.typeToAccountID[t] = id
-                }
-            }
         }
 
         // helper method to rename a shared account. This has to be done on the manager so that we can maintain our mapping
@@ -434,39 +350,6 @@ pub contract RestrictedChildAccount {
             destroy a
         }
 
-        pub fun safeDeposit(nft: @NonFungibleToken.NFT): @NonFungibleToken.NFT? {
-            let acct = self.borrowAccountForType(type: nft.getType())
-            if acct == nil {
-                return <- nft
-            }
-
-            let d = nft.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
-            let cap = acct!.getCollectionPublicCap(path: d.publicPath)
-            if !cap.check() {
-                return <- nft
-            }
-
-            cap.borrow()!.deposit(token: <- nft)
-            return nil
-        }
-
-        pub fun getPublicCapForType(type: Type): Capability<&{NonFungibleToken.CollectionPublic}>? {
-            let acct = self.borrowAccountForType(type: type)
-            if acct == nil {
-                return nil
-            }
-
-            // this will only work for collections which implement the ViewResolver interface.
-            let segments = StringUtils.split(type.identifier, ".")
-            let addr = AddressUtils.parseAddress(segments[1]) ?? panic("invalid collection type")
-            let name = segments[2]
-
-            let borrowedContract = getAccount(addr).contracts.borrow<&ViewResolver>(name: name) ?? panic("contract ViewResolver could not be borrowed")
-            let view = borrowedContract.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
-
-            return acct!.getCollectionPublicCap(path: view.publicPath)
-        }
-
         init() {
             self.accounts <- {}
             self.namesToID = {}
@@ -484,10 +367,6 @@ pub contract RestrictedChildAccount {
         return <- m
     }
 
-    pub fun createFactoryManager(): @FactoryManager {
-        return <- create FactoryManager()
-    }
-
     pub fun createRestrictedAccount(
         acctCap: Capability<&AuthAccount>,
         name: String,
@@ -495,7 +374,7 @@ pub contract RestrictedChildAccount {
         description: String,
         proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate, CapabilityProxy.GetterPublic}>,
         filter: Capability<&{CapabilityFilter.Filter}>?,
-        factoryManager: Capability<&FactoryManager{FactoryManagerGetter}>
+        factoryManager: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
     ): @RestrictedAccount {
         pre {
             acctCap.check(): "invalid auth account capability"
@@ -524,10 +403,6 @@ pub contract RestrictedChildAccount {
 
         let authAccountIdentifier = identifier.concat("AuthAccount")
         self.AuthAccountCapabilityPath = PrivatePath(identifier: authAccountIdentifier)!
-
-        let factoryManagerIdentifier = identifier.concat("AuthAccount")
-        self.FactoryManagerStoragePath = StoragePath(identifier: factoryManagerIdentifier)!
-        self.FactoryManagerPrivatePath = PrivatePath(identifier: factoryManagerIdentifier)!
 
         self.InboxName = "RestrictedChildAccount"
     }

@@ -8,7 +8,7 @@ pub contract CapabilityFactory {
     }
 
     pub resource interface Getter {
-        pub fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory})
+        pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
     }
 
     pub resource Manager: Getter {
@@ -25,6 +25,10 @@ pub contract CapabilityFactory {
         init () {
             self.factories = {}
         }
+    }
+
+    pub fun createFactoryManager(): @Manager {
+        return <- create Manager()
     }
 
     init() {

@@ -3,6 +3,7 @@
 import "RestrictedChildAccount"
 import "CapabilityProxy"
 import "CapabilityFilter"
+import "CapabilityFactory"
 
 import "MetadataViews"
 
@@ -52,7 +53,7 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
 
         // ------------ BEGIN Load Capability Factory
 
-        
+        let factoryManagerCap = getAccount(factoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
 
         // ------------ END Load Capability Factory
 
@@ -62,7 +63,8 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
             thumbnail: MetadataViews.HTTPFile(url: thumbnail),
             description: description,
             proxy: proxy,
-            filter: filterCap
+            filter: filterCap,
+            factoryManager: factoryManagerCap
         )
 
         let s <- RestrictedChildAccount.wrapAccount(<- a)
@@ -76,3 +78,4 @@ transaction(parent: Address, name: String, description: String, thumbnail: Strin
         acct.inbox.publish(cap, name: RestrictedChildAccount.InboxName, recipient: parent)
     }
 }
+ 
