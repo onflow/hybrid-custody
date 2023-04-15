@@ -240,6 +240,7 @@ pub contract RestrictedChildAccount {
     pub resource interface ManagerPublic {
         pub fun borrowAccountPublic(id: UInt64): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
         pub fun borrowByNamePublic(name: String): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
+        pub fun borrowByAddressPublic(address: Address): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
         pub fun getIDs(): [UInt64]
         pub fun cleanupInvalidAccount(id: UInt64)
     }
@@ -250,6 +251,7 @@ pub contract RestrictedChildAccount {
     pub resource Manager: ManagerPublic {
         access(self) let accounts: @{UInt64: RestrictedAccount}
         pub let namesToID: {String: UInt64}
+        pub let addressToID: {Address: UInt64}
 
         // maintain a mapping of type -> child account id so that the manager
         // can handle where an nft should go when an nft is deposited.
@@ -263,6 +265,7 @@ pub contract RestrictedChildAccount {
         pub fun registerAccount(_ a: @RestrictedAccount) {
             assert(self.namesToID[a.name] == nil, message: "name is already taken")
             self.namesToID[a.name] = a.uuid
+            self.addressToID[a.getAccountAddress()] = a.uuid
 
             let display = a.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
             emit AccountAdded(parent: self.owner!.address, child: a.getAccountAddress(), id: a.uuid, name: display.name, thumbnail: display.thumbnail.uri())
@@ -273,8 +276,8 @@ pub contract RestrictedChildAccount {
         pub fun removeAccount(id: UInt64) {
             let a <- self.accounts.remove(key: id) ?? panic("account was not found")
             self.namesToID.remove(key: a.name)
+            self.addressToID.remove(key: a.getAccountAddress())
 
-            self.namesToID.remove(key: a.name)
             let address = a.getAccountAddress()
             let display = a.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
 
@@ -288,12 +291,19 @@ pub contract RestrictedChildAccount {
         }
 
         pub fun borrowByName(name: String): &RestrictedAccount? {
-            let id = self.namesToID[name]
-            if id == nil {
-                return nil
+            if let id = self.namesToID[name] {
+                return self.borrowAccount(id: id)
             }
+            
+            return nil
+        }
 
-            return self.borrowAccount(id: id!)
+        pub fun borrowByAddress(_ addr: Address): &RestrictedAccount? {
+            if let id = self.addressToID[addr] {
+                return self.borrowAccount(id: id)
+            }
+            
+            return nil
         }
         
         pub fun borrowAccountForType(type: Type): &RestrictedAccount? {
@@ -324,6 +334,14 @@ pub contract RestrictedChildAccount {
 
         pub fun borrowAccountPublic(id: UInt64): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}? {
             return &self.accounts[id] as &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}?
+        }
+
+        pub fun borrowByAddressPublic(address: Address): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}? {
+            if let id = self.addressToID[address] {
+                return self.borrowAccountPublic(id: id)
+            }
+
+            return nil
         }
 
         pub fun borrowByNamePublic(name: String): &RestrictedAccount{RestrictedAccountPublic, MetadataViews.Resolver}? {
@@ -359,6 +377,7 @@ pub contract RestrictedChildAccount {
             self.accounts <- {}
             self.namesToID = {}
             self.typeToAccountID = {}
+            self.addressToID = {}
         }
 
         destroy() {
