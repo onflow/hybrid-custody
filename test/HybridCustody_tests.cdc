@@ -29,26 +29,26 @@ pub fun testSetupFactory() {
 
 pub fun testSetupChildAccount() {
     let tmp = blockchain.createAccount()
-    setupAccountManager(tmp, FilterKindAll)
+    setupChildAccount(tmp, FilterKindAll)
 }
 
 pub fun testGetPublicCapabilityFromChildAccount() {
     let tmp = blockchain.createAccount()    
-    setupAccountManager(tmp, FilterKindAll)
+    setupChildAccount(tmp, FilterKindAll)
     
     scriptExecutor("hybrid-custody/get_public_capability.cdc", [tmp.address])
 }
 
 pub fun testGetProviderCapabilityFromChildAccount() {
     let tmp = blockchain.createAccount()    
-    setupAccountManager(tmp, FilterKindAll)
+    setupChildAccount(tmp, FilterKindAll)
     
     scriptExecutor("hybrid-custody/get_provider_capability.cdc", [tmp.address])
 }
 
 pub fun testGetProviderCapabilityFromChildAccount_DenylistFilter() {
     let tmp = blockchain.createAccount()    
-    setupAccountManager(tmp, FilterKindDenyList)
+    setupChildAccount(tmp, FilterKindDenyList)
 
 
     let identifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
@@ -59,7 +59,7 @@ pub fun testGetProviderCapabilityFromChildAccount_DenylistFilter() {
 
 pub fun testGetProviderCapabilityFromChildAccount_AllowlistFilter() {
     let tmp = blockchain.createAccount()    
-    setupAccountManager(tmp, FilterKindAllowList)
+    setupChildAccount(tmp, FilterKindAllowList)
 
     let identifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
     addTypeToFilter(getTestAccount(FilterKindAllowList), FilterKindAllowList, identifier)
@@ -67,12 +67,47 @@ pub fun testGetProviderCapabilityFromChildAccount_AllowlistFilter() {
     scriptExecutor("hybrid-custody/get_provider_capability.cdc", [tmp.address])
 }
 
+pub fun testPublishAccount() {
+    let tmp = blockchain.createAccount()
+    setupChildAccount(tmp, FilterKindAll)
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    let parent = blockchain.createAccount()
+
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [tmp], [parent.address, factory.address, filter.address], nil, nil)
+
+    scriptExecutor("hybrid-custody/get_collection_from_inbox.cdc", [parent.address, tmp.address])
+}
+
+pub fun testRedeemAccount() {
+    let child = blockchain.createAccount()
+    setupChildAccount(child, FilterKindAll)
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    let parent = blockchain.createAccount()
+
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+
+    setupAccountManager(parent)
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+
+    scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
+}
+
 // --------------- End Test Cases --------------- 
 
 
 // --------------- Transaction wrapper functions ---------------
 
-pub fun setupAccountManager(_ acct: Test.Account, _ filterKind: String) {
+pub fun setupAccountManager(_ acct: Test.Account) {
+    txExecutor("hybrid-custody/setup_manager.cdc", [acct], [], nil, nil)
+}
+
+pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(filterKind)
 
