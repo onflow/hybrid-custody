@@ -27,9 +27,9 @@ transaction(factoryAddress: Address, filterAddress: Address) {
 
         // check that paths are all configured properly
         acct.unlink(HybridCustody.PrivatePath)
-        acct.link<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.BorrowableAccount}>(HybridCustody.PrivatePath, target: HybridCustody.StoragePath)
+        acct.link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.PrivatePath, target: HybridCustody.StoragePath)
 
         acct.unlink(HybridCustody.PublicPath)
-        acct.link<&HybridCustody.ChildAccount{HybridCustody.AccountPublic}>(HybridCustody.PublicPath, target: HybridCustody.StoragePath)
+        acct.link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.PublicPath, target: HybridCustody.StoragePath)
     }
 }

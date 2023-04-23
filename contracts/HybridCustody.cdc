@@ -3,6 +3,8 @@ import "CapabilityProxy"
 import "CapabilityFilter"
 
 pub contract HybridCustody {
+
+    // TODO: Rename these events to start with Child
     pub let StoragePath: StoragePath
     pub let PublicPath: PublicPath
     pub let PrivatePath: PrivatePath
@@ -14,23 +16,40 @@ pub contract HybridCustody {
     pub let ManagerPublicPath: PublicPath
     pub let ManagerPrivatePath: PrivatePath
 
+    // TODO: Events!
+
     pub resource interface Account {
         pub fun getCapability(path: CapabilityPath, type: Type): Capability?
-        // pub fun getAddress(): Address
-        // pub fun isChildOf(_ addr: Address)
-        // pub fun getParents(): [Address]
-        // pub fun canBorrowAcct(): Bool
-        // pub fun borrowAcct(): &AuthAccount?
-        // pub fun publishToParent(parent: Address)
-        // pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        pub fun getAddress(): Address
+        pub fun isChildOf(_ addr: Address): Bool
+        pub fun getParents(): [Address]
+        pub fun borrowAccount(): &AuthAccount?
+        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
     }
 
     pub resource interface BorrowableAccount {
         access(contract) fun borrowAccount(): &AuthAccount
     }
 
+    pub resource interface ChildAccountPublic {
+        pub fun getParents(): [Address]
+        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+    }
+
+    pub resource interface ChildAccountPrivate {
+        pub fun removeParent(parent: Address): Bool
+        pub fun publishToParent(
+            parentAddress: Address,
+            factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
+            filter: Capability<&{CapabilityFilter.Filter}>
+        )
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
+    }
+
     pub resource interface AccountPublic {
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        access(contract) fun setRedeemed(_ addr: Address)
+        pub fun getAddress(): Address
     }
 
     pub resource interface AccountPrivate {
@@ -49,6 +68,9 @@ pub contract HybridCustody {
     pub resource Manager: ManagerPrivate, ManagerPublic {
         pub let accounts: {UInt64: Capability<&{AccountPrivate, AccountPublic}>}
         pub let addressToAccountID: {Address: UInt64}
+
+        pub let ownedAccounts: {UInt64: Capability<&{Account, ChildAccountPrivate}>}
+        pub let addressToOwnedAccountID: {Address: UInt64}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
             let acct = cap.borrow()
@@ -89,7 +111,6 @@ pub contract HybridCustody {
 
         pub fun borrowWithAddress(_ addr: Address): &{AccountPrivate, AccountPublic}? {
             let id = self.addressToAccountID[addr]
-            // assert(false, message: id == nil ? "nil": "not nil")
             if id == nil {
                 return nil
             }
@@ -100,6 +121,9 @@ pub contract HybridCustody {
         init() {
             self.accounts = {}
             self.addressToAccountID = {}
+
+            self.ownedAccounts = {}
+            self.addressToOwnedAccountID = {}
         }
     }
 
@@ -117,6 +141,10 @@ pub contract HybridCustody {
         pub let factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
         pub let filter: Capability<&{CapabilityFilter.Filter}>
         pub let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
+
+        pub fun getAddress(): Address {
+            return self.childCap.address
+        }
 
         pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
@@ -152,13 +180,30 @@ pub contract HybridCustody {
             self.filter = filter
             self.proxy = proxy
         }
+
+        access(contract) fun setRedeemed(_ addr: Address) {
+            let acct = self.childCap.borrow()!.borrowAccount()
+            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.StoragePath) {
+                m.setRedeemed(addr)
+            }
+        }
     }
 
-    pub resource ChildAccount: Account, AccountPrivate, AccountPublic, BorrowableAccount {
+    pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
         pub let acct: Capability<&AuthAccount>
         pub let factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
         pub let filter: Capability<&{CapabilityFilter.Filter}>
         pub let proxy: @CapabilityProxy.Proxy
+
+        pub let parents: {Address: Bool}
+
+        access(contract) fun setRedeemed(_ addr: Address) {
+            pre {
+                self.parents[addr] != nil: "address is not waiting to be redeemed"
+            }
+
+            self.parents[addr] = true
+        }
 
         /*
         getCapability - Returns a capability from this ChildAccount's auth account,
@@ -238,6 +283,46 @@ pub contract HybridCustody {
             return self.acct.borrow()!
         }
 
+        pub fun getParents(): [Address] {
+            return self.parents.keys
+        }
+
+        pub fun isChildOf(_ addr: Address): Bool {
+            return self.parents[addr] != nil
+        }
+
+        pub fun hasRedeemed(addr: Address): Bool {
+            return self.parents[addr] != nil && self.parents[addr]! == true
+        }
+
+        pub fun removeParent(parent: Address): Bool {
+            if self.parents[parent] == nil {
+                return false
+            }
+
+            let identifier = HybridCustody.getProxyIdentifierForParent(parent)
+            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifierForParent(parent)
+
+            let acct = self.borrowAccount()
+            acct.unlink(PrivatePath(identifier: identifier)!)
+            acct.unlink(PublicPath(identifier: identifier)!)
+
+            acct.unlink(PrivatePath(identifier: capProxyIdentifier)!)
+            acct.unlink(PublicPath(identifier: capProxyIdentifier)!)
+
+            destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: identifier)!)
+            destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capProxyIdentifier)!)
+
+            self.parents.remove(key: parent)
+
+            // TODO: emit event
+            return true
+        }
+
+        pub fun getAddress(): Address {
+            return self.acct.address
+        }
+
         init(
             _ acct: Capability<&AuthAccount>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
@@ -248,6 +333,8 @@ pub contract HybridCustody {
             self.factory = factory
             self.filter = filter
             self.proxy <- proxy
+
+            self.parents = {}
         }
 
         destroy () {

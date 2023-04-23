@@ -5,7 +5,7 @@ import "ExampleNFT"
 import "MetadataViews"
 
 pub fun main(addr: Address): Bool {
-    let m = getAuthAccount(addr).getCapability<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate}>(HybridCustody.PrivatePath).borrow()!
+    let m = getAuthAccount(addr).getCapability<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPrivate}>(HybridCustody.PrivatePath).borrow()!
 
     let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
     let cap = m.getCapability(path: d.providerPath, type: Type<&{NonFungibleToken.Provider}>())
