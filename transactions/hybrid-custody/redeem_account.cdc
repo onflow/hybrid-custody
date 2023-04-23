@@ -9,8 +9,8 @@ transaction(childAddress: Address) {
             acct.unlink(HybridCustody.ManagerPublicPath)
             acct.unlink(HybridCustody.ManagerPrivatePath)
 
-            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.PrivatePath, target: HybridCustody.ManagerStoragePath)
-            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.PublicPath, target: HybridCustody.ManagerStoragePath)
+            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerPrivatePath, target: HybridCustody.ManagerStoragePath)
+            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
         }
 
         let inboxName = HybridCustody.getProxyIdentifierForParent(acct.address)

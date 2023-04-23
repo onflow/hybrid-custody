@@ -73,14 +73,22 @@ pub contract HybridCustody {
         pub let addressToOwnedAccountID: {Address: UInt64}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
+            // Is there a scenario where you are shared the same address multiple times? Seems like overkill.
             let acct = cap.borrow()
                 ?? panic("invalid account capability")
 
             self.accounts[acct.uuid] = cap
             self.addressToAccountID[cap.address] =  acct.uuid
-
-            // TODO: is there a scenario where you are shared the same address multiple times?
+            
             // TODO: emit account registered event
+        }
+
+        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPrivate}>) {
+            let acct = cap.borrow()
+                ?? panic("cannot add invalid account")
+
+            self.ownedAccounts[acct.uuid] = cap
+            self.addressToOwnedAccountID[cap.address] = acct.uuid
         }
 
         pub fun getIDs(): [UInt64] {
@@ -190,12 +198,13 @@ pub contract HybridCustody {
     }
 
     pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
-        pub let acct: Capability<&AuthAccount>
+        pub var acct: Capability<&AuthAccount>
         pub let factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
         pub let filter: Capability<&{CapabilityFilter.Filter}>
         pub let proxy: @CapabilityProxy.Proxy
 
         pub let parents: {Address: Bool}
+        pub var acctOwner: Address?
 
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
@@ -323,6 +332,54 @@ pub contract HybridCustody {
             return self.acct.address
         }
 
+        pub fun getOwner(): Address {
+            return self.acctOwner != nil ? self.acctOwner! : self.owner!.address
+        }
+
+        pub fun giveOwnership(to: Address) {
+            self.relinquishOwnership()
+            
+            let acct = self.borrowAccount()
+
+            let identifier =  HybridCustody.getOwnerIdentifierForParent(to)
+            let cap = acct.link<&{Account, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.StoragePath)
+                ?? panic("failed to link child account capability")
+
+            acct.inbox.publish(cap, name: identifier, recipient: to)
+
+            // TODO: Emit event!
+        }
+
+        pub fun relinquishOwnership() {
+            // NOTE: Until Capability controllers, we can't be sure that a given auth account capability hasn't been stored and shared with
+            // someone else. This means someone could "give away" ownership of an account but hide that there is a capability it has, in the event
+            // that the new owner at some point adds that path back in, giving the previous owner control it wouldn't have had before.
+
+            let acct = self.borrowAccount()
+
+            // Revoke all keys
+            acct.keys.forEach(fun (key: AccountKey): Bool {
+                if !key.isRevoked {
+                    acct.keys.revoke(keyIndex: key.keyIndex)
+                }
+                return true
+            })
+            
+            // Remove all active AuthAccount capabilities
+            acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
+                if type == Type<&AuthAccount>() {
+                    acct.unlink(path)
+                }
+                return true
+            })
+
+            // Link a new AuthAccount Capability
+            let authAcctPath = "HybridCustodyRelinquished".concat(HybridCustody.account.address.toString()).concat(getCurrentBlock().height.toString())
+            let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
+
+            self.acct = acctCap
+        }
+
         init(
             _ acct: Capability<&AuthAccount>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
@@ -335,6 +392,7 @@ pub contract HybridCustody {
             self.proxy <- proxy
 
             self.parents = {}
+            self.acctOwner = nil
         }
 
         destroy () {
@@ -347,8 +405,13 @@ pub contract HybridCustody {
     pub fun getProxyIdentifierForParent(_ addr: Address): String {
         return "ProxyAccount".concat(addr.toString())
     }
+
     pub fun getCapabilityProxyIdentifierForParent(_ addr: Address): String {
         return "CapabilityProxy".concat(addr.toString())
+    }
+
+    pub fun getOwnerIdentifierForParent(_ addr: Address): String {
+        return "HybridCustodyOwnedAccount".concat(HybridCustody.account.address.toString()).concat(addr.toString())
     }
 
     pub fun createChildAccount(
