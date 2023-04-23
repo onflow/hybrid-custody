@@ -6,22 +6,15 @@ import "CapabilityFactory"
 import "CapabilityProxy"
 import "CapabilityFilter"
 
-transaction(factoryAddress: Address, filterAddress: Address) {
+transaction {
     prepare(acct: AuthAccount) {
         var acctCap = acct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
         if !acctCap.check() {
             acctCap = acct.linkAccount(HybridCustody.LinkedAccountPrivatePath)!
         }
 
-        let factoryCap = getAccount(factoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
-        assert(factoryCap.check(), message: "factory address is not configured properly")
-
-        let filterCap = getAccount(filterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-        assert(filterCap.check(), message: "capability filter is not configured properly")
-
         if acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath) == nil {
-            let proxy <- CapabilityProxy.createProxy()
-            let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap, factory: factoryCap, filter: filterCap, proxy: <- proxy)
+            let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap)
             acct.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
         }
 

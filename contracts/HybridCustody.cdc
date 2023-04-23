@@ -33,12 +33,10 @@ pub contract HybridCustody {
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
     pub resource interface Account {
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun getAddress(): Address
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParents(): [Address]
         pub fun borrowAccount(): &AuthAccount?
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
     }
 
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
@@ -49,7 +47,6 @@ pub contract HybridCustody {
     // Public methods anyone can call on a child account
     pub resource interface ChildAccountPublic {
         pub fun getParents(): [Address]
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         access(contract) fun setRedeemed(_ addr: Address)
     }
 
@@ -61,7 +58,6 @@ pub contract HybridCustody {
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
         )
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun giveOwnership(to: Address)
         pub fun relinquishOwnership()
     }
@@ -277,9 +273,6 @@ pub contract HybridCustody {
     */
     pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
         pub var acct: Capability<&AuthAccount>
-        pub let factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
-        pub let filter: Capability<&{CapabilityFilter.Filter}>
-        pub let proxy: @CapabilityProxy.Proxy
 
         pub let parents: {Address: Bool}
         pub var acctOwner: Address?
@@ -290,42 +283,6 @@ pub contract HybridCustody {
             }
 
             self.parents[addr] = true
-        }
-
-        /*
-        getCapability - Returns a capability from this ChildAccount's auth account,
-        using its CapabilityFactory to return the right type of capability. If the desired type
-        has not been registered, a nil capability will be returned.
-        */
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
-            let acct = self.borrowAccount()
-
-            let f = self.factory.borrow()!.getFactory(type)
-            if f == nil {
-                return nil
-            }
-
-            let cap = f!.getCapability(acct: acct, path: path)
-            
-            if path.getType() == Type<PrivatePath>() {
-                assert(self.filter.borrow()!.allowed(cap: cap), message: "requested capability is not allowed")
-            }
-
-            return cap
-        }
-
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
-            let acct = self.borrowAccount()
-
-            let f = self.factory.borrow()!.getFactory(type)
-            if f == nil {
-                return nil
-            }
-
-            // NOTE: we are specifically not checking the filter here because we are reading from a public path
-            // which means that the capability is discoverable anyway, there's nothing we can do to prevent it from
-            // being read
-            return f!.getCapability(acct: acct, path: path)
         }
 
         /*
@@ -392,10 +349,12 @@ pub contract HybridCustody {
         }
 
         pub fun isChildOf(_ addr: Address): Bool {
+            // TODO: Add test
             return self.parents[addr] != nil
         }
 
         pub fun hasRedeemed(addr: Address): Bool {
+            // TODO: Add test
             return self.parents[addr] != nil && self.parents[addr]! == true
         }
 
@@ -430,14 +389,17 @@ pub contract HybridCustody {
         }
 
         pub fun getAddress(): Address {
+            // TODO add test
             return self.acct.address
         }
 
         pub fun getOwner(): Address {
+            // TODO: add test
             return self.acctOwner != nil ? self.acctOwner! : self.owner!.address
         }
 
         pub fun giveOwnership(to: Address) {
+            // TODO: add test
             self.relinquishOwnership()
             
             let acct = self.borrowAccount()
@@ -459,6 +421,8 @@ pub contract HybridCustody {
             // NOTE: Until Capability controllers, we can't be sure that a given auth account capability hasn't been stored and shared with
             // someone else. This means someone could "give away" ownership of an account but hide that there is a capability it has, in the event
             // that the new owner at some point adds that path back in, giving the previous owner control it wouldn't have had before.
+
+            // TODO: add test
 
             let acct = self.borrowAccount()
 
@@ -486,22 +450,12 @@ pub contract HybridCustody {
         }
 
         init(
-            _ acct: Capability<&AuthAccount>,
-            _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
-            _ filter: Capability<&{CapabilityFilter.Filter}>,
-            _ proxy: @CapabilityProxy.Proxy
+            _ acct: Capability<&AuthAccount>
         ) {
             self.acct = acct
-            self.factory = factory
-            self.filter = filter
-            self.proxy <- proxy
 
             self.parents = {}
             self.acctOwner = nil
-        }
-
-        destroy () {
-            destroy self.proxy
         }
     }
 
@@ -520,16 +474,13 @@ pub contract HybridCustody {
     }
 
     pub fun createChildAccount(
-        acct: Capability<&AuthAccount>,
-        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
-        filter: Capability<&{CapabilityFilter.Filter}>,
-        proxy: @CapabilityProxy.Proxy
+        acct: Capability<&AuthAccount>
     ): @ChildAccount {
         pre {
             acct.check(): "invalid auth account capability"
         }
 
-        return <- create ChildAccount(acct, factory, filter, <-proxy)
+        return <- create ChildAccount(acct)
     }
 
     pub fun createManager(): @Manager {
