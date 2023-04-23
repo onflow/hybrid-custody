@@ -18,9 +18,9 @@ you will find three main resources being used:
 pub contract HybridCustody {
 
     // TODO: Rename these events to start with Child
-    pub let StoragePath: StoragePath
-    pub let PublicPath: PublicPath
-    pub let PrivatePath: PrivatePath
+    pub let ChildStoragePath: StoragePath
+    pub let ChildPublicPath: PublicPath
+    pub let ChildPrivatePath: PrivatePath
 
     pub let LinkedAccountPrivatePath: PrivatePath
     pub let BorrowableAccountPrivatePath: PrivatePath
@@ -260,7 +260,7 @@ pub contract HybridCustody {
 
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!.borrowAccount()
-            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.StoragePath) {
+            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
                 m.setRedeemed(addr)
             }
         }
@@ -367,7 +367,7 @@ pub contract HybridCustody {
             let proxy = acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(capProxyPrivate)
             assert(proxy.check(), message: "failed to setup capability proxy for parent address")
 
-            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount}>(HybridCustody.PrivatePath)
+            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy)
             let identifier = HybridCustody.getProxyIdentifierForParent(parentAddress)
 
@@ -443,7 +443,7 @@ pub contract HybridCustody {
             let acct = self.borrowAccount()
 
             let identifier =  HybridCustody.getOwnerIdentifierForParent(to)
-            let cap = acct.link<&{Account, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.StoragePath)
+            let cap = acct.link<&{Account, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
                 ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
@@ -537,10 +537,10 @@ pub contract HybridCustody {
     }
 
     init() {
-        let identifier = "HybridCustody".concat(self.account.address.toString())
-        self.StoragePath = StoragePath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
-        self.PublicPath = PublicPath(identifier: identifier)!
+        let identifier = "HybridCustodyChild".concat(self.account.address.toString())
+        self.ChildStoragePath = StoragePath(identifier: identifier)!
+        self.ChildPrivatePath = PrivatePath(identifier: identifier)!
+        self.ChildPublicPath = PublicPath(identifier: identifier)!
 
         self.LinkedAccountPrivatePath = PrivatePath(identifier: "LinkedAccountPrivatePath".concat(identifier))!
         self.BorrowableAccountPrivatePath = PrivatePath(identifier: "BorrowableAccountPrivatePath".concat(identifier))!

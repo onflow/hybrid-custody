@@ -19,17 +19,17 @@ transaction(factoryAddress: Address, filterAddress: Address) {
         let filterCap = getAccount(filterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
         assert(filterCap.check(), message: "capability filter is not configured properly")
 
-        if acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.StoragePath) == nil {
+        if acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath) == nil {
             let proxy <- CapabilityProxy.createProxy()
             let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap, factory: factoryCap, filter: filterCap, proxy: <- proxy)
-            acct.save(<-ChildAccount, to: HybridCustody.StoragePath)
+            acct.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
         }
 
         // check that paths are all configured properly
-        acct.unlink(HybridCustody.PrivatePath)
-        acct.link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.PrivatePath, target: HybridCustody.StoragePath)
+        acct.unlink(HybridCustody.ChildPrivatePath)
+        acct.link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
 
-        acct.unlink(HybridCustody.PublicPath)
-        acct.link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.PublicPath, target: HybridCustody.StoragePath)
+        acct.unlink(HybridCustody.ChildPublicPath)
+        acct.link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
     }
 }

@@ -10,7 +10,7 @@ transaction {
         acct.unlink(HybridCustody.ManagerPublicPath)
         acct.unlink(HybridCustody.ManagerPrivatePath)
 
-        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.PrivatePath, target: HybridCustody.ManagerStoragePath)
-        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.PublicPath, target: HybridCustody.ManagerStoragePath)
+        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ManagerStoragePath)
+        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ManagerStoragePath)
     }
 }
