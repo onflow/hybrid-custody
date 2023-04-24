@@ -17,17 +17,16 @@ you will find three main resources being used:
 */
 pub contract HybridCustody {
 
-    // TODO: Rename these events to start with Child
     pub let ChildStoragePath: StoragePath
     pub let ChildPublicPath: PublicPath
     pub let ChildPrivatePath: PrivatePath
 
-    pub let LinkedAccountPrivatePath: PrivatePath
-    pub let BorrowableAccountPrivatePath: PrivatePath
-
     pub let ManagerStoragePath: StoragePath
     pub let ManagerPublicPath: PublicPath
     pub let ManagerPrivatePath: PrivatePath
+
+    pub let LinkedAccountPrivatePath: PrivatePath
+    pub let BorrowableAccountPrivatePath: PrivatePath
 
     // TODO: Events!
 
@@ -35,7 +34,7 @@ pub contract HybridCustody {
     pub resource interface Account {
         pub fun getAddress(): Address
         pub fun isChildOf(_ addr: Address): Bool
-        pub fun getParents(): [Address]
+        pub fun getParentsAddresses(): [Address]
         pub fun borrowAccount(): &AuthAccount?
     }
 
@@ -46,7 +45,10 @@ pub contract HybridCustody {
 
     // Public methods anyone can call on a child account
     pub resource interface ChildAccountPublic {
-        pub fun getParents(): [Address]
+        pub fun getParentsAddresses(): [Address]
+        pub fun getParentStatuses(): {Address: Bool}
+        pub fun getRedeemedStatus(addr: Address): Bool?
+
         access(contract) fun setRedeemed(_ addr: Address)
     }
 
@@ -73,6 +75,8 @@ pub contract HybridCustody {
     pub resource interface AccountPrivate {
         pub fun getCapability(path: CapabilityPath, type: Type): Capability?
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+
+        access(contract) fun redeemedCallback(_ addr: Address)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -88,7 +92,6 @@ pub contract HybridCustody {
     // What child accounts it has
     pub resource interface ManagerPublic {
         pub fun borrowAccountPublic(id: UInt64): &{AccountPublic}?
-
         // pub fun getChildAddresses(): [Address]
     }
 
@@ -115,7 +118,7 @@ pub contract HybridCustody {
             
             // TODO: emit account registered event
 
-            // TODO: borrow the child account and mark it as registered
+            acct.redeemedCallback(self.owner!.address)
         }
 
         pub fun removeChildByAddress(addr: Address) {
@@ -192,7 +195,7 @@ pub contract HybridCustody {
     ProxyAccount resources it shares, without worrying about whether the upstream parent can do anything to prevent it.
     */
     pub resource ProxyAccount: AccountPrivate, AccountPublic {
-        access(self) let childCap: Capability<&{BorrowableAccount}>
+        access(self) let childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>
 
         // The CapabilityFactory Manager is a ProxyAccount's way of limiting what types can be asked for
         // by its parent account. The CapabilityFactory returns Capabilities which can be
@@ -214,6 +217,10 @@ pub contract HybridCustody {
 
         pub fun getAddress(): Address {
             return self.childCap.address
+        }
+
+        access(contract) fun redeemedCallback(_ addr: Address) {
+            self.childCap.borrow()!.setRedeemed(addr)
         }
 
         // The main function to get ways to access an account from a child to a parent. When a PrivatePath type is used, 
@@ -243,7 +250,7 @@ pub contract HybridCustody {
         }
 
         init(
-            _ childCap: Capability<&{BorrowableAccount}>,
+            _ childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>,
             _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
@@ -276,6 +283,7 @@ pub contract HybridCustody {
 
         pub let parents: {Address: Bool}
         pub var acctOwner: Address?
+        pub var relinquishedOwnership: Bool
 
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
@@ -324,7 +332,7 @@ pub contract HybridCustody {
             let proxy = acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(capProxyPrivate)
             assert(proxy.check(), message: "failed to setup capability proxy for parent address")
 
-            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount}>(HybridCustody.ChildPrivatePath)
+            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy)
             let identifier = HybridCustody.getProxyIdentifierForParent(parentAddress)
 
@@ -338,24 +346,29 @@ pub contract HybridCustody {
             assert(proxyCap.check(), message: "Proxy capability check failed")
 
             acct.inbox.publish(proxyCap, name: identifier, recipient: parentAddress)
+            self.parents[parentAddress] = false
         }
 
         pub fun borrowAccount(): &AuthAccount {
             return self.acct.borrow()!
         }
 
-        pub fun getParents(): [Address] {
+        pub fun getParentsAddresses(): [Address] {
             return self.parents.keys
         }
 
         pub fun isChildOf(_ addr: Address): Bool {
-            // TODO: Add test
             return self.parents[addr] != nil
         }
 
-        pub fun hasRedeemed(addr: Address): Bool {
-            // TODO: Add test
-            return self.parents[addr] != nil && self.parents[addr]! == true
+        // returns nil if the given address is not a parent, false if the parent
+        // has not redeemed the child account yet, and true if they have
+        pub fun getRedeemedStatus(addr: Address): Bool? {
+            return self.parents[addr]
+        }
+
+        pub fun getParentStatuses(): {Address: Bool} {
+            return self.parents
         }
 
         /*
@@ -389,17 +402,17 @@ pub contract HybridCustody {
         }
 
         pub fun getAddress(): Address {
-            // TODO add test
             return self.acct.address
         }
 
-        pub fun getOwner(): Address {
-            // TODO: add test
+        pub fun getOwner(): Address? {
+            if self.relinquishedOwnership {
+                return nil
+            }
             return self.acctOwner != nil ? self.acctOwner! : self.owner!.address
         }
 
         pub fun giveOwnership(to: Address) {
-            // TODO: add test
             self.relinquishOwnership()
             
             let acct = self.borrowAccount()
@@ -409,6 +422,8 @@ pub contract HybridCustody {
                 ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
+            self.acctOwner = to
+            self.relinquishedOwnership = false
 
             // TODO: Emit event!
         }
@@ -422,8 +437,6 @@ pub contract HybridCustody {
             // someone else. This means someone could "give away" ownership of an account but hide that there is a capability it has, in the event
             // that the new owner at some point adds that path back in, giving the previous owner control it wouldn't have had before.
 
-            // TODO: add test
-
             let acct = self.borrowAccount()
 
             // Revoke all keys
@@ -434,10 +447,11 @@ pub contract HybridCustody {
                 return true
             })
             
-            // Remove all active AuthAccount capabilities
+            // Find all active AuthAccount capabilities so they can be removed after we make the new auth account cap
+            let pathsToUnlink: [PrivatePath] = []
             acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
-                if type == Type<&AuthAccount>() {
-                    acct.unlink(path)
+                if type.identifier == "Capability<&AuthAccount>" {
+                    pathsToUnlink.append(path)
                 }
                 return true
             })
@@ -447,6 +461,15 @@ pub contract HybridCustody {
             let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
 
             self.acct = acctCap
+            let newAcct = self.acct.borrow()!
+
+            // cleanup, remove all previously found paths. We had to do it in this order because we will be unlinking the existing path
+            // which will cause a deference issue with the originally borrowed auth account
+            for  p in pathsToUnlink {
+                newAcct.unlink(p)
+            }
+            
+            self.relinquishedOwnership = true
         }
 
         init(
@@ -456,6 +479,7 @@ pub contract HybridCustody {
 
             self.parents = {}
             self.acctOwner = nil
+            self.relinquishedOwnership = false
         }
     }
 

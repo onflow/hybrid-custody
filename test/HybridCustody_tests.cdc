@@ -98,10 +98,111 @@ pub fun testRedeemAccount() {
     scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
 }
 
+pub fun testProxyAccount_getAddress() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    scriptExecutor("hybrid-custody/verify_proxy_address.cdc", [parent.address, child.address])
+}
+
+pub fun testProxyAccount_getCapability() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+}
+
+pub fun testProxyAccount_getPublicCapability() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_collection_public_capability.cdc", [parent.address, child.address])
+}
+
+pub fun testCheckParentRedeemedStatus() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    setupChildAccount(child, FilterKindAll)
+
+    setupAccountManager(parent)
+    assert(!isParent(child: child, parent: parent), message: "parent is already pending")
+
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+    assert(isParent(child: child, parent: parent), message: "parent is already pending")
+
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+    assert(checkIsRedeemed(child: child, parent: parent), message: "parents was redeemed but is not marked properly")
+}
+
+pub fun testRelinquishOwnership() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let numKeysBefore = getNumValidKeys(child)
+    assert(numKeysBefore > 0, message: "no keys to revoke")
+    assert(checkAuthAccountDefaultCap(account: child), message: "Missing Auth Account Capability at default path")
+
+    let owner = getOwner(child: child)
+    assert(owner! == child.address, message: "mismatched owner")
+
+    txExecutor("hybrid-custody/relinquish_ownership.cdc", [child], [], nil, nil)
+    let numKeysAfter = getNumValidKeys(child)
+    assert(numKeysAfter == 0, message: "not all keys were revoked")
+    assert(!checkAuthAccountDefaultCap(account: child), message: "Found Auth Account Capability at default path")
+    let ownerAfter = getOwner(child: child)
+    assert(ownerAfter == nil, message: "should not have an owner anymore")
+}
+
+pub fun testTransferOwnership() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let owner = blockchain.createAccount()
+    setupAccountManager(owner)
+
+    txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
+    assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
+
+    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address], nil, nil)
+    assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+
+    // TODO: unlink parent
+}
+
 // --------------- End Test Cases --------------- 
 
 
 // --------------- Transaction wrapper functions ---------------
+
+pub fun setupChildAndParent_FilterKindAll(child: Test.Account, parent: Test.Account) {
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    setupChildAccount(child, FilterKindAll)
+
+    setupAccountManager(parent)
+
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+}
 
 pub fun setupAccountManager(_ acct: Test.Account) {
     txExecutor("hybrid-custody/setup_manager.cdc", [acct], [], nil, nil)
@@ -162,6 +263,41 @@ pub fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: Stri
     txExecutor(filePath, [acct], [identifier], nil, nil)
 }
 
+// ---------------- End Transaction wrapper functions
+
+// ---------------- Begin script wrapper functions
+
+pub fun getParentStatusesForChild(_ child: Test.Account): {Address: Bool} {
+    return scriptExecutor("hybrid-custody/get_parents_from_child.cdc", [child.address])! as! {Address: Bool}
+}
+
+pub fun isParent(child: Test.Account, parent: Test.Account): Bool {
+    return scriptExecutor("hybrid-custody/is_parent.cdc", [child.address, parent.address])! as! Bool
+}
+
+pub fun checkIsRedeemed(child: Test.Account, parent: Test.Account): Bool {
+    return scriptExecutor("hybrid-custody/is_redeemed.cdc", [child.address, parent.address])! as! Bool
+}
+
+pub fun getNumValidKeys(_ child: Test.Account): Int {
+    return scriptExecutor("hybrid-custody/get_num_valid_keys.cdc", [child.address])! as! Int
+}
+
+pub fun checkAuthAccountDefaultCap(account: Test.Account): Bool {
+    return scriptExecutor("hybrid-custody/check_default_auth_acct_linked_path.cdc", [account.address])! as! Bool
+}
+
+pub fun getOwner(child: Test.Account): Address? {
+    let res = scriptExecutor("hybrid-custody/get_owner_of_child.cdc", [child.address])
+    if res == nil {
+        return nil
+    }
+
+    return res! as! Address
+}
+
+// ---------------- End script wrapper functions
+
 // ---------------- BEGIN General-purpose helper functions
 
 pub fun buildTypeIdentifier(_ acct: Test.Account, _ contractName: String, _ suffix: String): String {
@@ -170,8 +306,6 @@ pub fun buildTypeIdentifier(_ acct: Test.Account, _ contractName: String, _ suff
 }
 
 // ---------------- END General-purpose helper functions
-
-// ---------------- End Transaction wrapper functions
 
 pub fun getTestAccount(_ name: String): Test.Account {
     if accounts[name] == nil {
@@ -235,18 +369,6 @@ pub fun txExecutor(_ filePath: String, _ signers: [Test.Account], _ arguments: [
     }
 
     return txResult.status == Test.ResultStatus.succeeded
-}
-
-pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
-    switch errorType {
-        case ErrorType.TX_PANIC: return 159
-        case ErrorType.TX_ASSERT: return 170
-        case ErrorType.TX_PRE: return 174
-        case ErrorType.CONTRACT_WITHDRAWBALANCE: return 679
-        default: panic("Invalid error type")
-    }
-
-    return 0
 }
 
 pub fun setup() {
@@ -376,7 +498,18 @@ pub enum ErrorType: UInt8 {
     pub case TX_PANIC
     pub case TX_ASSERT
     pub case TX_PRE
-    pub case CONTRACT_WITHDRAWBALANCE
 }
+
+pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
+    switch errorType {
+        case ErrorType.TX_PANIC: return 159
+        case ErrorType.TX_ASSERT: return 170
+        case ErrorType.TX_PRE: return 174
+        default: panic("Invalid error type")
+    }
+
+    return 0
+}
+
 // END SECTION: Helper functions
  
