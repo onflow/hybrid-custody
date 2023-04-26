@@ -85,6 +85,8 @@ pub contract HybridCustody {
         pub fun borrowAccount(id: UInt64): &{AccountPrivate, AccountPublic}?
         pub fun removeChildByAddress(addr: Address)
         pub fun removeChild(id: UInt64)
+        pub fun removeOwnedByAddress(addr: Address)
+        pub fun removeOwned(id: UInt64)
         // TODO: Owned account methods
     }
 
@@ -175,6 +177,33 @@ pub contract HybridCustody {
             }
 
             return self.borrowAccount(id: id!)
+        }
+
+        pub fun removeOwnedByAddress(addr: Address) {
+            let id = self.addressToOwnedAccountID[addr]
+                ?? panic("no owned account with given address")
+            self.removeOwned(id: id)
+        }
+
+        pub fun removeOwned(id: UInt64) {
+            let acct = self.ownedAccounts.remove(key: id)
+                ?? panic("account not found")
+            acct.borrow()!.relinquishOwnership()
+
+            // TODO: emit event?
+        }
+
+        pub fun giveOwnerShip(id: UInt64, to: Address) {
+            let acct = self.ownedAccounts.remove(key: id)
+                ?? panic("account not found")
+            self.addressToOwnedAccountID.remove(key: acct.address)
+
+            acct.borrow()!.giveOwnership(to: to)
+        }
+
+        pub fun giveOwnershipByAddress(of: Address, to: Address) {
+            let id = self.addressToOwnedAccountID[of] ?? panic("account was not found")
+            self.giveOwnerShip(id: id, to: to)
         }
 
         init() {

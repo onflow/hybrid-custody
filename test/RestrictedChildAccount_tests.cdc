@@ -16,7 +16,7 @@ pub let childAccountName = "child1 account"
 // BEGIN SECTION - Test Cases
 
 pub fun testSetupCapabilityFactory() {
-    let txCode = loadCode("factory/setup_factory_manager.cdc", "transactions")
+    let txCode = loadCode("factory/setup.cdc", "transactions")
 
     let signer = accounts["nftCapFactory"]!
     txExecutor(txCode, [signer], [], nil, nil)

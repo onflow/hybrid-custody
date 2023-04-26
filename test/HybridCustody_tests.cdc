@@ -182,8 +182,6 @@ pub fun testTransferOwnership() {
 
     txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
-
-    // TODO: unlink parent
 }
 
 // --------------- End Test Cases --------------- 
