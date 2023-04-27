@@ -14,7 +14,7 @@ transaction(childAddress: Address) {
         }
 
         let inboxName = HybridCustody.getOwnerIdentifier(acct.address) 
-        let cap = acct.inbox.claim<&AnyResource{HybridCustody.Account, HybridCustody.ChildAccountPrivate}>(inboxName, provider: childAddress)
+        let cap = acct.inbox.claim<&AnyResource{HybridCustody.Account, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(inboxName, provider: childAddress)
             ?? panic("proxy account cap not found")
 
         let manager = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)

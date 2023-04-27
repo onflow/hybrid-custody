@@ -46,9 +46,20 @@ pub contract HybridCustody {
     // Public methods anyone can call on a child account
     pub resource interface ChildAccountPublic {
         pub fun getParentsAddresses(): [Address]
+
+        // getParentStatuses
+        // Returns all parent addresses of this child account, and whether they have already
+        // redeemed the parent has redeemed the account (true) or has not (false)
         pub fun getParentStatuses(): {Address: Bool}
+
+        // getRedeemedStatus
+        // Returns true if the given address is a parent of this child and has redeemed it.
+        // Returns false if the given address is a parent of this child and has NOT redeemed it.
+        // returns nil if the given address it not a parent of this child account.
         pub fun getRedeemedStatus(addr: Address): Bool?
 
+        // setRedeemed
+        // A callback function to mark a parent as redeemed on the child account.
         access(contract) fun setRedeemed(_ addr: Address)
     }
 
@@ -61,6 +72,12 @@ pub contract HybridCustody {
             filter: Capability<&{CapabilityFilter.Filter}>
         )
         pub fun giveOwnership(to: Address)
+
+        // seal
+        // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
+        // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
+        // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
+        // USE WITH EXTREME CAUTION.
         pub fun seal()
     }
 
@@ -85,14 +102,19 @@ pub contract HybridCustody {
         pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
         pub fun removeChild(addr: Address)
         pub fun removeOwned(addr: Address)
+
         // TODO: Owned account methods
+        pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
     }
 
     // Functions anyone can call on a manager to get information about an account such as
     // What child accounts it has
     pub resource interface ManagerPublic {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
+        // TODO: Owned account public methods
         // pub fun getChildAddresses(): [Address]
+        // TODO: What questions do we expect we should be able to ask the owner of an account? For instance
+        // Should I be able to borrow typed public capabilities of an account owned by the manager?
     }
 
     /*
@@ -105,16 +127,15 @@ pub contract HybridCustody {
     */
     pub resource Manager: ManagerPrivate, ManagerPublic {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic}>}
-        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPrivate}>}
+        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
             pre {
                 self.accounts[cap.address] == nil: "There is already a child account with this address"
             }
 
-            // Is there a scenario where you are shared the same address multiple times? Seems like overkill.
             let acct = cap.borrow()
-                ?? panic("invalid account capability")
+                ?? panic("child account capability could not be borrowed")
 
             self.accounts[cap.address] = cap
             
@@ -128,7 +149,7 @@ pub contract HybridCustody {
             // TODO: emit event if cap is not nil
         }
 
-        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPrivate}>) {
+        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -159,6 +180,14 @@ pub contract HybridCustody {
             }
 
             return cap!.borrow()
+        }
+
+        pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}? {
+            if let cap = self.ownedAccounts[addr] {
+                return cap.borrow()
+            }
+
+            return nil
         }
 
         pub fun removeOwned(addr: Address) {
@@ -280,7 +309,7 @@ pub contract HybridCustody {
     a form of Hybrid Custody which has no true owner over an account, but shared partial ownership.
     */
     pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
-        pub var acct: Capability<&AuthAccount>
+        priv var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
         pub var acctOwner: Address?
@@ -419,7 +448,7 @@ pub contract HybridCustody {
             let acct = self.borrowAccount()
 
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.link<&{Account, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
+            let cap = acct.link<&{Account, ChildAccountPublic, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
                 ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
@@ -429,10 +458,11 @@ pub contract HybridCustody {
             // TODO: Emit event!
         }
 
-        // seal - Ensures all keys on an account are revoked, unlinks all currently active AuthAccount capabilities,
-        // then makes a new one and replaces the @ChildAccount's underlying AuthAccount Capability with the new one to ensure that
-        // all parent accounts can still operate normally. Unless this method is executed via the giveOwnership function, this will 
-        // leave an account **without** an owner. ONLY USE WITH EXTREME CAUTION.
+        // seal
+        // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
+        // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
+        // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
+        // USE WITH EXTREME CAUTION.
         pub fun seal() {
             // NOTE: Until Capability controllers are released, it is possible that the owner of an account could obtain a capability to the path
             // that this method will create. Because of that, an app could fake giving ownership away fully, preventing a user from knowing that 
