@@ -13,7 +13,7 @@ transaction(childAddress: Address) {
             acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
         }
 
-        let inboxName = HybridCustody.getOwnerIdentifierForParent(acct.address) 
+        let inboxName = HybridCustody.getOwnerIdentifier(acct.address) 
         let cap = acct.inbox.claim<&AnyResource{HybridCustody.Account, HybridCustody.ChildAccountPrivate}>(inboxName, provider: childAddress)
             ?? panic("proxy account cap not found")
 

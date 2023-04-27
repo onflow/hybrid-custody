@@ -102,6 +102,8 @@ pub contract HybridCustody {
     A resource for an account which fills the Parent role of the Child-Parent account
     management Model. A Manager can redeem or remove child accounts, and obtain any capabilities
     exposed by the child account to them.
+
+    TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
     pub resource Manager: ManagerPrivate, ManagerPublic {
         pub let accounts: {UInt64: Capability<&{AccountPrivate, AccountPublic}>}
@@ -131,7 +133,7 @@ pub contract HybridCustody {
 
         pub fun removeChild(id: UInt64) {
             let cap = self.accounts.remove(key: id) ?? panic("no account found with the given id")
-            self.addressToOwnedAccountID.remove(key: cap.address)
+            self.addressToAccountID.remove(key: cap.address)
 
             // TODO: emit event
         }
@@ -188,7 +190,7 @@ pub contract HybridCustody {
         pub fun removeOwned(id: UInt64) {
             let acct = self.ownedAccounts.remove(key: id)
                 ?? panic("account not found")
-            acct.borrow()!.relinquishOwnership()
+            acct.borrow()!.relinquishOwnership() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
 
             // TODO: emit event?
         }
@@ -344,7 +346,7 @@ pub contract HybridCustody {
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
         ) {
-            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifierForParent(parentAddress)
+            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parentAddress)
 
             let capProxyStorage = StoragePath(identifier: capProxyIdentifier)!
             let acct = self.borrowAccount()
@@ -363,7 +365,7 @@ pub contract HybridCustody {
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy)
-            let identifier = HybridCustody.getProxyIdentifierForParent(parentAddress)
+            let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
 
             let s = StoragePath(identifier: identifier)!
             let p = PrivatePath(identifier: identifier)!
@@ -411,8 +413,8 @@ pub contract HybridCustody {
                 return false
             }
 
-            let identifier = HybridCustody.getProxyIdentifierForParent(parent)
-            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifierForParent(parent)
+            let identifier = HybridCustody.getProxyAccountIdentifier(parent)
+            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parent)
 
             let acct = self.borrowAccount()
             acct.unlink(PrivatePath(identifier: identifier)!)
@@ -446,7 +448,7 @@ pub contract HybridCustody {
             
             let acct = self.borrowAccount()
 
-            let identifier =  HybridCustody.getOwnerIdentifierForParent(to)
+            let identifier =  HybridCustody.getOwnerIdentifier(to)
             let cap = acct.link<&{Account, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
                 ?? panic("failed to link child account capability")
 
@@ -514,15 +516,15 @@ pub contract HybridCustody {
 
     // Utility function to get the path identifier for a parent address when interacting with a 
     // child account and its parents
-    pub fun getProxyIdentifierForParent(_ addr: Address): String {
+    pub fun getProxyAccountIdentifier(_ addr: Address): String {
         return "ProxyAccount".concat(addr.toString())
     }
 
-    pub fun getCapabilityProxyIdentifierForParent(_ addr: Address): String {
+    pub fun getCapabilityProxyIdentifier(_ addr: Address): String {
         return "CapabilityProxy".concat(addr.toString())
     }
 
-    pub fun getOwnerIdentifierForParent(_ addr: Address): String {
+    pub fun getOwnerIdentifier(_ addr: Address): String {
         return "HybridCustodyOwnedAccount".concat(HybridCustody.account.address.toString()).concat(addr.toString())
     }
 
