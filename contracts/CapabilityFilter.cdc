@@ -31,7 +31,11 @@ pub contract CapabilityFilter {
         }
 
         pub fun allowed(cap: Capability): Bool {
-            return !self.deniedTypes.containsKey((cap.borrow<&AnyResource>() ?? panic("requested type is not allowed")).getType())
+            if let item = cap.borrow<&AnyResource>() {
+                return !self.deniedTypes.containsKey(item.getType())
+            }
+
+            return true
         }
 
         pub fun getDetails(): AnyStruct {
@@ -63,7 +67,11 @@ pub contract CapabilityFilter {
         }
 
         pub fun allowed(cap: Capability): Bool {
-            return self.allowedTypes.containsKey((cap.borrow<&AnyResource>() ?? panic("requested type is not allowed")).getType())
+            if let item = cap.borrow<&AnyResource>() {
+                return self.allowedTypes.containsKey(item.getType())
+            }
+
+            return false
         }
 
         pub fun getDetails(): AnyStruct {
