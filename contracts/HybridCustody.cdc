@@ -108,6 +108,10 @@ pub contract HybridCustody {
         pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPrivate}>}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
+            pre {
+                self.accounts[cap.address] == nil: "There is already a child account with this address"
+            }
+
             // Is there a scenario where you are shared the same address multiple times? Seems like overkill.
             let acct = cap.borrow()
                 ?? panic("invalid account capability")
@@ -125,6 +129,10 @@ pub contract HybridCustody {
         }
 
         pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPrivate}>) {
+            pre {
+                self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
+            }
+
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
 
