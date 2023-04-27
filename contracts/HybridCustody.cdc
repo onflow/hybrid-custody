@@ -65,12 +65,26 @@ pub contract HybridCustody {
 
     // Accessible to the owner of the ChildAccount.
     pub resource interface ChildAccountPrivate {
+        // removeParent
+        // Deletes the proxy account resource being used to share access to this child account with the
+        // supplied parent address, and unlinks the paths it was using to reach the proxy account
         pub fun removeParent(parent: Address): Bool
+
+        // publicToParent
+        // Sets up a new ProxyAccount resource for the given parentAddress to redeem.
+        // This proxy account uses the supplied factory and filter to manage what can be obtained
+        // from the child account, and a new CapabilityProxy resource is created for the sharing of one-off
+        // capabilities. Each of these pieces of access control are managed through the child account.
         pub fun publishToParent(
             parentAddress: Address,
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
         )
+
+        // giveOwnership
+        // Passes ownership of this child account to the given address. Once executed, all active keys on 
+        // the child account will be revoked, and the active AuthAccount Capability being used by to obtain capabilities
+        // will be rotated, preventing anyone without the newly generated capability from gaining access to the account.
         pub fun giveOwnership(to: Address)
 
         // seal
@@ -79,6 +93,11 @@ pub contract HybridCustody {
         // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
         // USE WITH EXTREME CAUTION.
         pub fun seal()
+
+        // TODO:
+        // 1. function to replace the capability factory of the child account
+        // 2. function to replace the capability filter of the child account
+        // 3. functions to add or remove capabilities from the CapabilityProxy resource
     }
 
     // Public methods exposed on a proxy account resource. ChildAccountPublic will share
