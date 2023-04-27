@@ -147,7 +147,7 @@ pub fun testCheckParentRedeemedStatus() {
     assert(checkIsRedeemed(child: child, parent: parent), message: "parents was redeemed but is not marked properly")
 }
 
-pub fun testRelinquishOwnership() {
+pub fun testseal() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 

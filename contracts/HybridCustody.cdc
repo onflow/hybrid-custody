@@ -61,7 +61,7 @@ pub contract HybridCustody {
             filter: Capability<&{CapabilityFilter.Filter}>
         )
         pub fun giveOwnership(to: Address)
-        pub fun relinquishOwnership()
+        pub fun seal()
     }
 
     // Public methods exposed on a proxy account resource. ChildAccountPublic will share
@@ -190,7 +190,7 @@ pub contract HybridCustody {
         pub fun removeOwned(id: UInt64) {
             let acct = self.ownedAccounts.remove(key: id)
                 ?? panic("account not found")
-            acct.borrow()!.relinquishOwnership() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
+            acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
 
             // TODO: emit event?
         }
@@ -444,7 +444,7 @@ pub contract HybridCustody {
         }
 
         pub fun giveOwnership(to: Address) {
-            self.relinquishOwnership()
+            self.seal()
             
             let acct = self.borrowAccount()
 
@@ -459,14 +459,14 @@ pub contract HybridCustody {
             // TODO: Emit event!
         }
 
-        // relinquishOwnership - Ensures all keys on an account are revoked, unlinks all currently active AuthAccount capabilities,
+        // seal - Ensures all keys on an account are revoked, unlinks all currently active AuthAccount capabilities,
         // then makes a new one and replaces the @ChildAccount's underlying AuthAccount Capability with the new one to ensure that
         // all parent accounts can still operate normally. Unless this method is executed via the giveOwnership function, this will 
         // leave an account **without** an owner. ONLY USE WITH EXTREME CAUTION.
-        pub fun relinquishOwnership() {
-            // NOTE: Until Capability controllers, we can't be sure that a given auth account capability hasn't been stored and shared with
-            // someone else. This means someone could "give away" ownership of an account but hide that there is a capability it has, in the event
-            // that the new owner at some point adds that path back in, giving the previous owner control it wouldn't have had before.
+        pub fun seal() {
+            // NOTE: Until Capability controllers are released, it is possible that the owner of an account could obtain a capability to the path
+            // that this method will create. Because of that, an app could fake giving ownership away fully, preventing a user from knowing that 
+            // another entity has access they shouldn't have.
 
             let acct = self.borrowAccount()
 
@@ -488,6 +488,9 @@ pub contract HybridCustody {
             })
 
             // Link a new AuthAccount Capability
+            // NOTE: This path cannot be sufficiently randomly generated, an app calling this function could build a capability to this path before
+            // it is made, thus maintaining ownership despite making it look like they gave it away. Until capability controllers, this method should not be fully trusted.
+            // TODO: make an additional function for the owner to rotate the auth account capability so they can mitigate this behavior (still not perfect)
             let authAcctPath = "HybridCustodyRelinquished".concat(HybridCustody.account.address.toString()).concat(getCurrentBlock().height.toString())
             let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
 
