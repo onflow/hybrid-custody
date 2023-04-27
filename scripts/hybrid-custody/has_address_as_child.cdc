@@ -5,7 +5,7 @@ pub fun main(parent: Address, child: Address): Bool {
     let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
         ?? panic("manager not found")
 
-    let childAccount = m.borrowWithAddress(child)
+    let childAccount = m.borrowAccount(addr: child)
         ?? panic("child not found")
 
     return true

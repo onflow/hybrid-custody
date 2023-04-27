@@ -9,6 +9,6 @@ pub fun main(parent: Address, child: Address) {
     let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
         ?? panic("manager does not exist")
 
-    let childAcct = m.borrowWithAddress(child) ?? panic("child account not found")
+    let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
     assert(childAcct.getAddress() == child, message: "addresses do not match")
 }

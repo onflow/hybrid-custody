@@ -10,7 +10,7 @@ pub fun main(parent: Address, child: Address) {
     let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
         ?? panic("manager does not exist")
 
-    let childAcct = m.borrowWithAddress(child) ?? panic("child account not found")
+    let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
 
     let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 

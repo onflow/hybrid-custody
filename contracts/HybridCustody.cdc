@@ -82,18 +82,16 @@ pub contract HybridCustody {
     // Entry point for a parent to borrow its child account and obtain capabilities or
     // perform other actions on the child account
     pub resource interface ManagerPrivate {
-        pub fun borrowAccount(id: UInt64): &{AccountPrivate, AccountPublic}?
-        pub fun removeChildByAddress(addr: Address)
-        pub fun removeChild(id: UInt64)
-        pub fun removeOwnedByAddress(addr: Address)
-        pub fun removeOwned(id: UInt64)
+        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
+        pub fun removeChild(addr: Address)
+        pub fun removeOwned(addr: Address)
         // TODO: Owned account methods
     }
 
     // Functions anyone can call on a manager to get information about an account such as
     // What child accounts it has
     pub resource interface ManagerPublic {
-        pub fun borrowAccountPublic(id: UInt64): &{AccountPublic}?
+        pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
         // pub fun getChildAddresses(): [Address]
     }
 
@@ -106,56 +104,39 @@ pub contract HybridCustody {
     TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
     pub resource Manager: ManagerPrivate, ManagerPublic {
-        pub let accounts: {UInt64: Capability<&{AccountPrivate, AccountPublic}>}
-        pub let addressToAccountID: {Address: UInt64}
-
-        pub let ownedAccounts: {UInt64: Capability<&{Account, ChildAccountPrivate}>}
-        pub let addressToOwnedAccountID: {Address: UInt64}
+        pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic}>}
+        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPrivate}>}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
             // Is there a scenario where you are shared the same address multiple times? Seems like overkill.
             let acct = cap.borrow()
                 ?? panic("invalid account capability")
 
-            self.accounts[acct.uuid] = cap
-            self.addressToAccountID[cap.address] =  acct.uuid
+            self.accounts[cap.address] = cap
             
             // TODO: emit account registered event
 
             acct.redeemedCallback(self.owner!.address)
         }
 
-        pub fun removeChildByAddress(addr: Address) {
-            let id = self.addressToAccountID.remove(key: addr)
-                ?? panic("no child account found with the given address")
-            self.removeChild(id: id)
-        }
-
-        pub fun removeChild(id: UInt64) {
-            let cap = self.accounts.remove(key: id) ?? panic("no account found with the given id")
-            self.addressToAccountID.remove(key: cap.address)
-
-            // TODO: emit event
+        pub fun removeChild(addr: Address) {
+            let cap = self.accounts.remove(key: addr)
+            // TODO: emit event if cap is not nil
         }
 
         pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPrivate}>) {
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
 
-            self.ownedAccounts[acct.uuid] = cap
-            self.addressToOwnedAccountID[cap.address] = acct.uuid
+            self.ownedAccounts[cap.address] = cap
         }
 
-        pub fun getIDs(): [UInt64] {
+        pub fun getAddresses(): [Address] {
             return self.accounts.keys
         }
 
-        pub fun getIDForAddress(_ addr: Address): UInt64? {
-            return self.addressToAccountID[addr]
-        }
-
-        pub fun borrowAccount(id: UInt64): &{AccountPrivate, AccountPublic}? {
-            let cap = self.accounts[id]
+        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}? {
+            let cap = self.accounts[addr]
             if cap == nil {
                 return nil
             }
@@ -163,8 +144,8 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowAccountPublic(id: UInt64): &{AccountPublic}? {
-            let cap = self.accounts[id]
+        pub fun borrowAccountPublic(addr: Address): &{AccountPublic}? {
+            let cap = self.accounts[addr]
             if cap == nil {
                 return nil
             }
@@ -172,48 +153,29 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowWithAddress(_ addr: Address): &{AccountPrivate, AccountPublic}? {
-            let id = self.addressToAccountID[addr]
-            if id == nil {
-                return nil
+        pub fun removeOwned(addr: Address) {
+            if let acct = self.ownedAccounts.remove(key: addr) {
+                if acct.check() {
+                    acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
+                }
+
+                // TODO: emit event
             }
 
-            return self.borrowAccount(id: id!)
+            // Don't emit an event if nothing was removed
         }
 
-        pub fun removeOwnedByAddress(addr: Address) {
-            let id = self.addressToOwnedAccountID[addr]
-                ?? panic("no owned account with given address")
-            self.removeOwned(id: id)
-        }
-
-        pub fun removeOwned(id: UInt64) {
-            let acct = self.ownedAccounts.remove(key: id)
+        pub fun giveOwnerShip(addr: Address, to: Address) {
+            let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
-            acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
-
-            // TODO: emit event?
-        }
-
-        pub fun giveOwnerShip(id: UInt64, to: Address) {
-            let acct = self.ownedAccounts.remove(key: id)
-                ?? panic("account not found")
-            self.addressToOwnedAccountID.remove(key: acct.address)
+            self.ownedAccounts.remove(key: acct.address)
 
             acct.borrow()!.giveOwnership(to: to)
         }
 
-        pub fun giveOwnershipByAddress(of: Address, to: Address) {
-            let id = self.addressToOwnedAccountID[of] ?? panic("account was not found")
-            self.giveOwnerShip(id: id, to: to)
-        }
-
         init() {
             self.accounts = {}
-            self.addressToAccountID = {}
-
             self.ownedAccounts = {}
-            self.addressToOwnedAccountID = {}
         }
     }
 
