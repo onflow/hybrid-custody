@@ -94,10 +94,22 @@ pub contract HybridCustody {
         // USE WITH EXTREME CAUTION.
         pub fun seal()
 
-        // TODO:
-        // 1. function to replace the capability factory of the child account
-        // 2. function to replace the capability filter of the child account
-        // 3. functions to add or remove capabilities from the CapabilityProxy resource
+        // setCapabilityFactoryForParent
+        // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the account
+        // to start managing their own factory of capabilities to be able to retrieve
+        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+
+        // setCapabilityFilterForParent
+        // Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the account
+        // to start managing their own filter for retrieving Capabilities on Private Paths
+        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
+
+        // addCapabilityToProxy
+        // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
+        // permitting anyone to borrow it.
+        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
+
+        pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
     }
 
     // Public methods exposed on a proxy account resource. ChildAccountPublic will share
@@ -130,8 +142,9 @@ pub contract HybridCustody {
     // What child accounts it has
     pub resource interface ManagerPublic {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
+        pub fun getChildAddresses(): [Address]
+        pub fun getOwnedAddresses(): [Address]
         // TODO: Owned account public methods
-        // pub fun getChildAddresses(): [Address]
         // TODO: What questions do we expect we should be able to ask the owner of an account? For instance
         // Should I be able to borrow typed public capabilities of an account owned by the manager?
     }
@@ -229,6 +242,14 @@ pub contract HybridCustody {
             acct.borrow()!.giveOwnership(to: to)
         }
 
+        pub fun getChildAddresses(): [Address] {
+            return self.accounts.keys
+        }
+
+        pub fun getOwnedAddresses(): [Address] {
+            return self.ownedAccounts.keys
+        }
+
         init() {
             self.accounts = {}
             self.ownedAccounts = {}
@@ -251,12 +272,12 @@ pub contract HybridCustody {
         // casted to their appropriate types once obtained, but only if the child account has configured their 
         // factory to allow it. For instance, a ProxyAccout might choose to expose NonFungibleToken.Provider, but not
         // FungibleToken.Provider
-        pub let factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
+        pub var factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
 
         // The CapabilityFilter is a restriction put at the front of obtaining any non-public Capability.
         // Some wallets might want to give access to NonFungibleToken.Provider, but only to **some** of the collections it
         // manages, not all of them.
-        pub let filter: Capability<&{CapabilityFilter.Filter}>
+        pub var filter: Capability<&{CapabilityFilter.Filter}>
 
         // The CapabilityProxy is a way to share one-off capabilities by the child account. These capabilities can be public OR private
         // and are separate from the factory which returns a capability at a given path as a certain type. When using the CapabilityProxy,
@@ -270,6 +291,14 @@ pub contract HybridCustody {
 
         access(contract) fun redeemedCallback(_ addr: Address) {
             self.childCap.borrow()!.setRedeemed(addr)
+        }
+
+        pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+            self.factory = cap
+        }
+
+        pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>) {
+            self.filter = cap
         }
 
         // The main function to get ways to access an account from a child to a parent. When a PrivatePath type is used, 
@@ -523,6 +552,38 @@ pub contract HybridCustody {
             }
             
             self.relinquishedOwnership = true
+        }
+
+        access(contract) fun borrowProxyAccount(parent: Address): &ProxyAccount? {
+            let identifier = HybridCustody.getProxyAccountIdentifier(parent)
+            return self.borrowAccount().borrow<&ProxyAccount>(from: StoragePath(identifier: identifier)!)
+        }
+
+        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            p.setCapabilityFactory(cap)
+        }
+
+        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            p.setCapabilityFilter(cap)
+        }
+
+        pub fun borrowCapabilityProxyForParent(parent: Address): &CapabilityProxy.Proxy? {
+            let identifier = HybridCustody.getCapabilityProxyIdentifier(parent)
+            return self.borrowAccount().borrow<&CapabilityProxy.Proxy>(from: StoragePath(identifier: identifier)!)
+        }
+
+        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool) {
+            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            let proxy = self.borrowCapabilityProxyForParent(parent: parent) ?? panic("could not borrow capability proxy resource for parent address")
+            proxy.addCapability(cap: cap, isPublic: isPublic)
+        }
+
+        pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability) {
+            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            let proxy = self.borrowCapabilityProxyForParent(parent: parent) ?? panic("could not borrow capability proxy resource for parent address")
+            proxy.removeCapability(cap: cap)
         }
 
         init(
