@@ -85,11 +85,10 @@ pub contract CapabilityProxy {
         // ------- End Getter methods
 
         pub fun addCapability(cap: Capability, isPublic: Bool) {
-            assert(cap.borrow<&AnyResource>() != nil, message: "capability could not be borrowed")
             if isPublic {
-                self.publicCapabilities[cap.getType()] = cap
+                self.publicCapabilities.insert(key: cap.getType(), cap)
             } else {
-                self.privateCapabilities[cap.getType()] = cap
+                self.privateCapabilities.insert(key: cap.getType(), cap)
             }
         }
 
