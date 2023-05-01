@@ -44,7 +44,7 @@ pub contract HybridCustody {
     pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address) // TODO: Decide on Type or identifier String
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
-    pub event OwnershipGranted(id: UInt64, child: Address, parent: Address)
+    pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
     pub event SealedAccount(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
@@ -711,12 +711,12 @@ pub contract HybridCustody {
         }
 
         let childAcct <- create ChildAccount(acct)
-        emit CreatedChildAccount(id: childAcct.id, child: acct.borrow()!.address)
+        emit CreatedChildAccount(id: childAcct.uuid, child: acct.borrow()!.address)
         return <- childAcct
     }
 
     pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
-        let manager <- create Manager()
+        let manager <- create Manager(filter: filter)
         emit CreatedManager(id: manager.uuid)
         return <- manager
     }
