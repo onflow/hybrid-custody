@@ -15,8 +15,9 @@ pub contract CapabilityProxy {
     pub let PrivatePath: PrivatePath
     pub let PublicPath: PublicPath
     
+    /* Events */
+    //
     pub event ProxyCreated(id: UInt64)
-    
     pub event CapabilityAdded(id: UInt64, type: Type, isPublic: Bool) // TODO: Decide on Type or identifier String
     pub event CapabilityRemoved(id: UInt64, type: Type) // TODO: Decide on Type or identifier String
 

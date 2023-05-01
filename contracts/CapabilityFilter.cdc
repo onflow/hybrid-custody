@@ -9,6 +9,11 @@ pub contract CapabilityFilter {
     pub let PublicPath: PublicPath
     pub let PrivatePath: PrivatePath
 
+    /* Events */
+    //
+    pub event TypeAdded(id: UInt64, filterType: Type, newType: Type) // TODO: Decide on Type or identifier String
+    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: Type) // TODO: Decide on Type or identifier String
+
     pub resource interface Filter {
         pub fun allowed(cap: Capability): Bool
         pub fun getDetails(): AnyStruct
@@ -24,10 +29,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.deniedTypes.insert(key: type, true)
+            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type)
         }
 
         pub fun removeType(_ type: Type) {
             self.deniedTypes.remove(key: type)
+            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type)
         }
 
         pub fun allowed(cap: Capability): Bool {
@@ -60,10 +67,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.allowedTypes.insert(key: type, true)
+            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type)
         }
 
         pub fun removeType(_ type: Type) {
             self.allowedTypes.remove(key: type)
+            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type)
         }
 
         pub fun allowed(cap: Capability): Bool {
