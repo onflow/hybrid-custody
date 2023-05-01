@@ -41,7 +41,7 @@ pub contract HybridCustody {
     pub event AddedOwnedAccount(id: UInt64, child: Address, parent: Address)
     pub event RemovedProxyAccount(id: UInt64?, child: Address, parent: Address)
     pub event RemovedOwnedAccount(id: UInt64?, child: Address, parent: Address)
-    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, child: Address, pendingParent: Address)
+    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address) // TODO: Decide on Type or identifier String
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
     pub event OwnershipGranted(id: UInt64, child: Address, parent: Address)
@@ -501,7 +501,7 @@ pub contract HybridCustody {
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
-            emit ProxyAccountPublished(childAcctID: self.uuid, proxyAcctID: proxyAcct.uuid, capProxyID: proxy.borrow()!.uuid, factoryID: factory.borrow()!.uuid, filterID: filter.borrow()!.uuid, child: self.acct.address, pendingParent: parentAddress)
+            emit ProxyAccountPublished(childAcctID: self.uuid, proxyAcctID: proxyAcct.uuid, capProxyID: proxy.borrow()!.uuid, factoryID: factory.borrow()!.uuid, filterID: filter.borrow()!.uuid, filterType: filter.getType(), child: self.acct.address, pendingParent: parentAddress)
 
             let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
             let s = StoragePath(identifier: identifier)!
