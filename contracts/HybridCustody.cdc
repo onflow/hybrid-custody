@@ -14,6 +14,9 @@ you will find three main resources being used:
 3. Manager - A resource setup by the parent which manages all child accounts shared with it. The Manager resource
     also maintains a set of accounts that it "owns", meaning it has a capability to the full ChildAccount resource and
     would then also be able to manage the child account's links as it sees fit.
+
+Authors (please add to this list if you contribute!):
+- Austin Kline - https://twitter.com/austin_flowty
 */
 pub contract HybridCustody {
 
@@ -121,10 +124,17 @@ pub contract HybridCustody {
 
     // Methods only accessible to the designated parent of a ProxyAccount
     pub resource interface AccountPrivate {
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?{
+            post {
+                result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)): "Capability is not allowed by this account's Parent"
+            }
+        }
+
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
 
         access(contract) fun redeemedCallback(_ addr: Address)
+        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -136,6 +146,7 @@ pub contract HybridCustody {
 
         // TODO: Owned account methods
         pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
+        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
     }
 
     // Functions anyone can call on a manager to get information about an account such as
@@ -161,6 +172,10 @@ pub contract HybridCustody {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic}>}
         pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>}
 
+        // An optional filter to gate what capabilities are permitted to be returned from a proxy account
+        // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
+        pub let filter: Capability<&{CapabilityFilter.Filter}>?
+
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
             pre {
                 self.accounts[cap.address] == nil: "There is already a child account with this address"
@@ -174,6 +189,14 @@ pub contract HybridCustody {
             // TODO: emit account registered event
 
             acct.redeemedCallback(self.owner!.address)
+            acct.setManagerCapabilityFilter(self.filter)
+        }
+
+        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+            let acct = self.borrowAccount(addr: childAddress) 
+                ?? panic("child account not found")
+
+            acct.setManagerCapabilityFilter(cap)
         }
 
         pub fun removeChild(addr: Address) {
@@ -250,9 +273,10 @@ pub contract HybridCustody {
             return self.ownedAccounts.keys
         }
 
-        init() {
+        init(filter: Capability<&{CapabilityFilter.Filter}>?) {
             self.accounts = {}
             self.ownedAccounts = {}
+            self.filter = filter
         }
     }
 
@@ -285,12 +309,20 @@ pub contract HybridCustody {
         // a Capability to their Full TopShot collection, but only to the path that the collection exists in.
         pub let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
 
+        // managerCapabilityFilter is a component optionally given to a proxy account when a manager redeems it. If this filter
+        // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
+        access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
+
         pub fun getAddress(): Address {
             return self.childCap.address
         }
 
         access(contract) fun redeemedCallback(_ addr: Address) {
             self.childCap.borrow()!.setRedeemed(addr)
+        }
+
+        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
+            self.managerCapabilityFilter = managerCapabilityFilter
         }
 
         pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
@@ -301,7 +333,7 @@ pub contract HybridCustody {
             self.filter = cap
         }
 
-        // The main function to get ways to access an account from a child to a parent. When a PrivatePath type is used, 
+        // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
         // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to 
         // ensure that borrowing is permitted
         pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
@@ -327,6 +359,10 @@ pub contract HybridCustody {
             return self.getCapability(path: path, type: type)
         }
 
+        pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}? {
+            return self.managerCapabilityFilter != nil ? self.managerCapabilityFilter!.borrow() : nil
+        }
+
         init(
             _ childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
@@ -337,6 +373,7 @@ pub contract HybridCustody {
             self.factory = factory
             self.filter = filter
             self.proxy = proxy
+            self.managerCapabilityFilter = nil // this will get set when a parent account redeems
         }
 
         access(contract) fun setRedeemed(_ addr: Address) {
@@ -621,8 +658,8 @@ pub contract HybridCustody {
         return <- create ChildAccount(acct)
     }
 
-    pub fun createManager(): @Manager {
-        return <- create Manager()
+    pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
+        return <- create Manager(filter: filter)
     }
 
     init() {

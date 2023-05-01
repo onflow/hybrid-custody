@@ -7,10 +7,12 @@ pub let app = "app"
 pub let child = "child"
 pub let nftFactory = "nftFactory"
 pub let exampleNFT = "ExampleNFT"
+pub let capabilityFilter = "CapabilityFilter"
 
 pub let FilterKindAll = "all"
 pub let FilterKindAllowList = "allowlist"
 pub let FilterKindDenyList = "denylist"
+
 
 // --------------- Test cases --------------- 
 
@@ -31,41 +33,6 @@ pub fun testSetupChildAccount() {
     let tmp = blockchain.createAccount()
     setupChildAccount(tmp, FilterKindAll)
 }
-
-// pub fun testGetPublicCapabilityFromChildAccount() {
-//     let tmp = blockchain.createAccount()    
-//     setupChildAccount(tmp, FilterKindAll)
-    
-//     scriptExecutor("hybrid-custody/get_public_capability.cdc", [tmp.address])
-// }
-
-// pub fun testGetProviderCapabilityFromChildAccount() {
-//     let tmp = blockchain.createAccount()    
-//     setupChildAccount(tmp, FilterKindAll)
-    
-//     scriptExecutor("hybrid-custody/get_provider_capability.cdc", [tmp.address])
-// }
-
-// pub fun testGetProviderCapabilityFromChildAccount_DenylistFilter() {
-//     let tmp = blockchain.createAccount()    
-//     setupChildAccount(tmp, FilterKindDenyList)
-
-
-//     let identifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
-//     addTypeToFilter(getTestAccount(FilterKindDenyList), FilterKindDenyList, identifier)
-
-//     expectScriptFailure("hybrid-custody/get_provider_capability.cdc", [tmp.address])
-// }
-
-// pub fun testGetProviderCapabilityFromChildAccount_AllowlistFilter() {
-//     let tmp = blockchain.createAccount()    
-//     setupChildAccount(tmp, FilterKindAllowList)
-
-//     let identifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
-//     addTypeToFilter(getTestAccount(FilterKindAllowList), FilterKindAllowList, identifier)
-
-//     scriptExecutor("hybrid-custody/get_provider_capability.cdc", [tmp.address])
-// }
 
 pub fun testPublishAccount() {
     let tmp = blockchain.createAccount()
@@ -93,7 +60,7 @@ pub fun testRedeemAccount() {
     txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
 
     setupAccountManager(parent)
-    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
 
     scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
 }
@@ -143,11 +110,11 @@ pub fun testCheckParentRedeemedStatus() {
     txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
     assert(isParent(child: child, parent: parent), message: "parent is already pending")
 
-    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
     assert(checkIsRedeemed(child: child, parent: parent), message: "parents was redeemed but is not marked properly")
 }
 
-pub fun testseal() {
+pub fun testSeal() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -180,8 +147,53 @@ pub fun testTransferOwnership() {
     txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
 
-    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address], nil, nil)
+    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+}
+
+pub fun testGetCapability_ManagerFilterAllowed() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindAllowList)
+    setupFilter(filter, FilterKindAllowList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+
+    addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+}
+
+pub fun testGetCapability_ManagerFilterNotAllowed() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindDenyList)
+    setupFilter(filter, FilterKindDenyList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
 }
 
 // --------------- End Test Cases --------------- 
@@ -199,11 +211,19 @@ pub fun setupChildAndParent_FilterKindAll(child: Test.Account, parent: Test.Acco
 
     txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
 
-    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address], nil, nil)
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
 }
 
 pub fun setupAccountManager(_ acct: Test.Account) {
-    txExecutor("hybrid-custody/setup_manager.cdc", [acct], [], nil, nil)
+    txExecutor("hybrid-custody/setup_manager.cdc", [acct], [nil, nil], nil, nil)
+}
+
+pub fun setAccountManagerWithFilter(_ acct: Test.Account, _ filterAccount: Test.Account) {
+    txExecutor("hybrid-custody/setup_manager.cdc", [acct], [nil, nil], nil, nil)
+}
+
+pub fun setManagerFilterOnChild(child: Test.Account, parent: Test.Account, filterAddress: Address) {
+    txExecutor("hybrid-custody/set_manager_filter_cap.cdc", [parent], [filterAddress, child.address], nil, nil)
 }
 
 pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
@@ -303,6 +323,12 @@ pub fun buildTypeIdentifier(_ acct: Test.Account, _ contractName: String, _ suff
     return "A.".concat(addrString.slice(from: 2, upTo: addrString.length)).concat(".").concat(contractName).concat(".").concat(suffix)
 }
 
+pub fun getCapabilityFilterPath(): String {
+    let filterAcct =  getTestAccount(capabilityFilter)
+
+    return "CapabilityFilter".concat(filterAcct.address.toString())
+}
+
 // ---------------- END General-purpose helper functions
 
 pub fun getTestAccount(_ name: String): Test.Account {
@@ -329,11 +355,12 @@ pub fun scriptExecutor(_ scriptName: String, _ arguments: [AnyStruct]): AnyStruc
     return scriptResult.returnValue
 }
 
-pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]) {
+pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {
     let scriptCode = loadCode(scriptName, "scripts")
     let scriptResult = blockchain.executeScript(scriptCode, arguments)
 
     assert(scriptResult.error != nil, message: "script error was expected but there is no error message")
+    return scriptResult.error!.message
 }
 
 pub fun txExecutor(_ filePath: String, _ signers: [Test.Account], _ arguments: [AnyStruct], _ expectedError: String?, _ expectedErrorType: ErrorType?): Bool {
@@ -511,3 +538,39 @@ pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
 
 // END SECTION: Helper functions
  
+
+ // Copied functions from flow-utils so we can assert on error conditions
+ // https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/StringUtils.cdc
+pub fun contains(_ s: String, _ substr: String): Bool {
+    if let index =  index(s, substr, 0) {
+        return true
+    }
+    return false
+}
+
+ // https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/StringUtils.cdc
+pub fun index(_ s : String, _ substr : String, _ startIndex: Int): Int?{
+    for i in range(startIndex,s.length-substr.length+1){
+        if s[i]==substr[0] && s.slice(from:i, upTo:i+substr.length) == substr{
+            return i
+        }
+    }
+    return nil
+}
+
+// https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/ArrayUtils.cdc
+pub fun rangeFunc(_ start: Int, _ end: Int, _ f : ((Int):Void) ) {
+    var current = start
+    while current < end{
+        f(current)
+        current = current + 1
+    }
+}
+
+pub fun range(_ start: Int, _ end: Int): [Int]{
+    var res:[Int] = []
+    rangeFunc(start, end, fun (i:Int){
+        res.append(i)
+    })
+    return res
+}
