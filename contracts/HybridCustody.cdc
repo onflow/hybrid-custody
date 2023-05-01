@@ -15,8 +15,10 @@ you will find three main resources being used:
     also maintains a set of accounts that it "owns", meaning it has a capability to the full ChildAccount resource and
     would then also be able to manage the child account's links as it sees fit.
 
-Authors (please add to this list if you contribute!):
+Contributors (please add to this list if you contribute!):
 - Austin Kline - https://twitter.com/austin_flowty
+- Deniz Edincik- https://twitter.com/bluesign
+- Giovanni Sanchez - https://twitter.com/gio_incognito
 */
 pub contract HybridCustody {
 
@@ -119,12 +121,13 @@ pub contract HybridCustody {
     // some methods here, but isn't necessarily the same
     pub resource interface AccountPublic {
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        pub fun getPublicCapFromProxy(type: Type): Capability?
         pub fun getAddress(): Address
     }
 
     // Methods only accessible to the designated parent of a ProxyAccount
     pub resource interface AccountPrivate {
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability?{
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
             post {
                 result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)): "Capability is not allowed by this account's Parent"
             }
@@ -132,6 +135,13 @@ pub contract HybridCustody {
 
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
+        pub fun getPrivateCapFromProxy(type: Type): Capability? {
+            post {
+                result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)): "Capability is not allowed by this account's Parent"
+            }
+        }
+
+        pub fun getPublicCapFromProxy(type: Type): Capability?
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
@@ -313,6 +323,8 @@ pub contract HybridCustody {
         // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
         access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
 
+        pub let parent: Address
+
         pub fun getAddress(): Address {
             return self.childCap.address
         }
@@ -355,6 +367,21 @@ pub contract HybridCustody {
             return cap
         }
 
+        pub fun getPrivateCapFromProxy(type: Type): Capability? {
+            if let p = self.proxy.borrow() {
+                return p.getPrivateCapability(type)
+            }
+
+            return nil
+        }
+
+        pub fun getPublicCapFromProxy(type: Type): Capability? {
+            if let p = self.proxy.borrow() {
+                return p.getPublicCapability(type)
+            }
+            return nil
+        }
+
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
             return self.getCapability(path: path, type: type)
         }
@@ -363,24 +390,31 @@ pub contract HybridCustody {
             return self.managerCapabilityFilter != nil ? self.managerCapabilityFilter!.borrow() : nil
         }
 
+        access(contract) fun setRedeemed(_ addr: Address) {
+            let acct = self.childCap.borrow()!.borrowAccount()
+            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
+                m.setRedeemed(addr)
+            }
+        }
+
+        pub fun borrowCapabilityProxy(): &CapabilityProxy.Proxy? {
+            let path = HybridCustody.getCapabilityProxyIdentifier(self.parent)
+            return self.childCap.borrow()!.borrowAccount().borrow<&CapabilityProxy.Proxy>(from: StoragePath(identifier: path)!)
+        }
+
         init(
             _ childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>,
-            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
+            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>,
+            _ parent: Address
         ) {
             self.childCap = childCap
             self.factory = factory
             self.filter = filter
             self.proxy = proxy
             self.managerCapabilityFilter = nil // this will get set when a parent account redeems
-        }
-
-        access(contract) fun setRedeemed(_ addr: Address) {
-            let acct = self.childCap.borrow()!.borrowAccount()
-            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
-                m.setRedeemed(addr)
-            }
+            self.parent = parent
         }
     }
 
@@ -448,7 +482,7 @@ pub contract HybridCustody {
             assert(proxy.check(), message: "failed to setup capability proxy for parent address")
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
-            let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy)
+            let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
             let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
 
             let s = StoragePath(identifier: identifier)!
@@ -591,7 +625,7 @@ pub contract HybridCustody {
             self.relinquishedOwnership = true
         }
 
-        access(contract) fun borrowProxyAccount(parent: Address): &ProxyAccount? {
+        pub fun borrowProxyAccount(parent: Address): &ProxyAccount? {
             let identifier = HybridCustody.getProxyAccountIdentifier(parent)
             return self.borrowAccount().borrow<&ProxyAccount>(from: StoragePath(identifier: identifier)!)
         }
@@ -641,7 +675,7 @@ pub contract HybridCustody {
     }
 
     pub fun getCapabilityProxyIdentifier(_ addr: Address): String {
-        return "CapabilityProxy".concat(addr.toString())
+        return "ChildCapabilityProxy".concat(addr.toString())
     }
 
     pub fun getOwnerIdentifier(_ addr: Address): String {

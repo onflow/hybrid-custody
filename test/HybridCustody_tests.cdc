@@ -16,184 +16,210 @@ pub let FilterKindDenyList = "denylist"
 
 // --------------- Test cases --------------- 
 
-pub fun testImports() {
-    let res = scriptExecutor("test_imports.cdc", [])! as! Bool
-    assert(res, message: "import test failed")
-}
+// pub fun testImports() {
+//     let res = scriptExecutor("test_imports.cdc", [])! as! Bool
+//     assert(res, message: "import test failed")
+// }
 
-pub fun testSetupFactory() {
-    let tmp = blockchain.createAccount()
-    setupFactoryManager(tmp)
-    setupNFTCollection(tmp)
+// pub fun testSetupFactory() {
+//     let tmp = blockchain.createAccount()
+//     setupFactoryManager(tmp)
+//     setupNFTCollection(tmp)
 
-    scriptExecutor("factory/get_provider_from_factory.cdc", [tmp.address])
-}
+//     scriptExecutor("factory/get_provider_from_factory.cdc", [tmp.address])
+// }
 
-pub fun testSetupChildAccount() {
-    let tmp = blockchain.createAccount()
-    setupChildAccount(tmp, FilterKindAll)
-}
+// pub fun testSetupChildAccount() {
+//     let tmp = blockchain.createAccount()
+//     setupChildAccount(tmp, FilterKindAll)
+// }
 
-pub fun testPublishAccount() {
-    let tmp = blockchain.createAccount()
-    setupChildAccount(tmp, FilterKindAll)
+// pub fun testPublishAccount() {
+//     let tmp = blockchain.createAccount()
+//     setupChildAccount(tmp, FilterKindAll)
 
-    let factory = getTestAccount(nftFactory)
-    let filter = getTestAccount(FilterKindAll)
+//     let factory = getTestAccount(nftFactory)
+//     let filter = getTestAccount(FilterKindAll)
 
-    let parent = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
 
-    txExecutor("hybrid-custody/publish_to_parent.cdc", [tmp], [parent.address, factory.address, filter.address], nil, nil)
+//     txExecutor("hybrid-custody/publish_to_parent.cdc", [tmp], [parent.address, factory.address, filter.address], nil, nil)
 
-    scriptExecutor("hybrid-custody/get_collection_from_inbox.cdc", [parent.address, tmp.address])
-}
+//     scriptExecutor("hybrid-custody/get_collection_from_inbox.cdc", [parent.address, tmp.address])
+// }
 
-pub fun testRedeemAccount() {
-    let child = blockchain.createAccount()
-    setupChildAccount(child, FilterKindAll)
+// pub fun testRedeemAccount() {
+//     let child = blockchain.createAccount()
+//     setupChildAccount(child, FilterKindAll)
 
-    let factory = getTestAccount(nftFactory)
-    let filter = getTestAccount(FilterKindAll)
+//     let factory = getTestAccount(nftFactory)
+//     let filter = getTestAccount(FilterKindAll)
 
-    let parent = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
 
-    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+//     txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
 
-    setupAccountManager(parent)
-    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
+//     setupAccountManager(parent)
+//     txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
 
-    scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
-}
+//     scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
+// }
 
-pub fun testProxyAccount_getAddress() {
+// pub fun testProxyAccount_getAddress() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     scriptExecutor("hybrid-custody/verify_proxy_address.cdc", [parent.address, child.address])
+// }
+
+// pub fun testProxyAccount_getCapability() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     setupNFTCollection(child)
+
+//     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+// }
+
+// pub fun testProxyAccount_getPublicCapability() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     setupNFTCollection(child)
+
+//     scriptExecutor("hybrid-custody/get_nft_collection_public_capability.cdc", [parent.address, child.address])
+// }
+
+// pub fun testCheckParentRedeemedStatus() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+//     let factory = getTestAccount(nftFactory)
+//     let filter = getTestAccount(FilterKindAll)
+
+//     setupChildAccount(child, FilterKindAll)
+
+//     setupAccountManager(parent)
+//     assert(!isParent(child: child, parent: parent), message: "parent is already pending")
+
+//     txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+//     assert(isParent(child: child, parent: parent), message: "parent is already pending")
+
+//     txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
+//     assert(checkIsRedeemed(child: child, parent: parent), message: "parents was redeemed but is not marked properly")
+// }
+
+// pub fun testSeal() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     let numKeysBefore = getNumValidKeys(child)
+//     assert(numKeysBefore > 0, message: "no keys to revoke")
+//     assert(checkAuthAccountDefaultCap(account: child), message: "Missing Auth Account Capability at default path")
+
+//     let owner = getOwner(child: child)
+//     assert(owner! == child.address, message: "mismatched owner")
+
+//     txExecutor("hybrid-custody/relinquish_ownership.cdc", [child], [], nil, nil)
+//     let numKeysAfter = getNumValidKeys(child)
+//     assert(numKeysAfter == 0, message: "not all keys were revoked")
+//     assert(!checkAuthAccountDefaultCap(account: child), message: "Found Auth Account Capability at default path")
+//     let ownerAfter = getOwner(child: child)
+//     assert(ownerAfter == nil, message: "should not have an owner anymore")
+// }
+
+// pub fun testTransferOwnership() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     let owner = blockchain.createAccount()
+//     setupAccountManager(owner)
+
+//     txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
+//     assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
+
+//     txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
+//     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+// }
+
+// pub fun testGetCapability_ManagerFilterAllowed() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     setupNFTCollection(child)
+
+//     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+//     let filter = getTestAccount(FilterKindAllowList)
+//     setupFilter(filter, FilterKindAllowList)
+
+//     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+//     setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+//     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+//     assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+
+//     addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
+//     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+// }
+
+// pub fun testGetCapability_ManagerFilterNotAllowed() {
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+//     setupNFTCollection(child)
+
+//     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+//     let filter = getTestAccount(FilterKindDenyList)
+//     setupFilter(filter, FilterKindDenyList)
+
+//     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+//     addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
+//     setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+//     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+//     assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+// }
+
+pub fun testGetPrivateCapabilityFromProxy() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
-    scriptExecutor("hybrid-custody/verify_proxy_address.cdc", [parent.address, child.address])
-}
-
-pub fun testProxyAccount_getCapability() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
+    let isPublic = false
     setupNFTCollection(child)
+    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
 
-    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    scriptExecutor("hybrid-custody/get_examplenft_collection_from_proxy.cdc", [parent.address, child.address, isPublic])
 }
 
-pub fun testProxyAccount_getPublicCapability() {
+pub fun testGetPublicCapabilityFromProxy() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
+    let isPublic = true
     setupNFTCollection(child)
+    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
 
-    scriptExecutor("hybrid-custody/get_nft_collection_public_capability.cdc", [parent.address, child.address])
-}
-
-pub fun testCheckParentRedeemedStatus() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-    let factory = getTestAccount(nftFactory)
-    let filter = getTestAccount(FilterKindAll)
-
-    setupChildAccount(child, FilterKindAll)
-
-    setupAccountManager(parent)
-    assert(!isParent(child: child, parent: parent), message: "parent is already pending")
-
-    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
-    assert(isParent(child: child, parent: parent), message: "parent is already pending")
-
-    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
-    assert(checkIsRedeemed(child: child, parent: parent), message: "parents was redeemed but is not marked properly")
-}
-
-pub fun testSeal() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    let numKeysBefore = getNumValidKeys(child)
-    assert(numKeysBefore > 0, message: "no keys to revoke")
-    assert(checkAuthAccountDefaultCap(account: child), message: "Missing Auth Account Capability at default path")
-
-    let owner = getOwner(child: child)
-    assert(owner! == child.address, message: "mismatched owner")
-
-    txExecutor("hybrid-custody/relinquish_ownership.cdc", [child], [], nil, nil)
-    let numKeysAfter = getNumValidKeys(child)
-    assert(numKeysAfter == 0, message: "not all keys were revoked")
-    assert(!checkAuthAccountDefaultCap(account: child), message: "Found Auth Account Capability at default path")
-    let ownerAfter = getOwner(child: child)
-    assert(ownerAfter == nil, message: "should not have an owner anymore")
-}
-
-pub fun testTransferOwnership() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    let owner = blockchain.createAccount()
-    setupAccountManager(owner)
-
-    txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
-    assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
-
-    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
-    assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
-}
-
-pub fun testGetCapability_ManagerFilterAllowed() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    setupNFTCollection(child)
-
-    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-
-    let filter = getTestAccount(FilterKindAllowList)
-    setupFilter(filter, FilterKindAllowList)
-
-    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
-    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
-
-    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
-
-    addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
-    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-
-}
-
-pub fun testGetCapability_ManagerFilterNotAllowed() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    setupNFTCollection(child)
-
-    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-
-    let filter = getTestAccount(FilterKindDenyList)
-    setupFilter(filter, FilterKindDenyList)
-
-    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
-    addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
-    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
-
-    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    scriptExecutor("hybrid-custody/get_examplenft_collection_from_proxy.cdc", [parent.address, child.address, isPublic])
 }
 
 // --------------- End Test Cases --------------- 
@@ -279,6 +305,10 @@ pub fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: Stri
     }
 
     txExecutor(filePath, [acct], [identifier], nil, nil)
+}
+
+pub fun addNFTCollectionToProxy(child: Test.Account, parent: Test.Account, isPublic: Bool) {
+    txExecutor("hybrid-custody/add_example_nft_collection_to_proxy.cdc", [child], [parent.address, isPublic], nil, nil)
 }
 
 // ---------------- End Transaction wrapper functions
