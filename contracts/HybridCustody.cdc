@@ -37,10 +37,7 @@ pub contract HybridCustody {
     //
     pub event CreatedManager(id: UInt64)
     pub event CreatedChildAccount(id: UInt64, child: Address)
-    pub event AddedProxyAccount(id: UInt64, child: Address, parent: Address)
-    pub event AddedOwnedAccount(id: UInt64, child: Address, parent: Address)
-    pub event RemovedProxyAccount(id: UInt64?, child: Address, parent: Address)
-    pub event RemovedOwnedAccount(id: UInt64?, child: Address, parent: Address)
+    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
     pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address) // TODO: Decide on Type or identifier String
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
@@ -208,7 +205,7 @@ pub contract HybridCustody {
 
             self.accounts[cap.address] = cap
             
-            emit AddedProxyAccount(id: acct.uuid, child: cap.address, parent: self.owner!.address)
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: true, active: true)
 
             acct.redeemedCallback(self.owner!.address)
             acct.setManagerCapabilityFilter(self.filter)
@@ -225,7 +222,7 @@ pub contract HybridCustody {
             if let cap = self.accounts.remove(key: addr) {
                 // TODO: Add access(contract) methods that flow down to ChildAccount s.t. parent is removed if exists in ChildAccount.parents
                 let id: UInt64? = cap.borrow()?.uuid ?? nil
-                emit RemovedProxyAccount(id: id, child: cap.address, parent: self.owner!.address)
+                emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
             }
         }
 
@@ -238,7 +235,7 @@ pub contract HybridCustody {
                 ?? panic("cannot add invalid account")
             self.ownedAccounts[cap.address] = cap
 
-            emit AddedOwnedAccount(id: acct.uuid, child: cap.address, parent: self.owner!.address)
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
         }
 
         pub fun getAddresses(): [Address] {
@@ -277,9 +274,8 @@ pub contract HybridCustody {
                     acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
                 }
                 let id: UInt64? = acct.borrow()?.uuid ?? nil
-                emit RemovedOwnedAccount(id: id, child: acct.address, parent: self.owner!.address)
+                emit AccountUpdated(id: id, child: addr, parent: self.owner!.address, proxy: false, active: false)
             }
-
             // Don't emit an event if nothing was removed
         }
 
