@@ -11,8 +11,7 @@ pub contract CapabilityFilter {
 
     /* Events */
     //
-    pub event TypeAdded(id: UInt64, filterType: Type, newType: String)
-    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: String)
+    pub event FilterUpdated(id: UInt64, filterType: String, type: String, active: Bool)
 
     pub resource interface Filter {
         pub fun allowed(cap: Capability): Bool
@@ -29,12 +28,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.deniedTypes.insert(key: type, true)
-            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type.identifier)
+            emit FilterUpdated(id: self.uuid, filterType: self.getType().identifier, type: type.identifier, active: true)
         }
 
         pub fun removeType(_ type: Type) {
             self.deniedTypes.remove(key: type)
-            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type.identifier)
+            emit FilterUpdated(id: self.uuid, filterType: self.getType().identifier, type: type.identifier, active: false)
         }
 
         pub fun allowed(cap: Capability): Bool {
@@ -67,12 +66,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.allowedTypes.insert(key: type, true)
-            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type.identifier)
+            emit FilterUpdated(id: self.uuid, filterType: self.getType().identifier, type: type.identifier, active: true)
         }
 
         pub fun removeType(_ type: Type) {
             self.allowedTypes.remove(key: type)
-            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type.identifier)
+            emit FilterUpdated(id: self.uuid, filterType: self.getType().identifier, type: type.identifier, active: false)
         }
 
         pub fun allowed(cap: Capability): Bool {
