@@ -497,7 +497,16 @@ pub contract HybridCustody {
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
-            emit ProxyAccountPublished(childAcctID: self.uuid, proxyAcctID: proxyAcct.uuid, capProxyID: proxy.borrow()!.uuid, factoryID: factory.borrow()!.uuid, filterID: filter.borrow()!.uuid, filterType: filter.getType(), child: self.acct.address, pendingParent: parentAddress)
+            emit ProxyAccountPublished(
+                childAcctID: self.uuid,
+                proxyAcctID: proxyAcct.uuid,
+                capProxyID: proxy.borrow()!.uuid,
+                factoryID: factory.borrow()!.uuid,
+                filterID: filter.borrow()!.uuid,
+                filterType: filter.getType(),
+                child: self.acct.address,
+                pendingParent: parentAddress
+            )
 
             let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
             let s = StoragePath(identifier: identifier)!
