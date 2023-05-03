@@ -11,8 +11,8 @@ pub contract CapabilityFilter {
 
     /* Events */
     //
-    pub event TypeAdded(id: UInt64, filterType: Type, newType: Type) // TODO: Decide on Type or identifier String
-    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: Type) // TODO: Decide on Type or identifier String
+    pub event TypeAdded(id: UInt64, filterType: Type, newType: String) // TODO: Decide on Type or identifier String
+    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: String) // TODO: Decide on Type or identifier String
 
     pub resource interface Filter {
         pub fun allowed(cap: Capability): Bool
@@ -29,12 +29,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.deniedTypes.insert(key: type, true)
-            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type)
+            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type.identifier)
         }
 
         pub fun removeType(_ type: Type) {
             self.deniedTypes.remove(key: type)
-            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type)
+            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type.identifier)
         }
 
         pub fun allowed(cap: Capability): Bool {
@@ -67,12 +67,12 @@ pub contract CapabilityFilter {
 
         pub fun addType(_ type: Type) {
             self.allowedTypes.insert(key: type, true)
-            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type)
+            emit TypeAdded(id: self.uuid, filterType: self.getType(), newType: type.identifier)
         }
 
         pub fun removeType(_ type: Type) {
             self.allowedTypes.remove(key: type)
-            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type)
+            emit TypeRemoved(id: self.uuid, filterType: self.getType(), removedType: type.identifier)
         }
 
         pub fun allowed(cap: Capability): Bool {

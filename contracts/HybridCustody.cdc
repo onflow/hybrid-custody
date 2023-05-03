@@ -38,11 +38,11 @@ pub contract HybridCustody {
     pub event CreatedManager(id: UInt64)
     pub event CreatedChildAccount(id: UInt64, child: Address)
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
-    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address) // TODO: Decide on Type or identifier String
+    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: String, child: Address, pendingParent: Address)
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
     pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
-    pub event SealedAccount(id: UInt64, address: Address, parents: [Address])
+    pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
     pub resource interface Account {
@@ -503,7 +503,7 @@ pub contract HybridCustody {
                 capProxyID: proxy.borrow()!.uuid,
                 factoryID: factory.borrow()!.uuid,
                 filterID: filter.borrow()!.uuid,
-                filterType: filter.getType(),
+                filterType: filter.getType().identifier,
                 child: self.acct.address,
                 pendingParent: parentAddress
             )
@@ -646,7 +646,7 @@ pub contract HybridCustody {
                 newAcct.unlink(p)
             }
 
-            emit SealedAccount(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
+            emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
 
             self.relinquishedOwnership = true
         }
