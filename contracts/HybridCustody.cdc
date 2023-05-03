@@ -485,7 +485,7 @@ pub contract HybridCustody {
             if acct.borrow<&CapabilityProxy.Proxy>(from: capProxyStorage) == nil {
                 let proxy <- CapabilityProxy.createProxy()
                 acct.save(<-proxy, to: capProxyStorage)
-            } 
+            }
 
             let capProxyPublic = PublicPath(identifier: capProxyIdentifier)!
             let capProxyPrivate = PrivatePath(identifier: capProxyIdentifier)!
