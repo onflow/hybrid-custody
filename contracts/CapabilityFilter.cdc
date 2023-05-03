@@ -11,8 +11,8 @@ pub contract CapabilityFilter {
 
     /* Events */
     //
-    pub event TypeAdded(id: UInt64, filterType: Type, newType: String) // TODO: Decide on Type or identifier String
-    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: String) // TODO: Decide on Type or identifier String
+    pub event TypeAdded(id: UInt64, filterType: Type, newType: String)
+    pub event TypeRemoved(id: UInt64, filterType: Type, removedType: String)
 
     pub resource interface Filter {
         pub fun allowed(cap: Capability): Bool

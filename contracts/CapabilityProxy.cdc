@@ -18,8 +18,8 @@ pub contract CapabilityProxy {
     /* Events */
     //
     pub event ProxyCreated(id: UInt64)
-    pub event CapabilityAdded(id: UInt64, type: String, isPublic: Bool) // TODO: Decide on Type or identifier String
-    pub event CapabilityRemoved(id: UInt64, type: String) // TODO: Decide on Type or identifier String
+    pub event CapabilityAdded(id: UInt64, type: String, isPublic: Bool)
+    pub event CapabilityRemoved(id: UInt64, type: String)
 
     pub resource interface GetterPrivate {
         pub fun getPrivateCapability(_ type: Type): Capability? {
