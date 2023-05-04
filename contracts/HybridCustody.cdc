@@ -93,7 +93,12 @@ pub contract HybridCustody {
             parentAddress: Address,
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
-        )
+        ) {
+            pre {
+                factory.check(): "Invalid CapabilityFactory.Getter Capability provided"
+                filter.check(): "Invalid CapabilityFilter Capability provided"
+            }
+        }
 
         // giveOwnership
         // Passes ownership of this child account to the given address. Once executed, all active keys on 
@@ -111,12 +116,20 @@ pub contract HybridCustody {
         // setCapabilityFactoryForParent
         // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the account
         // to start managing their own factory of capabilities to be able to retrieve
-        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+            pre {
+                cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
+            }
+        }
 
         // setCapabilityFilterForParent
         // Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the account
         // to start managing their own filter for retrieving Capabilities on Private Paths
-        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
+        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+            pre {
+                cap.check(): "Invalid CapabilityFilter Capability provided"
+            }
+        }
 
         // addCapabilityToProxy
         // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
