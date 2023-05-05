@@ -1,3 +1,5 @@
+import "MetadataViews"
+
 import "HybridCustody"
 import "CapabilityFilter"
 
@@ -20,7 +22,7 @@ transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPa
         }
 
         let inboxName = HybridCustody.getProxyAccountIdentifier(acct.address)
-        let cap = acct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic}>(inboxName, provider: childAddress)
+        let cap = acct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAddress)
             ?? panic("proxy account cap not found")
 
         let manager = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)

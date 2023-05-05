@@ -222,6 +222,36 @@ pub fun testGetPublicCapabilityFromProxy() {
     scriptExecutor("hybrid-custody/get_examplenft_collection_from_proxy.cdc", [parent.address, child.address, isPublic])
 }
 
+pub fun testMetadata_ProxyAccount_Metadata() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let name = "my name"
+    let desc = "lorem ipsum"
+    let url = "http://example.com/image.png"
+    txExecutor("hybrid-custody/metadata/set_proxy_account_display.cdc", [parent], [child.address, name, desc, url], nil, nil)
+
+    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_proxy_display_name.cdc", [parent.address, child.address])! as! String
+    assert(name == resolvedName, message: "names do not match")
+}
+
+pub fun testMetadata_ChildAccount_Metadata() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let name = "my name"
+    let desc = "lorem ipsum"
+    let url = "http://example.com/image.png"
+    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [child], [name, desc, url], nil, nil)
+
+    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
+    assert(name == resolvedName, message: "names do not match")
+}
+
 // --------------- End Test Cases --------------- 
 
 

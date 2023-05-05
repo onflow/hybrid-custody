@@ -1,3 +1,7 @@
+// Third-party imports
+import "MetadataViews"
+
+// HC-owned imports
 import "CapabilityFactory"
 import "CapabilityProxy"
 import "CapabilityFilter"
@@ -17,7 +21,7 @@ you will find three main resources being used:
 
 Contributors (please add to this list if you contribute!):
 - Austin Kline - https://twitter.com/austin_flowty
-- Deniz Edincik- https://twitter.com/bluesign
+- Deniz Edincik - https://twitter.com/bluesign
 - Giovanni Sanchez - https://twitter.com/gio_incognito
 */
 pub contract HybridCustody {
@@ -167,12 +171,13 @@ pub contract HybridCustody {
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
+        access(contract) fun setDisplay(_ d: MetadataViews.Display)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
     // perform other actions on the child account
     pub resource interface ManagerPrivate {
-        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
+        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}?
         pub fun removeChild(addr: Address)
         pub fun removeOwned(addr: Address)
 
@@ -184,7 +189,7 @@ pub contract HybridCustody {
     // Functions anyone can call on a manager to get information about an account such as
     // What child accounts it has
     pub resource interface ManagerPublic {
-        pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
+        pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
         pub fun getChildAddresses(): [Address]
         pub fun getOwnedAddresses(): [Address]
         // TODO: Owned account public methods
@@ -201,14 +206,14 @@ pub contract HybridCustody {
     TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
     pub resource Manager: ManagerPrivate, ManagerPublic {
-        pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic}>}
+        pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
         pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>}
 
         // An optional filter to gate what capabilities are permitted to be returned from a proxy account
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
         pub let filter: Capability<&{CapabilityFilter.Filter}>?
 
-        pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
+        pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
                 self.accounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -255,7 +260,7 @@ pub contract HybridCustody {
             return self.accounts.keys
         }
 
-        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}? {
+        pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}? {
             let cap = self.accounts[addr]
             if cap == nil {
                 return nil
@@ -264,7 +269,7 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowAccountPublic(addr: Address): &{AccountPublic}? {
+        pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}? {
             let cap = self.accounts[addr]
             if cap == nil {
                 return nil
@@ -290,6 +295,13 @@ pub contract HybridCustody {
                 emit AccountUpdated(id: id, child: addr, parent: self.owner!.address, proxy: false, active: false)
             }
             // Don't emit an event if nothing was removed
+        }
+
+        pub fun setChildDisplay(child: Address, display: MetadataViews.Display) {
+            let acct = self.borrowAccount(addr: child)
+                ?? panic("child account not found")
+
+            acct.setDisplay(display)
         }
 
         pub fun giveOwnerShip(addr: Address, to: Address) {
@@ -323,7 +335,7 @@ pub contract HybridCustody {
     Because the ProxyAccount resource exists on the child account itself, whoever owns the child account will be able to manage all
     ProxyAccount resources it shares, without worrying about whether the upstream parent can do anything to prevent it.
     */
-    pub resource ProxyAccount: AccountPrivate, AccountPublic {
+    pub resource ProxyAccount: AccountPrivate, AccountPublic, MetadataViews.Resolver {
         access(self) let childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>
 
         // The CapabilityFactory Manager is a ProxyAccount's way of limiting what types can be asked for
@@ -348,6 +360,10 @@ pub contract HybridCustody {
         // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
         access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
 
+        access(self) let data: {String: AnyStruct}
+        access(self) let resources: @{String: AnyResource}
+        access(self) var display: MetadataViews.Display?
+
         pub let parent: Address
 
         pub fun getAddress(): Address {
@@ -368,6 +384,10 @@ pub contract HybridCustody {
 
         pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
+        }
+
+        access(contract) fun setDisplay(_ d: MetadataViews.Display) {
+            self.display = d
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
@@ -427,6 +447,20 @@ pub contract HybridCustody {
             return self.childCap.borrow()!.borrowAccount().borrow<&CapabilityProxy.Proxy>(from: StoragePath(identifier: path)!)
         }
 
+        pub fun getViews(): [Type] {
+            return [
+                Type<MetadataViews.Display>()
+            ]
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            switch view {
+                case Type<MetadataViews.Display>():
+                    return self.display
+            }
+            return nil
+        }
+
         init(
             _ childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
@@ -440,6 +474,14 @@ pub contract HybridCustody {
             self.proxy = proxy
             self.managerCapabilityFilter = nil // this will get set when a parent account redeems
             self.parent = parent
+
+            self.data = {}
+            self.resources <- {}
+            self.display = nil
+        }
+
+        destroy () {
+            destroy <- self.resources
         }
     }
 
@@ -452,12 +494,15 @@ pub contract HybridCustody {
     marking the account as owned by no one. Note that even if there isn't an owner, the parent accounts would still exist, allowing
     a form of Hybrid Custody which has no true owner over an account, but shared partial ownership.
     */
-    pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
+    pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
         priv var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
         pub var acctOwner: Address?
         pub var relinquishedOwnership: Bool
+
+        access(self) let data: {String: AnyStruct}
+        access(self) let resources: @{String: AnyResource}
 
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
@@ -510,17 +555,6 @@ pub contract HybridCustody {
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
-            emit ProxyAccountPublished(
-                childAcctID: self.uuid,
-                proxyAcctID: proxyAcct.uuid,
-                capProxyID: proxy.borrow()!.uuid,
-                factoryID: factory.borrow()!.uuid,
-                filterID: filter.borrow()!.uuid,
-                filterType: filter.getType(),
-                child: self.acct.address,
-                pendingParent: parentAddress
-            )
-
             let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
             let s = StoragePath(identifier: identifier)!
             let p = PrivatePath(identifier: identifier)!
@@ -528,7 +562,7 @@ pub contract HybridCustody {
             acct.save(<-proxyAcct, to: s) // TODO: Handle case where ProxyAccount is already saved, e.g. previously published for parentAddress
             acct.link<&ProxyAccount{AccountPrivate, AccountPublic}>(p, target: s)
             
-            let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic}>(p)
+            let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p)
             assert(proxyCap.check(), message: "Proxy capability check failed")
 
             acct.inbox.publish(proxyCap, name: identifier, recipient: parentAddress)
@@ -696,6 +730,27 @@ pub contract HybridCustody {
             proxy.removeCapability(cap: cap)
         }
 
+        pub fun getViews(): [Type] {
+            return [
+                Type<MetadataViews.Display>()
+            ]
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            switch view {
+                case Type<MetadataViews.Display>():
+                    if let item = self.data["display"] {
+                        return item as? MetadataViews.Display
+                    }
+                    break
+            }
+            return nil
+        }
+
+        pub fun setDisplay(_ d: MetadataViews.Display) {
+            self.data.insert(key: "display", d)
+        }
+
         init(
             _ acct: Capability<&AuthAccount>
         ) {
@@ -704,6 +759,13 @@ pub contract HybridCustody {
             self.parents = {}
             self.acctOwner = nil
             self.relinquishedOwnership = false
+
+            self.data = {}
+            self.resources <- {}
+        }
+
+        destroy () {
+            destroy <- self.resources
         }
     }
 
