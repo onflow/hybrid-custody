@@ -94,10 +94,13 @@ pub contract CapabilityProxy {
         }
 
         pub fun removeCapability(cap: Capability) {
-            let removedPublic = self.publicCapabilities.remove(key: cap.getType())
-            self.privateCapabilities.remove(key: cap.getType())
-
-            emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: removedPublic != nil, active: false)
+            if let removedPublic = self.publicCapabilities.remove(key: cap.getType()) {
+                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
+            }
+            
+            if let removedPrivate = self.privateCapabilities.remove(key: cap.getType()) {
+                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: false, active: false)
+            }
         }
 
         init() {
