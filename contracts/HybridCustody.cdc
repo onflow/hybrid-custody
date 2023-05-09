@@ -33,7 +33,16 @@ pub contract HybridCustody {
     pub let LinkedAccountPrivatePath: PrivatePath
     pub let BorrowableAccountPrivatePath: PrivatePath
 
-    // TODO: Events!
+    /* Events */
+    //
+    pub event CreatedManager(id: UInt64)
+    pub event CreatedChildAccount(id: UInt64, child: Address)
+    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
+    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address)
+    pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
+    pub event RemovedParent(id: UInt64, child: Address, parent: Address)
+    pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
+    pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
     pub resource interface Account {
@@ -84,7 +93,12 @@ pub contract HybridCustody {
             parentAddress: Address,
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
-        )
+        ) {
+            pre {
+                factory.check(): "Invalid CapabilityFactory.Getter Capability provided"
+                filter.check(): "Invalid CapabilityFilter Capability provided"
+            }
+        }
 
         // giveOwnership
         // Passes ownership of this child account to the given address. Once executed, all active keys on 
@@ -102,12 +116,20 @@ pub contract HybridCustody {
         // setCapabilityFactoryForParent
         // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the account
         // to start managing their own factory of capabilities to be able to retrieve
-        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+        pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+            pre {
+                cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
+            }
+        }
 
         // setCapabilityFilterForParent
         // Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the account
         // to start managing their own filter for retrieving Capabilities on Private Paths
-        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
+        pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+            pre {
+                cap.check(): "Invalid CapabilityFilter Capability provided"
+            }
+        }
 
         // addCapabilityToProxy
         // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
@@ -196,7 +218,7 @@ pub contract HybridCustody {
 
             self.accounts[cap.address] = cap
             
-            // TODO: emit account registered event
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: true, active: true)
 
             acct.redeemedCallback(self.owner!.address)
             acct.setManagerCapabilityFilter(self.filter)
@@ -210,8 +232,11 @@ pub contract HybridCustody {
         }
 
         pub fun removeChild(addr: Address) {
-            let cap = self.accounts.remove(key: addr)
-            // TODO: emit event if cap is not nil
+            if let cap = self.accounts.remove(key: addr) {
+                // TODO: Add access(contract) methods that flow down to ChildAccount s.t. parent is removed if exists in ChildAccount.parents
+                let id: UInt64? = cap.borrow()?.uuid ?? nil
+                emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+            }
         }
 
         pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>) {
@@ -221,8 +246,9 @@ pub contract HybridCustody {
 
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
-
             self.ownedAccounts[cap.address] = cap
+
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
         }
 
         pub fun getAddresses(): [Address] {
@@ -260,10 +286,9 @@ pub contract HybridCustody {
                 if acct.check() {
                     acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
                 }
-
-                // TODO: emit event
+                let id: UInt64? = acct.borrow()?.uuid ?? nil
+                emit AccountUpdated(id: id, child: addr, parent: self.owner!.address, proxy: false, active: false)
             }
-
             // Don't emit an event if nothing was removed
         }
 
@@ -440,6 +465,8 @@ pub contract HybridCustody {
             }
 
             self.parents[addr] = true
+
+            emit ChildAccountRedeemed(id: self.uuid, child: self.acct.address, parent: addr)
         }
 
         /*
@@ -483,12 +510,22 @@ pub contract HybridCustody {
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(HybridCustody.ChildPrivatePath)
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
-            let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
+            emit ProxyAccountPublished(
+                childAcctID: self.uuid,
+                proxyAcctID: proxyAcct.uuid,
+                capProxyID: proxy.borrow()!.uuid,
+                factoryID: factory.borrow()!.uuid,
+                filterID: filter.borrow()!.uuid,
+                filterType: filter.getType(),
+                child: self.acct.address,
+                pendingParent: parentAddress
+            )
 
+            let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
             let s = StoragePath(identifier: identifier)!
             let p = PrivatePath(identifier: identifier)!
 
-            acct.save(<-proxyAcct, to: s)
+            acct.save(<-proxyAcct, to: s) // TODO: Handle case where ProxyAccount is already saved, e.g. previously published for parentAddress
             acct.link<&ProxyAccount{AccountPrivate, AccountPublic}>(p, target: s)
             
             let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic}>(p)
@@ -545,8 +582,8 @@ pub contract HybridCustody {
             destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capProxyIdentifier)!)
 
             self.parents.remove(key: parent)
+            emit RemovedParent(id: self.uuid, child: self.acct.address, parent: parent)
 
-            // TODO: emit event
             return true
         }
 
@@ -574,7 +611,7 @@ pub contract HybridCustody {
             self.acctOwner = to
             self.relinquishedOwnership = false
 
-            // TODO: Emit event!
+            emit OwnershipGranted(id: self.uuid, child: self.acct.address, owner: to)
         }
 
         // seal
@@ -621,7 +658,9 @@ pub contract HybridCustody {
             for  p in pathsToUnlink {
                 newAcct.unlink(p)
             }
-            
+
+            emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
+
             self.relinquishedOwnership = true
         }
 
@@ -689,11 +728,15 @@ pub contract HybridCustody {
             acct.check(): "invalid auth account capability"
         }
 
-        return <- create ChildAccount(acct)
+        let childAcct <- create ChildAccount(acct)
+        emit CreatedChildAccount(id: childAcct.uuid, child: acct.borrow()!.address)
+        return <- childAcct
     }
 
     pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
-        return <- create Manager(filter: filter)
+        let manager <- create Manager(filter: filter)
+        emit CreatedManager(id: manager.uuid)
+        return <- manager
     }
 
     init() {

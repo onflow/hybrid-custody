@@ -15,10 +15,10 @@ pub contract CapabilityProxy {
     pub let PrivatePath: PrivatePath
     pub let PublicPath: PublicPath
     
+    /* Events */
+    //
     pub event ProxyCreated(id: UInt64)
-    
-    pub event CapabilityAdded(address: Address, type: Type, isPublic: Bool)
-    pub event CapabilityRemoved(address: Address, type: Type)
+    pub event ProxyUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
 
     pub resource interface GetterPrivate {
         pub fun getPrivateCapability(_ type: Type): Capability? {
@@ -90,11 +90,17 @@ pub contract CapabilityProxy {
             } else {
                 self.privateCapabilities.insert(key: cap.getType(), cap)
             }
+            emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: isPublic, active: true)
         }
 
         pub fun removeCapability(cap: Capability) {
-            self.publicCapabilities.remove(key: cap.getType())
-            self.privateCapabilities.remove(key: cap.getType())
+            if let removedPublic = self.publicCapabilities.remove(key: cap.getType()) {
+                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
+            }
+            
+            if let removedPrivate = self.privateCapabilities.remove(key: cap.getType()) {
+                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: false, active: false)
+            }
         }
 
         init() {
@@ -104,7 +110,9 @@ pub contract CapabilityProxy {
     }
 
     pub fun createProxy(): @Proxy {
-        return <- create Proxy()
+        let proxy <- create Proxy()
+        emit ProxyCreated(id: proxy.uuid)
+        return <- proxy
     }
     
     init() {
