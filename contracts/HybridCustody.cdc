@@ -207,7 +207,7 @@ pub contract HybridCustody {
     */
     pub resource Manager: ManagerPrivate, ManagerPublic {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
-        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>}
+        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
 
         // An optional filter to gate what capabilities are permitted to be returned from a proxy account
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
@@ -244,7 +244,7 @@ pub contract HybridCustody {
             }
         }
 
-        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>) {
+        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -560,7 +560,7 @@ pub contract HybridCustody {
             let p = PrivatePath(identifier: identifier)!
 
             acct.save(<-proxyAcct, to: s) // TODO: Handle case where ProxyAccount is already saved, e.g. previously published for parentAddress
-            acct.link<&ProxyAccount{AccountPrivate, AccountPublic}>(p, target: s)
+            acct.link<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p, target: s)
             
             let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p)
             assert(proxyCap.check(), message: "Proxy capability check failed")
@@ -638,7 +638,7 @@ pub contract HybridCustody {
             let acct = self.borrowAccount()
 
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.link<&{Account, ChildAccountPublic, ChildAccountPrivate}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
+            let cap = acct.link<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
                 ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
