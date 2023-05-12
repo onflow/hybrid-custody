@@ -213,6 +213,20 @@ pub contract HybridCustody {
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
         pub let filter: Capability<&{CapabilityFilter.Filter}>?
 
+        // A bucket of structs so that the Manager resource can be easily extended with new functionality.
+        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
+        // added
+        pub let data: {String: AnyStruct}
+
+        // A bucket of resources so that the Manager resource can be easily extended with new functionality.
+        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
+        // added
+        pub let resources: @{String: AnyResource}
+
+        // A dictionary of views used to resolve metadata views. Whoever the owner of the child account is, is
+        // able to add new views
+        pub let views: {Type: AnyStruct}
+
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
                 self.accounts[cap.address] == nil: "There is already a child account with this address"
@@ -321,17 +335,26 @@ pub contract HybridCustody {
         }
 
         pub fun getViews(): [Type] {
-            return []
+            return self.views.keys
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            return nil
+            return self.views[view]
         }
 
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
             self.accounts = {}
             self.ownedAccounts = {}
             self.filter = filter
+
+            self.data = {}
+            self.resources <- {}
+            self.views = {}
+        }
+
+        destroy () {
+            // TODO: Should all owned accounts be sealed when this is destroyed?
+            destroy self.resources
         }
     }
 
@@ -369,7 +392,9 @@ pub contract HybridCustody {
         access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
 
         access(self) let data: {String: AnyStruct}
+
         access(self) let resources: @{String: AnyResource}
+
         access(self) let views: {Type: AnyStruct}
     
         pub let parent: Address
