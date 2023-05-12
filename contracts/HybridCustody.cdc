@@ -171,7 +171,7 @@ pub contract HybridCustody {
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
-        access(contract) fun setDisplay(_ d: MetadataViews.Display)
+        access(contract) fun setView(_ v: AnyStruct)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -205,7 +205,7 @@ pub contract HybridCustody {
 
     TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
-    pub resource Manager: ManagerPrivate, ManagerPublic {
+    pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
         pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
 
@@ -301,7 +301,7 @@ pub contract HybridCustody {
             let acct = self.borrowAccount(addr: child)
                 ?? panic("child account not found")
 
-            acct.setDisplay(display)
+            acct.setView(display)
         }
 
         pub fun giveOwnerShip(addr: Address, to: Address) {
@@ -318,6 +318,14 @@ pub contract HybridCustody {
 
         pub fun getOwnedAddresses(): [Address] {
             return self.ownedAccounts.keys
+        }
+
+        pub fun getViews(): [Type] {
+            return []
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            return nil
         }
 
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
@@ -362,8 +370,8 @@ pub contract HybridCustody {
 
         access(self) let data: {String: AnyStruct}
         access(self) let resources: @{String: AnyResource}
-        access(self) var display: MetadataViews.Display?
-
+        access(self) let views: {Type: AnyStruct}
+    
         pub let parent: Address
 
         pub fun getAddress(): Address {
@@ -386,8 +394,8 @@ pub contract HybridCustody {
             self.filter = cap
         }
 
-        access(contract) fun setDisplay(_ d: MetadataViews.Display) {
-            self.display = d
+        access(contract) fun setView(_ v: AnyStruct) {
+            self.views.insert(key: v.getType(), v)
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
@@ -448,17 +456,11 @@ pub contract HybridCustody {
         }
 
         pub fun getViews(): [Type] {
-            return [
-                Type<MetadataViews.Display>()
-            ]
+            return self.views.keys
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            switch view {
-                case Type<MetadataViews.Display>():
-                    return self.display
-            }
-            return nil
+            return self.views[view]
         }
 
         init(
@@ -477,7 +479,7 @@ pub contract HybridCustody {
 
             self.data = {}
             self.resources <- {}
-            self.display = nil
+            self.views = {}
         }
 
         destroy () {
@@ -501,8 +503,19 @@ pub contract HybridCustody {
         pub var acctOwner: Address?
         pub var relinquishedOwnership: Bool
 
+        // A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
+        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
+        // added
         access(self) let data: {String: AnyStruct}
+
+        // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
+        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
+        // added
         access(self) let resources: @{String: AnyResource}
+
+        // A dictionary of views used to resolve metadata views. Whoever the owner of the child account is, is
+        // able to add new views
+        access(self) let views: {Type: AnyStruct}
 
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
@@ -731,24 +744,15 @@ pub contract HybridCustody {
         }
 
         pub fun getViews(): [Type] {
-            return [
-                Type<MetadataViews.Display>()
-            ]
+            return self.views.keys
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            switch view {
-                case Type<MetadataViews.Display>():
-                    if let item = self.data["display"] {
-                        return item as? MetadataViews.Display
-                    }
-                    break
-            }
-            return nil
+            return self.views[view]
         }
 
-        pub fun setDisplay(_ d: MetadataViews.Display) {
-            self.data.insert(key: "display", d)
+        pub fun setView(_ v: AnyStruct) {
+            self.views.insert(key: v.getType(), v)
         }
 
         init(
@@ -762,6 +766,7 @@ pub contract HybridCustody {
 
             self.data = {}
             self.resources <- {}
+            self.views = {}
         }
 
         destroy () {

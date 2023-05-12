@@ -12,7 +12,7 @@ transaction(name: String, description: String, thumbnail: String) {
             thumbnail: MetadataViews.HTTPFile(url: thumbnail)
         )
 
-        a.setDisplay(d)
+        a.setView(d)
     }
 }
  
