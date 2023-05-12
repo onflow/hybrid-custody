@@ -297,11 +297,11 @@ pub contract HybridCustody {
             // Don't emit an event if nothing was removed
         }
 
-        pub fun setChildDisplay(child: Address, display: MetadataViews.Display) {
+        pub fun setView(child: Address, data: AnyStruct) {
             let acct = self.borrowAccount(addr: child)
                 ?? panic("child account not found")
 
-            acct.setView(display)
+            acct.setView(data)
         }
 
         pub fun giveOwnerShip(addr: Address, to: Address) {
