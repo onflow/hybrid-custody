@@ -205,9 +205,15 @@ pub contract HybridCustody {
 
     TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
-    pub resource Manager: ManagerPrivate, ManagerPublic {
+    pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
         pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
+
+        // A bucket of structs so that the Manager resource can be easily extended with new functionality.
+        pub let data: {String: AnyStruct}
+
+        // A bucket of resources so that the Manager resource can be easily extended with new functionality.
+        pub let resources: @{String: AnyResource}
 
         // An optional filter to gate what capabilities are permitted to be returned from a proxy account
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
@@ -320,10 +326,25 @@ pub contract HybridCustody {
             return self.ownedAccounts.keys
         }
 
+        pub fun getViews(): [Type] {
+            return []
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            return nil
+        }
+
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
             self.accounts = {}
             self.ownedAccounts = {}
             self.filter = filter
+
+            self.data = {}
+            self.resources <- {}
+        }
+
+        destroy () {
+            destroy self.resources
         }
     }
 
@@ -360,8 +381,13 @@ pub contract HybridCustody {
         // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
         access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
 
+        // A bucket of structs so that the ProxyAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
+
+        // A bucket of resources so that the ProxyAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
+
+        // display is its own field on the ProxyAccount resource because only the parent should be able to set this field.
         access(self) var display: MetadataViews.Display?
 
         pub let parent: Address
@@ -501,7 +527,10 @@ pub contract HybridCustody {
         pub var acctOwner: Address?
         pub var relinquishedOwnership: Bool
 
+        // A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
+
+        // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
         access(contract) fun setRedeemed(_ addr: Address) {
