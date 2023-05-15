@@ -5,6 +5,7 @@ import "MetadataViews"
 import "CapabilityFactory"
 import "CapabilityProxy"
 import "CapabilityFilter"
+import "HybridCustodyMetadata"
 
 /*
 HybridCustody defines a framework for sharing accounts via account linking. In the contract,
@@ -171,7 +172,7 @@ pub contract HybridCustody {
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
-        access(contract) fun setView(_ v: AnyStruct)
+        access(contract) fun setViewResolver(_ resolver: {HybridCustodyMetadata.Resolver})
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -214,18 +215,14 @@ pub contract HybridCustody {
         pub let filter: Capability<&{CapabilityFilter.Filter}>?
 
         // A bucket of structs so that the Manager resource can be easily extended with new functionality.
-        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
-        // added
         pub let data: {String: AnyStruct}
 
         // A bucket of resources so that the Manager resource can be easily extended with new functionality.
-        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
-        // added
         pub let resources: @{String: AnyResource}
 
-        // A dictionary of views used to resolve metadata views. Whoever the owner of the child account is, is
-        // able to add new views
-        pub let views: {Type: AnyStruct}
+        // A dictionary of view resolvers used to get metadata views. The manager is able to add views to this dictionaty
+        // at any time.
+        pub let views: {Type: {HybridCustodyMetadata.Resolver}}
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
@@ -311,11 +308,11 @@ pub contract HybridCustody {
             // Don't emit an event if nothing was removed
         }
 
-        pub fun setView(child: Address, data: AnyStruct) {
+        pub fun setChildViewResolver(child: Address, resolver: {HybridCustodyMetadata.Resolver}) {
             let acct = self.borrowAccount(addr: child)
                 ?? panic("child account not found")
 
-            acct.setView(data)
+            acct.setViewResolver(resolver)
         }
 
         pub fun giveOwnerShip(addr: Address, to: Address) {
@@ -339,7 +336,7 @@ pub contract HybridCustody {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            return self.views[view]
+            return self.views[view]?.resolve(&self as &Manager{ManagerPublic}) ?? nil
         }
 
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
@@ -391,11 +388,15 @@ pub contract HybridCustody {
         // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
         access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
 
+        
+        // A bucket of structs so that the ProxyAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
 
+        // A bucket of resources so that the ProxyAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        access(self) let views: {Type: AnyStruct}
+        // A dictionary of views used to resolve metadata views. The manager of the proxy account is able to add views.
+        access(self) let views: {Type: {HybridCustodyMetadata.Resolver}}
     
         pub let parent: Address
 
@@ -419,8 +420,8 @@ pub contract HybridCustody {
             self.filter = cap
         }
 
-        access(contract) fun setView(_ v: AnyStruct) {
-            self.views.insert(key: v.getType(), v)
+        access(contract) fun setViewResolver(_ resolver: {HybridCustodyMetadata.Resolver}) {
+            self.views.insert(key: resolver.type, resolver)
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
@@ -485,7 +486,7 @@ pub contract HybridCustody {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            return self.views[view]
+            return self.views[view]?.resolve(&self as &ProxyAccount{AccountPublic}) ?? nil
         }
 
         init(
@@ -529,18 +530,14 @@ pub contract HybridCustody {
         pub var relinquishedOwnership: Bool
 
         // A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
-        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
-        // added
         access(self) let data: {String: AnyStruct}
 
         // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
-        // In cadence, you cannot add new fields, so a dictionary like this is our only option until attachments are 
-        // added
         access(self) let resources: @{String: AnyResource}
 
         // A dictionary of views used to resolve metadata views. Whoever the owner of the child account is, is
         // able to add new views
-        access(self) let views: {Type: AnyStruct}
+        access(self) let views: {Type: {HybridCustodyMetadata.Resolver}}
 
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
@@ -776,8 +773,8 @@ pub contract HybridCustody {
             return self.views[view]
         }
 
-        pub fun setView(_ v: AnyStruct) {
-            self.views.insert(key: v.getType(), v)
+        pub fun setView(_ resolver: {HybridCustodyMetadata.Resolver}) {
+            self.views.insert(key: resolver.type, resolver)
         }
 
         init(

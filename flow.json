@@ -18,6 +18,7 @@
 	"contracts": {
 		"RestrictedChildAccount": "./contracts/RestrictedChildAccount.cdc",
 		"HybridCustody": "./contracts/HybridCustody.cdc",
+		"HybridCustodyMetadata": "./contracts/HybridCustodyMetadata.cdc",
 		"LinkedAccount": "./contracts/LinkedAccount.cdc",
 		"CapabilityProxy": "./contracts/CapabilityProxy.cdc",
 		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
@@ -94,6 +95,7 @@
 				"ArrayUtils",
 				"RestrictedChildAccount",
 				"HybridCustody",
+				"HybridCustodyMetadata",
 				"LinkedAccount",
 				"CapabilityProxy",
 				"CapabilityFilter",
