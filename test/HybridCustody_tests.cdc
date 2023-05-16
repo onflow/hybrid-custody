@@ -74,6 +74,23 @@ pub fun testProxyAccount_getAddress() {
     scriptExecutor("hybrid-custody/verify_proxy_address.cdc", [parent.address, child.address])
 }
 
+pub fun testProxyAccount_hasChildAccounts() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    assert(
+        !(scriptExecutor("hybrid-custody/has_child_accounts.cdc", [parent.address]) as! Bool?)!,
+        message: "parent should not have child accounts before explicitly configured"
+    )
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    assert(
+        (scriptExecutor("hybrid-custody/has_child_accounts.cdc", [parent.address]) as! Bool?)!,
+        message: "parent should have child accounts after configured"
+    )
+}
+
 pub fun testProxyAccount_getCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -144,11 +161,21 @@ pub fun testTransferOwnership() {
     let owner = blockchain.createAccount()
     setupAccountManager(owner)
 
+    assert(
+        !(scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [owner.address]) as! Bool?)!,
+        message: "owner should not have owned accounts before transfer"
+    )
+
     txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
 
     txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+
+    assert(
+        (scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [owner.address]) as! Bool?)!,
+        message: "parent should have owned accounts after transfer"
+    )
 }
 
 pub fun testGetCapability_ManagerFilterAllowed() {
