@@ -2,7 +2,8 @@ import "FungibleToken"
 import "MetadataViews"
 import "HybridCustody"
 
-/// Returns a dictionary of VaultInfo indexed on the Type of Vault
+/// Returns a mapping of balances indexed on the Type of resource containing the balance
+///
 pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: UFix64} {
     // Get the account
     let account: AuthAccount = getAuthAccount(address)
@@ -15,9 +16,9 @@ pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: UFix64} {
     // Iterate over all stored items & get the path if the type is what we're looking for
     account.forEachStored(fun (path: StoragePath, type: Type): Bool {
         if type.isInstance(balanceType) || type.isSubtype(of: balanceType) {
-            // Get a reference to the vault & its balance
+            // Get a reference to the resource & its balance
             let vaultRef = account.borrow<&{FungibleToken.Balance}>(from: path)!
-            // Insert a new info struct if it's the first time we've seen the vault type
+            // Insert a new values if it's the first time we've seen the type
             if !seen.contains(type) {
                 balances.insert(key: type, vaultRef.balance)
             } else {
