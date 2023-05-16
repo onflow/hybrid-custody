@@ -2,11 +2,13 @@ import Test
 
 pub var accounts: {String: Test.Account} = {}
 pub var blockchain = Test.newEmulatorBlockchain()
+pub let flowTokenAccount: Address = 0x0ae53cb6e3f42a79
 
 pub let app = "app"
 pub let child = "child"
 pub let nftFactory = "nftFactory"
 pub let exampleNFT = "ExampleNFT"
+pub let flowToken = "FlowToken"
 pub let capabilityFilter = "CapabilityFilter"
 
 pub let FilterKindAll = "all"
@@ -277,6 +279,53 @@ pub fun testMetadata_ChildAccount_Metadata() {
 
     let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
     assert(name == resolvedName, message: "names do not match")
+}
+
+pub fun testGetAllFlowBalances() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let expectedChildBal = (scriptExecutor("test/get_flow_balance.cdc", [child.address]) as! UFix64?)!
+    let expectedParentBal = (scriptExecutor("test/get_flow_balance.cdc", [parent.address]) as! UFix64?)!
+
+    let result = (scriptExecutor("hybrid-custody/get_all_flow_balances.cdc", [parent.address]) as! {Address: UFix64}?)!
+
+    assert(
+        result.containsKey(child.address) && result[child.address] == expectedChildBal,
+        message: "child Flow balance incorrectly reported"
+    )
+
+    assert(
+        result.containsKey(parent.address) && result[parent.address] == expectedParentBal,
+        message: "parent Flow balance incorrectly reported"
+    )
+}
+
+pub fun testGetFlowBalanceByStoragePath() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let expectedChildBal = (scriptExecutor("test/get_flow_balance.cdc", [child.address]) as! UFix64?)!
+    let expectedParentBal = (scriptExecutor("test/get_flow_balance.cdc", [parent.address]) as! UFix64?)!
+
+    let result = (scriptExecutor(
+            "hybrid-custody/get_spec_balance_from_public.cdc",
+            [parent.address, PublicPath(identifier: "flowTokenVault")!]
+        ) as! {Address: UFix64}?)!
+
+    assert(
+        result.containsKey(child.address) && result[child.address] == expectedChildBal,
+        message: "child Flow balance incorrectly reported"
+    )
+
+    assert(
+        result.containsKey(parent.address) && result[parent.address] == expectedParentBal,
+        message: "parent Flow balance incorrectly reported"
+    )
 }
 
 // --------------- End Test Cases --------------- 
