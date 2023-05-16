@@ -4,7 +4,7 @@ import "HybridCustody"
 
 /// Returns a mapping of balances indexed on the Type of resource containing the balance
 ///
-pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: UFix64} {
+pub fun getAllBalancesInStorage(_ address: Address): {Type: UFix64} {
     // Get the account
     let account: AuthAccount = getAuthAccount(address)
     // Init for return value
@@ -37,7 +37,7 @@ pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: UFix64} {
 pub fun main(address: Address): {Address: {Type: UFix64}} {
 
     // Get the balance for the given address
-    let balances: {Address: {Type: UFix64}} = { address: getAllVaultInfoInAddressStorage(address) }
+    let balances: {Address: {Type: UFix64}} = { address: getAllBalancesInStorage(address) }
     // Tracking Addresses we've come across to prevent overwriting balances (more efficient than checking dict entries (?))
     let seen: [Address] = [address]
     
@@ -47,13 +47,13 @@ pub fun main(address: Address): {Address: {Type: UFix64}} {
         .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
         
         for childAccount in managerRef.getChildAddresses() {
-            balances.insert(key: childAccount, getAllVaultInfoInAddressStorage(address))
+            balances.insert(key: childAccount, getAllBalancesInStorage(address))
             seen.append(childAccount)
         }
 
         for ownedAccount in managerRef.getOwnedAddresses() {
             if seen.contains(ownedAccount) == false {
-                balances.insert(key: ownedAccount, getAllVaultInfoInAddressStorage(address))
+                balances.insert(key: ownedAccount, getAllBalancesInStorage(address))
                 seen.append(ownedAccount)
             }
         }
