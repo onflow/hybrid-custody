@@ -177,7 +177,7 @@ pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
 }
 
 pub fun loadCode(_ fileName: String, _ baseDirectory: String): String {
-    return Test.readFile("./".concat(baseDirectory).concat("/").concat(fileName))
+    return Test.readFile("../".concat(baseDirectory).concat("/").concat(fileName))
 }
 // END SECTION - Helper functions
 
