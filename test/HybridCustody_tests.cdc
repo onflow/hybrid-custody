@@ -523,7 +523,6 @@ pub fun setup() {
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
-        "LinkedAccount": linkedAccount,
         "HybridCustody": hybridCustodyAccount,
         "CapabilityProxy": capabilityProxyAccount,
         "CapabilityFilter": capabilityFilterAccount,
@@ -549,7 +548,6 @@ pub fun setup() {
         "ArrayUtils": accounts["ArrayUtils"]!.address,
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
-        "LinkedAccount": accounts["LinkedAccount"]!.address,
         "HybridCustody": accounts["HybridCustody"]!.address,
         "CapabilityProxy": accounts["CapabilityProxy"]!.address,
         "CapabilityFilter": accounts["CapabilityFilter"]!.address,
@@ -581,7 +579,6 @@ pub fun setup() {
     deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
-    deploy("LinkedAccount", accounts["LinkedAccount"]!, "../contracts/LinkedAccount.cdc")
     deploy("HybridCustody", accounts["HybridCustody"]!, "../contracts/HybridCustody.cdc")
 }
 
