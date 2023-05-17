@@ -2,7 +2,6 @@ import Test
 
 pub var accounts: {String: Test.Account} = {}
 pub var blockchain = Test.newEmulatorBlockchain()
-pub let flowTokenAccount: Address = 0x0ae53cb6e3f42a79
 pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
 
 pub let app = "app"

@@ -1,7 +1,7 @@
 import "FungibleToken"
 import "HybridCustody"
 
-/// Returns a dictionary of VaultInfo indexed on the Type of Vault
+/// Returns the balance of the object (presumably a FungibleToken Vault) at the given path in the specified account
 ///
 pub fun getVaultBalance(_ address: Address, _ balancePath: PublicPath): UFix64 {
     return getAccount(address).getCapability<&{FungibleToken.Balance}>(balancePath).borrow()?.balance ?? 0.0
