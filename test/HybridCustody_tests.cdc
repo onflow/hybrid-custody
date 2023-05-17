@@ -3,6 +3,7 @@ import Test
 pub var accounts: {String: Test.Account} = {}
 pub var blockchain = Test.newEmulatorBlockchain()
 pub let flowTokenAccount: Address = 0x0ae53cb6e3f42a79
+pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
 
 pub let app = "app"
 pub let child = "child"
@@ -303,6 +304,28 @@ pub fun testGetAllFlowBalances() {
     )
 }
 
+pub fun testGetAllFTBalance() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let expectedChildBal = (scriptExecutor("test/get_flow_balance.cdc", [child.address]) as! UFix64?)!
+    let expectedParentBal = (scriptExecutor("test/get_flow_balance.cdc", [parent.address]) as! UFix64?)!
+
+    let result = (scriptExecutor("test/get_all_vault_bal_from_storage.cdc", [parent.address]) as! {Address: {String: UFix64}}?)!
+
+    assert(
+        result.containsKey(child.address) && result[child.address]!["A.0ae53cb6e3f42a79.FlowToken.Vault"] == expectedChildBal,
+        message: "child Flow balance incorrectly reported"
+    )
+
+    assert(
+        result.containsKey(parent.address) && result[parent.address]!["A.0ae53cb6e3f42a79.FlowToken.Vault"] == expectedParentBal,
+        message: "parent Flow balance incorrectly reported"
+    )
+}
+
 pub fun testGetFlowBalanceByStoragePath() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -557,7 +580,6 @@ pub fun setup() {
     let nonFungibleToken = blockchain.createAccount()
     let metadataViews = blockchain.createAccount()
     let viewResolver = blockchain.createAccount()
-    let fungibleToken = blockchain.createAccount()
     
     // other contracts used in tests
     let exampleNFT = blockchain.createAccount()
@@ -568,7 +590,6 @@ pub fun setup() {
     let child2 = blockchain.createAccount()
 
     accounts = {
-        "FungibleToken": fungibleToken,
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
@@ -591,7 +612,7 @@ pub fun setup() {
     }
 
     blockchain.useConfiguration(Test.Configuration({
-        "FungibleToken": accounts["FungibleToken"]!.address,
+        "FungibleToken": fungibleTokenAddress,
         "NonFungibleToken": accounts["NonFungibleToken"]!.address,
         "MetadataViews": accounts["MetadataViews"]!.address,
         "ViewResolver": accounts["ViewResolver"]!.address,
@@ -610,7 +631,6 @@ pub fun setup() {
     }))
 
     // deploy standard libs first
-    deploy("FungibleToken", accounts["FungibleToken"]!, "../modules/flow-nft/contracts/utility/FungibleToken.cdc")
     deploy("NonFungibleToken", accounts["NonFungibleToken"]!, "../modules/flow-nft/contracts/NonFungibleToken.cdc")
     deploy("MetadataViews", accounts["MetadataViews"]!, "../modules/flow-nft/contracts/MetadataViews.cdc")
     deploy("ViewResolver", accounts["ViewResolver"]!, "../modules/flow-nft/contracts/ViewResolver.cdc")
