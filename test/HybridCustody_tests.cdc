@@ -281,6 +281,23 @@ pub fun testMetadata_ChildAccount_Metadata() {
     assert(name == resolvedName, message: "names do not match")
 }
 
+pub fun testRemoveChildAccount() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let childAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address])) as! [Address]?
+    assert(childAddressResult?.contains(child.address) == true, message: "child address not found")
+
+    let parentAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_parent_addresses.cdc", [child.address])) as! [Address]?
+    assert(parentAddressResult?.contains(parent.address) == true, message: "parent address not found")
+
+    assert(isParent(child: child, parent: parent) == true, message: "is not parent of child account")
+    txExecutor("hybrid-custody/remove_child_account.cdc", [parent], [child.address], nil, nil)
+    assert(isParent(child: child, parent: parent) == false, message: "child account was not removed from parent")
+}
+
 pub fun testGetAllFlowBalances() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()

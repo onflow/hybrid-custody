@@ -86,7 +86,7 @@ pub contract HybridCustody {
         // removeParent
         // Deletes the proxy account resource being used to share access to this child account with the
         // supplied parent address, and unlinks the paths it was using to reach the proxy account
-        pub fun removeParent(parent: Address): Bool
+        access(contract) fun removeParent(parent: Address): Bool
 
         // publicToParent
         // Sets up a new ProxyAccount resource for the given parentAddress to redeem.
@@ -172,6 +172,7 @@ pub contract HybridCustody {
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
         access(contract) fun setDisplay(_ d: MetadataViews.Display)
+        access(contract) fun removeSelfAsParent(parent: Address)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -245,6 +246,10 @@ pub contract HybridCustody {
         pub fun removeChild(addr: Address) {
             if let cap = self.accounts.remove(key: addr) {
                 // TODO: Add access(contract) methods that flow down to ChildAccount s.t. parent is removed if exists in ChildAccount.parents
+                let acct = cap.borrow()
+                    ?? panic("cannot remove invalid account")
+                acct.removeSelfAsParent(parent: self.owner!.address)
+                
                 let id: UInt64? = cap.borrow()?.uuid ?? nil
                 emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
             }
@@ -346,7 +351,7 @@ pub contract HybridCustody {
         destroy () {
             destroy self.resources
         }
-    }
+}
 
     /*
     The ProxyAccount resource sits between a child account and a parent and is stored on the same account as the child account.
@@ -403,7 +408,6 @@ pub contract HybridCustody {
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
             self.managerCapabilityFilter = managerCapabilityFilter
         }
-
         pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
             self.factory = cap
         }
@@ -485,6 +489,13 @@ pub contract HybridCustody {
                     return self.display
             }
             return nil
+        }
+
+        access(contract) fun removeSelfAsParent(parent: Address) {
+            let acct = self.childCap.borrow()!.borrowAccount()
+            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
+                m.removeParent(parent: parent)
+            }
         }
 
         init(
@@ -626,11 +637,10 @@ pub contract HybridCustody {
         configured for the provided parent address. Once done, the parent will not have any valid capabilities
         with which to access the child account.
         */
-        pub fun removeParent(parent: Address): Bool {
+        access(contract) fun removeParent(parent: Address): Bool {
             if self.parents[parent] == nil {
                 return false
             }
-
             let identifier = HybridCustody.getProxyAccountIdentifier(parent)
             let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parent)
 
