@@ -13,6 +13,16 @@
 		"emulator-ft": {
 			"address": "ee82856bf20e2aa6",
 			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
+		"hc-testnet": {
+		  "address": "0x96b15ff6dfde11fe",
+		  "key": {
+			"type": "google-kms",
+			"index": 0,
+			"signatureAlgorithm": "ECDSA_P256",
+			"hashAlgorithm": "SHA2_256",
+			"resourceID": "projects/flowty-contracts/locations/global/keyRings/contracts/cryptoKeys/hybrid-custody-test/cryptoKeyVersions/1"
+		  }
 		}
 	},
 	"contracts": {
@@ -105,6 +115,17 @@
 			],
 			"emulator-ft": [
 				"FungibleToken"
+			]
+		},
+		"testnet": {
+			"hc-testnet": [
+				"HybridCustody",
+				"CapabilityProxy",
+				"CapabilityFilter",
+				"CapabilityFactory",
+				"NFTProviderFactory",
+				"NFTProviderAndCollectionFactory",
+				"NFTCollectionPublicFactory"
 			]
 		}
 	}
