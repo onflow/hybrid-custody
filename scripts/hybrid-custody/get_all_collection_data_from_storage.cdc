@@ -4,13 +4,13 @@ import "HybridCustody"
 
 /// Helper function that retrieves data about all publicly accessible NFTs in an account
 ///
-pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollectionDisplay] {
+pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollectionData] {
 
     let account: AuthAccount = getAuthAccount(address)
-    let data: [MetadataViews.NFTCollectionDisplay] = []
+    let data: [MetadataViews.NFTCollectionData] = []
 
     let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>()
-    let collectionDisplayType: Type = Type<MetadataViews.NFTCollectionDisplay>()
+    let viewType: Type = Type<MetadataViews.NFTCollectionData>()
 
     // Iterate over each public path
     account.forEachStored(fun (path: StoragePath, type: Type): Bool {
@@ -25,9 +25,9 @@ pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollection
             if ids.length == 0 {
                 return true
             }
-            // Otherwise, attempt to get the NFTCollectionDisplay & append if exists
-            if let display = collectionRef.borrowViewResolver(id: ids[0]).resolveView(collectionDisplayType) as! MetadataViews.NFTCollectionDisplay? {
-                data.append(display)
+            // Otherwise, attempt to get the NFTCollectionData & append if exists
+            if let dataView = collectionRef.borrowViewResolver(id: ids[0]).resolveView(viewType) as! MetadataViews.NFTCollectionData? {
+                data.append(dataView)
             }
         }
         return true
@@ -37,9 +37,9 @@ pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollection
 
 /// Script that retrieve data about all NFT Collections in the storage of an account and any of its child accounts
 ///
-pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionDisplay]} {
+pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionData]} {
     
-    let allNFTData: {Address: [MetadataViews.NFTCollectionDisplay]} = {address: getAllViewsFromAddress(address)}
+    let allNFTData: {Address: [MetadataViews.NFTCollectionData]} = {address: getAllViewsFromAddress(address)}
     let seen: [Address] = [address]
     
     /* Iterate over any child accounts */ 

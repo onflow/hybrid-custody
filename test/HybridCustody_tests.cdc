@@ -414,7 +414,7 @@ pub fun testGetAllCollectionViewsFromStorage() {
     let expectedAddressToCollectionLength: {Address: Int} = {parent.address: expectedViewsLength, child.address: expectedViewsLength}
 
     scriptExecutor(
-        "test/test_get_all_collection_views_from_storage.cdc",
+        "test/test_get_all_collection_data_from_storage.cdc",
         [parent.address, expectedAddressToCollectionLength]
     )
 }
