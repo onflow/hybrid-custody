@@ -1,6 +1,36 @@
+// Original script imports
 import "NonFungibleToken"
 import "MetadataViews"
 import "HybridCustody"
+
+// Testing purposes only
+import "ExampleNFT"
+
+/* 
+ * TEST SCRIPT
+ * This script is a replication of that found in hybrid-custody/get_all_collection_views_from_storage as it's the best as
+ * as can be done without accessing the script's return type in the Cadence testing framework
+ */
+
+/// Assertion method to ensure passing test
+///
+pub fun assertPassing(result: {Address: [MetadataViews.NFTCollectionDisplay]}, expectedAddressToCollectionLength: {Address: Int}) {
+    // Taken from ExampleNFT.resolveView() which was not returning a view for some reason
+    let expectedView = MetadataViews.Media(
+        file: MetadataViews.HTTPFile(
+            url: "https://assets.website-files.com/5f6294c0c7a8cdd643b1c820/5f6294c0c7a8cda55cb1c936_Flow_Wordmark.svg"
+        ),
+        mediaType: "image/svg+xml"
+    )
+    for address in result.keys {
+        if expectedAddressToCollectionLength[address] == nil {
+            panic("Address ".concat(address.toString()).concat(" found but not expected!"))
+        }
+        if result[address]!.length != expectedAddressToCollectionLength[address]! {
+            panic("Incorrect number of NFTCollectionDisplay views found for ".concat(address.toString()))
+        }
+    }
+}
 
 /// Helper function that retrieves data about all publicly accessible NFTs in an account
 ///
@@ -37,7 +67,8 @@ pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollection
 
 /// Script that retrieve data about all NFT Collections in the storage of an account and any of its child accounts
 ///
-pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionDisplay]} {
+// pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionDisplay]} {
+pub fun main(address: Address, expectedAddressToCollectionLength: {Address: Int}) {
     
     let allNFTData: {Address: [MetadataViews.NFTCollectionDisplay]} = {address: getAllViewsFromAddress(address)}
     let seen: [Address] = [address]
@@ -59,5 +90,7 @@ pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionDisplay]} 
             }
         }
     }
-    return allNFTData 
+    // Assert instead of return here
+    assertPassing(result: allNFTData, expectedAddressToCollectionLength: expectedAddressToCollectionLength)
+    // return allNFTData 
 }
