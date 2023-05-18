@@ -1,10 +1,6 @@
-// Original script imports
 import "NonFungibleToken"
 import "MetadataViews"
 import "HybridCustody"
-
-// Testing purposes only
-import "ExampleNFT"
 
 /* 
  * TEST SCRIPT
