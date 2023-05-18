@@ -34,6 +34,7 @@
 		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
 		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
 		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
+		"ExampleToken": "./contracts/standard/ExampleToken.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
 			"aliases": {
@@ -107,7 +108,8 @@
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
-				"ExampleNFT"
+				"ExampleNFT",
+				"ExampleToken"
 			],
 			"emulator-ft": [
 				"FungibleToken"
