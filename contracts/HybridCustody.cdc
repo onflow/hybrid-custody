@@ -23,6 +23,7 @@ Contributors (please add to this list if you contribute!):
 - Austin Kline - https://twitter.com/austin_flowty
 - Deniz Edincik - https://twitter.com/bluesign
 - Giovanni Sanchez - https://twitter.com/gio_incognito
+- Ashley Daffin - https://twitter.com/web3ashlee
 */
 pub contract HybridCustody {
 
