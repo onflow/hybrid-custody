@@ -15,6 +15,8 @@ pub let FilterKindAll = "all"
 pub let FilterKindAllowList = "allowlist"
 pub let FilterKindDenyList = "denylist"
 
+pub let exampleNFTPublicIdentifier = "ExampleNFTCollection"
+
 
 // --------------- Test cases --------------- 
 
@@ -364,10 +366,77 @@ pub fun testGetFlowBalanceByStoragePath() {
         result.containsKey(child.address) && result[child.address] == expectedChildBal,
         message: "child Flow balance incorrectly reported"
     )
-
     assert(
         result.containsKey(parent.address) && result[parent.address] == expectedParentBal,
         message: "parent Flow balance incorrectly reported"
+    )
+}
+
+pub fun testGetSpecViewFromPublic() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    setupNFTCollection(parent)
+
+    mintNFTDefault(accounts["ExampleNFT"]!, receiver: child)
+    mintNFTDefault(accounts[exampleNFT]!, receiver: parent)
+
+    let expectedChildIDs = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
+    let expectedParentIDs = (scriptExecutor("example-nft/get_ids.cdc", [parent.address]) as! [UInt64]?)!
+
+    let expectedAddressLength: Int = 2
+    let expectedViewsLength: Int = 1
+
+    let result = (scriptExecutor(
+        "hybrid-custody/get_nft_display_view_from_public.cdc",
+        [parent.address, PublicPath(identifier: exampleNFTPublicIdentifier)!]
+        ) as! {Address: {UInt64: AnyStruct}}?)!
+
+    assert(
+        result.length == expectedAddressLength && result.containsKey(child.address) && result.containsKey(parent.address),
+        message: "invalid number of account views returned"
+    )
+    assert(
+        result[child.address]!.length == expectedAddressLength && result[child.address]!.containsKey(expectedChildIDs[0]),
+        message: "invalid child account views returned"
+    )
+    assert(
+        result[parent.address]!.length == expectedAddressLength && result[parent.address]!.containsKey(expectedChildIDs[0]),
+        message: "invalid parent account views returned"
+    )
+}
+
+pub fun testGetAllCollectionViewsFromStorage() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    setupNFTCollection(parent)
+
+    let expectedAddressLength: Int = 2
+    let expectedViewsLength: Int = 1
+
+    let result = (scriptExecutor(
+        "hybrid-custody/get_all_collection_views_from_storage.cdc",
+        [parent.address]
+        ) as! {Address: [AnyStruct]}?)!
+
+    assert(
+        result.length == expectedAddressLength && result.containsKey(child.address) && result.containsKey(parent.address),
+        message: "invalid number of account views returned"
+    )
+    assert(
+        result[child.address]!.length == expectedAddressLength,
+        message: "invalid number of child account Collection views returned"
+    )
+    assert(
+        result[parent.address]!.length == expectedAddressLength,
+        message: "invalid number of parent account Collection views returned"
     )
 }
 
@@ -419,6 +488,15 @@ pub fun setupFactoryManager(_ acct: Test.Account) {
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil, nil)
+}
+
+pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+    let filepath: String = "example-nft/mint_to_account.cdc"
+    txExecutor(filepath, [minter], [receiver.address, name, description, thumbnail], nil, nil)
+}
+
+pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
+    return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
 }
 
 pub fun setupFilter(_ acct: Test.Account, _ kind: String) {
