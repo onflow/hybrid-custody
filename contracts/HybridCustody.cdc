@@ -506,7 +506,7 @@ pub contract HybridCustody {
                 return
             }
 
-            let child = self.childCap.borrow()!
+            let child: &AnyResource{HybridCustody.BorrowableAccount} = self.childCap.borrow()!
             if !child.check() {
                 return
             }
