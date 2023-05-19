@@ -23,6 +23,7 @@ Contributors (please add to this list if you contribute!):
 - Austin Kline - https://twitter.com/austin_flowty
 - Deniz Edincik - https://twitter.com/bluesign
 - Giovanni Sanchez - https://twitter.com/gio_incognito
+- Ashley Daffin - https://twitter.com/web3ashlee
 */
 pub contract HybridCustody {
 
@@ -59,6 +60,7 @@ pub contract HybridCustody {
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
     pub resource interface BorrowableAccount {
         access(contract) fun borrowAccount(): &AuthAccount
+        pub fun check(): Bool
     }
 
     // Public methods anyone can call on a child account
@@ -172,6 +174,7 @@ pub contract HybridCustody {
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
         access(contract) fun setDisplay(_ d: MetadataViews.Display)
+        access(contract) fun parentRemoveChildCallback(parent: Address)
     }
 
     // Entry point for a parent to borrow its child account and obtain capabilities or
@@ -243,11 +246,22 @@ pub contract HybridCustody {
         }
 
         pub fun removeChild(addr: Address) {
-            if let cap = self.accounts.remove(key: addr) {
-                // TODO: Add access(contract) methods that flow down to ChildAccount s.t. parent is removed if exists in ChildAccount.parents
-                let id: UInt64? = cap.borrow()?.uuid ?? nil
-                emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+            let cap = self.accounts.remove(key: addr) 
+                ?? panic("child account not found")
+            
+            if !cap.check() {
+                // Emit event if invalid capability
+                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+                return
             }
+
+            let acct = cap.borrow()!
+            // Get the child account id before removing capability
+            let id: UInt64 = acct.uuid
+
+            acct.parentRemoveChildCallback(parent: self.owner!.address) 
+
+            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
         }
 
         pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
@@ -487,6 +501,22 @@ pub contract HybridCustody {
             return nil
         }
 
+        access(contract) fun parentRemoveChildCallback(parent: Address) {
+            if !self.childCap.check() {
+                return
+            }
+
+            let child: &AnyResource{HybridCustody.BorrowableAccount} = self.childCap.borrow()!
+            if !child.check() {
+                return
+            }
+
+            let acct = child.borrowAccount()
+            if let childAcct = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
+                childAcct.removeParent(parent: parent)
+            }
+        }
+
         init(
             _ childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
@@ -598,6 +628,10 @@ pub contract HybridCustody {
             self.parents[parentAddress] = false
         }
 
+        pub fun check(): Bool {
+            return self.acct.check()
+        }
+
         pub fun borrowAccount(): &AuthAccount {
             return self.acct.borrow()!
         }
@@ -630,7 +664,6 @@ pub contract HybridCustody {
             if self.parents[parent] == nil {
                 return false
             }
-
             let identifier = HybridCustody.getProxyAccountIdentifier(parent)
             let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parent)
 
