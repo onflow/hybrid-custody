@@ -14,8 +14,9 @@ pub fun getViews(_ address: Address, _ resolverCollectionPath: PublicPath): {UIn
         .getCapability<&{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(resolverCollectionPath).borrow() {
         // Iterate over IDs & resolve the view
         for id in collection.getIDs() {
-            let display = collection.borrowViewResolver(id: id).resolveView(Type<MetadataViews.Display>()) as! MetadataViews.Display
-            views.insert(key: id, display)
+            if let display = collection.borrowViewResolver(id: id).resolveView(Type<MetadataViews.Display>()) as? MetadataViews.Display {
+                views.insert(key: id, display)
+            }
         }
     }
 
@@ -49,3 +50,4 @@ pub fun main(address: Address, resolverCollectionPath: PublicPath): {Address: {U
 
     return allViews 
 }
+ 
