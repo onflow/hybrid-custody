@@ -799,7 +799,6 @@ pub fun setup() {
     deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
     deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
-    deploy("LinkedAccount", accounts["LinkedAccount"]!, "../contracts/LinkedAccount.cdc")
     deploy("HybridCustody", accounts["HybridCustody"]!, "../contracts/HybridCustody.cdc")
 }
 
