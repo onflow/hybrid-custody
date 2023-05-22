@@ -1,5 +1,5 @@
 import "FungibleToken"
-import "FlowToken"
+import "ExampleToken"
 
 import "HybridCustody"
 
@@ -7,6 +7,7 @@ transaction(amount: UFix64, to: Address, child: Address) {
 
     // The Vault resource that holds the tokens that are being transferred
     let paymentVault: @FungibleToken.Vault
+
 
     prepare(signer: AuthAccount) {
         // signer is the parent account
@@ -16,7 +17,7 @@ transaction(amount: UFix64, to: Address, child: Address) {
         let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
         
         //get Ft cap from child account
-        let cap = childAcct.getCapability(path: /private/ftProvider, type: Type<&{FungibleToken.Provider}>()) ?? panic("no cap found")
+        let cap = childAcct.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>()) ?? panic("no cap found")
         let providerCap = cap as! Capability<&{FungibleToken.Provider}>
 
         if providerCap == nil {
@@ -36,7 +37,7 @@ transaction(amount: UFix64, to: Address, child: Address) {
         let recipient = getAccount(to)
 
         // Get a reference to the recipient's Receiver
-        let receiverRef = recipient.getCapability(/public/flowTokenReceiver)
+        let receiverRef = recipient.getCapability(/public/exampleTokenReceiver)
             .borrow<&{FungibleToken.Receiver}>()
 			?? panic("Could not borrow receiver reference to the recipient's Vault")
 
@@ -44,3 +45,4 @@ transaction(amount: UFix64, to: Address, child: Address) {
         receiverRef.deposit(from: <-self.paymentVault)
     }
 }
+ 

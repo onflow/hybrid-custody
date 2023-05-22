@@ -18,3 +18,4 @@ transaction {
         acct.link<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.providerPath, target: d.storagePath)
     }
 }
+ 
