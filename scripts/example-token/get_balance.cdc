@@ -1,5 +1,3 @@
-// This script reads the balance field of an account's ExampleToken Balance
-
 import "FungibleToken"
 import "ExampleToken"
 

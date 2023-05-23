@@ -11,4 +11,3 @@ pub fun main(addr: Address) {
 
     let provider = factory.getCapability(acct: ref, path: providerPath) as! Capability<&{FungibleToken.Provider}>
 }
- 

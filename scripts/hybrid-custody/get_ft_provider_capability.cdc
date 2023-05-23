@@ -16,4 +16,3 @@ pub fun main(parent: Address, child: Address) {
     assert(providerCap.check(), message: "invalid provider capability")
     providerCap.borrow()!
 }
- 

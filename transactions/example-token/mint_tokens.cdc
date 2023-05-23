@@ -9,8 +9,6 @@ import "ExampleToken"
 
 transaction(recipient: Address, amount: UFix64) {
 
-    /// Reference to the Example Token Admin Resource object
-    // let tokenAdmin: &ExampleToken.Administrator
 
     /// Reference to the Fungible Token Receiver of the recipient
     let tokenReceiver: &{FungibleToken.Receiver}
@@ -21,12 +19,6 @@ transaction(recipient: Address, amount: UFix64) {
     prepare(signer: AuthAccount) {
         self.supplyBefore = ExampleToken.totalSupply
 
-        // Borrow a reference to the admin object
-        // assert(false, message: .toString())
-
-        // self.tokenAdmin = signer.borrow<&ExampleToken.Administrator>(from: ExampleToken.AdminStoragePath)
-        //     ?? panic("Signer is not the token admin")
-
         // Get the account of the recipient and borrow a reference to their receiver
         self.tokenReceiver = getAccount(recipient)
             .getCapability(ExampleToken.ReceiverPublicPath)
@@ -35,7 +27,6 @@ transaction(recipient: Address, amount: UFix64) {
     }
 
     execute {
-
         // Create a minter and mint tokens
         let minter <- ExampleToken.createNewMinter(allowedAmount: amount)
         let mintedVault <- minter.mintTokens(amount: amount)

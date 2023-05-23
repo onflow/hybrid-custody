@@ -101,7 +101,7 @@ pub fun testProxyAccount_hasChildAccounts() {
         message: "parent should have child accounts after configured"
     )
 }
-//TODO FIX THIS
+
 pub fun testProxyAccount_getFTCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -844,7 +844,6 @@ pub fun setup() {
         "FTProviderFactory": accounts["FTProviderFactory"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address,
         "ExampleToken": accounts["ExampleToken"]!.address
-
     }))
 
     // deploy standard libs first
@@ -860,7 +859,6 @@ pub fun setup() {
     // helper nft contract so we can actually talk to nfts with tests
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
     deploy("ExampleToken", accounts["ExampleToken"]!, "../contracts/standard/ExampleToken.cdc")
-
 
     // our main contract is last
     deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
