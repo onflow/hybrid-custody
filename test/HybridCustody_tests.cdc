@@ -371,6 +371,21 @@ pub fun testGetFlowBalanceByStoragePath() {
     )
 }
 
+pub fun testSetupChildAndParentMultiSig() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
+
+    txExecutor("hybrid-custody/setup_multi_sig.cdc", [child, parent], [filter.address, factory.address, filter.address], nil, nil)
+
+    assert(isParent(child: child, parent: parent), message: "parent account not found")
+}
+
 // --------------- End Test Cases --------------- 
 
 
@@ -553,9 +568,15 @@ pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): Str
 
 pub fun txExecutor(_ filePath: String, _ signers: [Test.Account], _ arguments: [AnyStruct], _ expectedError: String?, _ expectedErrorType: ErrorType?): Bool {
     let txCode = loadCode(filePath, "transactions")
+
+    let authorizers: [Address] = []
+    for s in signers {
+        authorizers.append(s.address)
+    }
+
     let tx = Test.Transaction(
         code: txCode,
-        authorizers: [signers[0].address],
+        authorizers: authorizers,
         signers: signers,
         arguments: arguments,
     )
