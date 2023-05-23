@@ -106,6 +106,7 @@ pub fun testProxyAccount_getFTCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
+    setupFTProvider(child)
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
     scriptExecutor("hybrid-custody/get_ft_provider_capability.cdc", [parent.address, child.address])
@@ -449,43 +450,42 @@ pub fun testSetupChildAndParentMultiSig() {
 
     assert(isParent(child: child, parent: parent), message: "parent account not found")
 pub fun testSendChildFtsWithParentSigner() {
-
     let parent = blockchain.createAccount()
     let child = blockchain.createAccount()
     let child2 = blockchain.createAccount()
+    let exampleToken = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
+    let mintAmount: UFix64 = 100.0
     let amount: UFix64 = 10.0
     setupFT(child2)
     setupFT(child)
     setupFTProvider(child)
+    
+    txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, mintAmount], nil, nil)
+    let balance: UFix64? = getBalance(child)
+    assert(balance == mintAmount, message: "balance should be".concat(mintAmount.toString()))
 
-    let balance: UFix64? = getBalance(child, amount)
-    assert(balance == amount, message: "balance should be".concat(amount.toString()))
-
-    let recipientBalanceBefore: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [child2.address])! as! UFix64) //TODO make getBalacne helper
+    let recipientBalanceBefore: UFix64? = getBalance(child2)
     assert(recipientBalanceBefore == 0.0, message: "recipient balance should be 0")
 
     txExecutor("hybrid-custody/send_child_ft_with_parent.cdc", [parent], [amount, child2.address, child.address], nil, nil)
 
-    let recipientBalanceAfter: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [child2.address])! as! UFix64)
-    assert(recipientBalanceAfter == amount, message: "recipient balance should be 10")
+    let recipientBalanceAfter: UFix64? = getBalance(child2)
+    assert(recipientBalanceAfter == amount, message: "recipient balance should be".concat(amount.toString()))
 }
 
-// Maybe move this to wrapper functions
 pub fun testAddExampleTokenToBalance() {
     let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
     let exampleToken = blockchain.createAccount()
 
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent) //TODO parent not needed here
+    setupFT(child)
 
     let amount: UFix64 = 100.0
     txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, amount], nil, nil)
 
-    let balance: UFix64? = getBalance(child, amount)
+    let balance: UFix64? = getBalance(child)
     assert(balance == amount, message: "balance should be".concat(amount.toString()))
 }
 
@@ -562,7 +562,6 @@ pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
 
     setupNFTCollection(acct)
     setupFT(acct)
-    setupFTProvider(acct)
 
 
     txExecutor("hybrid-custody/setup_child_account.cdc", [acct], [], nil, nil)
@@ -674,7 +673,7 @@ pub fun checkforAddresses(child: Test.Account, parent: Test.Account): Bool{
     return true
 }
 
-pub fun getBalance(_ acct: Test.Account, _ amount: UFix64): UFix64 {
+pub fun getBalance(_ acct: Test.Account): UFix64 {
     let balance: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [acct.address])! as! UFix64)
     return balance!
 }
