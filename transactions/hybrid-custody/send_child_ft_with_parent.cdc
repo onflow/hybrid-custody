@@ -8,7 +8,6 @@ transaction(amount: UFix64, to: Address, child: Address) {
     // The Vault resource that holds the tokens that are being transferred
     let paymentVault: @FungibleToken.Vault
 
-
     prepare(signer: AuthAccount) {
         // signer is the parent account
         // get the manager resource and borrow proxyAccount
@@ -19,10 +18,7 @@ transaction(amount: UFix64, to: Address, child: Address) {
         //get Ft cap from child account
         let cap = childAcct.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>()) ?? panic("no cap found")
         let providerCap = cap as! Capability<&{FungibleToken.Provider}>
-
-        if providerCap == nil {
-        return
-        }
+        assert(providerCap.check(), message: "invalid provider capability")
         
         // Get a reference to the child's stored vault
         let vaultRef = providerCap.borrow()!
