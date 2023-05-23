@@ -449,6 +449,8 @@ pub fun testSetupChildAndParentMultiSig() {
     txExecutor("hybrid-custody/setup_multi_sig.cdc", [child, parent], [filter.address, factory.address, filter.address], nil, nil)
 
     assert(isParent(child: child, parent: parent), message: "parent account not found")
+}
+
 pub fun testSendChildFtsWithParentSigner() {
     let parent = blockchain.createAccount()
     let child = blockchain.createAccount()
@@ -947,4 +949,3 @@ pub fun range(_ start: Int, _ end: Int): [Int]{
     })
     return res
 }
- 
