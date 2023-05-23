@@ -461,6 +461,9 @@ pub fun testSendChildFtsWithParentSigner() {
     setupFT(child)
     setupFTProvider(child)
 
+    let balance: UFix64? = getBalance(child, amount)
+    assert(balance == amount, message: "balance should be".concat(amount.toString()))
+
     let recipientBalanceBefore: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [child2.address])! as! UFix64) //TODO make getBalacne helper
     assert(recipientBalanceBefore == 0.0, message: "recipient balance should be 0")
 
@@ -482,8 +485,8 @@ pub fun testAddExampleTokenToBalance() {
     let amount: UFix64 = 100.0
     txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, amount], nil, nil)
 
-    let balance: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [child.address])! as! UFix64)
-    assert(balance == amount, message: "balance should be 100")
+    let balance: UFix64? = getBalance(child, amount)
+    assert(balance == amount, message: "balance should be".concat(amount.toString()))
 }
 
 pub fun testSetupChildWithDisplay() {
@@ -669,6 +672,11 @@ pub fun checkforAddresses(child: Test.Account, parent: Test.Account): Bool{
     let parentAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_parent_addresses.cdc", [child.address])) as! [Address]?
     assert(parentAddressResult?.contains(parent.address) == true, message: "parent address not found")
     return true
+}
+
+pub fun getBalance(_ acct: Test.Account, _ amount: UFix64): UFix64 {
+    let balance: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [acct.address])! as! UFix64)
+    return balance!
 }
 
 // ---------------- End script wrapper functions
