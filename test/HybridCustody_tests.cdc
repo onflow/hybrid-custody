@@ -519,7 +519,10 @@ pub fun testGetProxyAccountNFTCapabilities(){
     setupNFTCollection(child)
 
     let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-    assert(nftTypeIds[child.address]![0] == "A.ff8975b2fe6fb6f1.ExampleNFT.Collection", message: "typeId should be A.ff8975b2fe6fb6f1.ExampleNFT.Collection")
+   // assert(false, message: nftTypeIds[child.address]![0])
+    //TODO remove hardcoded typeID, 
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    assert(nftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
 }
 
 // TODO UNCOMMENT after #27 is merged
@@ -531,6 +534,7 @@ pub fun testGetProxyAccountNFTCapabilities(){
 //     setupFTProvider(child)
 
 //     let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+//      // TODO remove hardcoded typeID, use buildTypeIdentifier
 //      assert(ftTypeIds[child.address]![0] == "A.e9dd1081676bbc90.ExampleToken.Vault", message: "typeId should be A.e9dd1081676bbc90.ExampleToken.Vault")
 // }
 
