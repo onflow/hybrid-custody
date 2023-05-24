@@ -419,6 +419,38 @@ pub fun testGetAllCollectionViewsFromStorage() {
     )
 }
 
+pub fun testSetupChildAndParentMultiSig() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
+
+    txExecutor("hybrid-custody/setup_multi_sig.cdc", [child, parent], [filter.address, factory.address, filter.address], nil, nil)
+
+    assert(isParent(child: child, parent: parent), message: "parent account not found")
+}
+
+pub fun testSetupChildWithDisplay() {
+    let acct = blockchain.createAccount()
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
+
+    let name = "my name"
+    let desc = "description"
+    let thumbnail = "https://example.com/test.jpeg"
+
+    txExecutor("hybrid-custody/setup_child_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
+    assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
+}
+
 // --------------- End Test Cases --------------- 
 
 
@@ -458,7 +490,7 @@ pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
 
     setupNFTCollection(acct)
 
-    txExecutor("hybrid-custody/setup_managed_account.cdc", [acct], [], nil, nil)
+    txExecutor("hybrid-custody/setup_child_account.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupFactoryManager(_ acct: Test.Account) {
@@ -610,9 +642,15 @@ pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): Str
 
 pub fun txExecutor(_ filePath: String, _ signers: [Test.Account], _ arguments: [AnyStruct], _ expectedError: String?, _ expectedErrorType: ErrorType?): Bool {
     let txCode = loadCode(filePath, "transactions")
+
+    let authorizers: [Address] = []
+    for s in signers {
+        authorizers.append(s.address)
+    }
+
     let tx = Test.Transaction(
         code: txCode,
-        authorizers: [signers[0].address],
+        authorizers: authorizers,
         signers: signers,
         arguments: arguments,
     )
