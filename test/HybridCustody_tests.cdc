@@ -511,15 +511,13 @@ pub fun testSetupChildWithDisplay() {
 pub fun testGetProxyAccountNFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
     setupNFTCollection(child)
 
     let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-   // assert(false, message: nftTypeIds[child.address]![0])
-    //TODO remove hardcoded typeID, 
-    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
     assert(nftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
 }
 
