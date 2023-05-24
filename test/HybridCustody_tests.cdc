@@ -510,6 +510,29 @@ pub fun testSetupChildWithDisplay() {
     txExecutor("hybrid-custody/setup_child_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
     assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
 }
+pub fun testGetProxyAccountNFTCapabilities(){
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+    assert(nftTypeIds[child.address]![0] == "A.ff8975b2fe6fb6f1.ExampleNFT.Collection", message: "typeId should be A.ff8975b2fe6fb6f1.ExampleNFT.Collection")
+}
+
+// TODO UNCOMMENT after #27 is merged
+// pub fun testGetProxyAccountFTCapabilities(){
+//     let child = blockchain.createAccount()
+//     let parent = blockchain.createAccount()
+
+//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
+//     setupFTProvider(child)
+
+//     let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+//      assert(ftTypeIds[child.address]![0] == "A.e9dd1081676bbc90.ExampleToken.Vault", message: "typeId should be A.e9dd1081676bbc90.ExampleToken.Vault")
+// }
 
 pub fun testGetProxyAccountNFTCapabilities(){
     let child = blockchain.createAccount()
