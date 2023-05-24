@@ -16,4 +16,4 @@ maintains control of their managed accounts, but they can:
 
 | Network |  Address           |
 |---------|--------------------|
-| Testnet | 0x96b15ff6dfde11fe |
+| Testnet | [0x96b15ff6dfde11fe](https://testnet.contractbrowser.com/account/0x96b15ff6dfde11fe) |

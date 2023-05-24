@@ -15,6 +15,8 @@ pub let FilterKindAll = "all"
 pub let FilterKindAllowList = "allowlist"
 pub let FilterKindDenyList = "denylist"
 
+pub let exampleNFTPublicIdentifier = "ExampleNFTCollection"
+
 
 // --------------- Test cases --------------- 
 
@@ -364,10 +366,56 @@ pub fun testGetFlowBalanceByStoragePath() {
         result.containsKey(child.address) && result[child.address] == expectedChildBal,
         message: "child Flow balance incorrectly reported"
     )
-
     assert(
         result.containsKey(parent.address) && result[parent.address] == expectedParentBal,
         message: "parent Flow balance incorrectly reported"
+    )
+}
+
+pub fun testGetNFTDisplayViewFromPublic() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    setupNFTCollection(parent)
+
+    mintNFTDefault(accounts[exampleNFT]!, receiver: child)
+    mintNFTDefault(accounts[exampleNFT]!, receiver: parent)
+
+    let expectedChildIDs = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
+    let expectedParentIDs = (scriptExecutor("example-nft/get_ids.cdc", [parent.address]) as! [UInt64]?)!
+
+    let expectedAddressLength: Int = 2
+    let expectedViewsLength: Int = 1
+    let expectedAddressToIDs: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs}
+
+    scriptExecutor(
+        "test/test_get_nft_display_view_from_public.cdc",
+        [parent.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
+    )
+}
+
+pub fun testGetAllCollectionViewsFromStorage() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    setupNFTCollection(parent)
+
+    mintNFTDefault(accounts[exampleNFT]!, receiver: child)
+    mintNFTDefault(accounts[exampleNFT]!, receiver: parent)
+
+    let expectedAddressLength: Int = 2
+    let expectedViewsLength: Int = 1
+    let expectedAddressToCollectionLength: {Address: Int} = {parent.address: expectedViewsLength, child.address: expectedViewsLength}
+
+    scriptExecutor(
+        "test/test_get_all_collection_data_from_storage.cdc",
+        [parent.address, expectedAddressToCollectionLength]
     )
 }
 
@@ -451,6 +499,15 @@ pub fun setupFactoryManager(_ acct: Test.Account) {
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil, nil)
+}
+
+pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+    let filepath: String = "example-nft/mint_to_account.cdc"
+    txExecutor(filepath, [minter], [receiver.address, name, description, thumbnail], nil, nil)
+}
+
+pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
+    return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
 }
 
 pub fun setupFilter(_ acct: Test.Account, _ kind: String) {
