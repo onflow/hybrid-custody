@@ -30,11 +30,11 @@
 		"CapabilityProxy": "./contracts/CapabilityProxy.cdc",
 		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
 		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
+		"FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
 		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
 		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
 		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
 		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
-		"ExampleToken": "./contracts/standard/ExampleToken.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
 			"aliases": {
@@ -105,11 +105,11 @@
 				"CapabilityProxy",
 				"CapabilityFilter",
 				"CapabilityFactory",
+				"FTProviderFactory",
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
-				"ExampleNFT",
-				"ExampleToken"
+				"ExampleNFT"
 			],
 			"emulator-ft": [
 				"FungibleToken"

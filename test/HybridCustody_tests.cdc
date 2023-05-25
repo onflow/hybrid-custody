@@ -7,6 +7,7 @@ pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
 pub let app = "app"
 pub let child = "child"
 pub let nftFactory = "nftFactory"
+
 pub let exampleNFT = "ExampleNFT"
 pub let flowToken = "FlowToken"
 pub let capabilityFilter = "CapabilityFilter"
@@ -31,6 +32,13 @@ pub fun testSetupFactory() {
     setupNFTCollection(tmp)
 
     scriptExecutor("factory/get_provider_from_factory.cdc", [tmp.address])
+}
+
+pub fun testSetupFactoryWithFT() {
+    let tmp = blockchain.createAccount()
+    setupFactoryManager(tmp)
+
+    scriptExecutor("factory/get_ft_provider_from_factory.cdc", [tmp.address])
 }
 
 pub fun testSetupChildAccount() {
@@ -93,6 +101,15 @@ pub fun testProxyAccount_hasChildAccounts() {
         (scriptExecutor("hybrid-custody/has_child_accounts.cdc", [parent.address]) as! Bool?)!,
         message: "parent should have child accounts after configured"
     )
+}
+//TODO FIX THIS
+pub fun testProxyAccount_getFTCapability() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    scriptExecutor("hybrid-custody/get_ft_provider_capability.cdc", [parent.address, child.address])
 }
 
 pub fun testProxyAccount_getCapability() {
@@ -489,6 +506,8 @@ pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
     setupFactoryManager(factory)
 
     setupNFTCollection(acct)
+    setupFTProvider(acct)
+
 
     txExecutor("hybrid-custody/setup_child_account.cdc", [acct], [], nil, nil)
 }
@@ -508,6 +527,10 @@ pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, de
 
 pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
+}
+
+pub fun setupFTProvider(_ acct: Test.Account) {
+    txExecutor("ft-flow/setup.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupFilter(_ acct: Test.Account, _ kind: String) {
@@ -691,6 +714,7 @@ pub fun setup() {
     let cpFactory = blockchain.createAccount()
     let providerFactory = blockchain.createAccount()
     let cpAndProviderFactory = blockchain.createAccount()
+    let ftProviderFactory = blockchain.createAccount()
 
     // the account to store a factory manager
     let nftCapFactory = blockchain.createAccount()
@@ -724,6 +748,7 @@ pub fun setup() {
         "NFTCollectionPublicFactory": cpFactory,
         "NFTProviderAndCollectionFactory": providerFactory,
         "NFTProviderFactory": cpAndProviderFactory,
+        "FTProviderFactory": ftProviderFactory,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -749,6 +774,7 @@ pub fun setup() {
         "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
         "NFTProviderAndCollectionFactory": accounts["NFTProviderAndCollectionFactory"]!.address,
         "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
+        "FTProviderFactory": accounts["FTProviderFactory"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -772,6 +798,8 @@ pub fun setup() {
     deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
+    deploy("LinkedAccount", accounts["LinkedAccount"]!, "../contracts/LinkedAccount.cdc")
     deploy("HybridCustody", accounts["HybridCustody"]!, "../contracts/HybridCustody.cdc")
 }
 
