@@ -508,23 +508,6 @@ pub fun testSetupChildWithDisplay() {
     assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
 }
 
-pub fun testSetupChildWithDisplay() {
-    let acct = blockchain.createAccount()
-
-    let factory = getTestAccount(nftFactory)
-    let filter = getTestAccount(FilterKindAll)
-
-    setupFilter(filter, FilterKindAll)
-    setupFactoryManager(factory)
-
-    let name = "my name"
-    let desc = "description"
-    let thumbnail = "https://example.com/test.jpeg"
-
-    txExecutor("hybrid-custody/setup_child_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
-    assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
-}
-
 // --------------- End Test Cases --------------- 
 
 
