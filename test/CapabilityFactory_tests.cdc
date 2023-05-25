@@ -26,6 +26,7 @@ pub fun setup() {
     // main contract account being tested
     let capabilityFactory = blockchain.createAccount()
     let nftProviderFactory = blockchain.createAccount()
+    let ftProviderFactory = blockchain.createAccount()
 
     // flow-utils lib contracts
     let arrayUtils = blockchain.createAccount()
@@ -52,6 +53,7 @@ pub fun setup() {
         "ViewResolver": viewResolver,
         "CapabilityFactory": capabilityFactory,
         "NFTProviderFactory": nftProviderFactory,
+        "FTProviderFactory": ftProviderFactory,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -70,6 +72,7 @@ pub fun setup() {
         "AddressUtils": accounts["AddressUtils"]!.address,
         "CapabilityFactory": accounts["CapabilityFactory"]!.address,
         "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
+        "FTProviderFactory": accounts["FTProviderFactory"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -90,6 +93,7 @@ pub fun setup() {
     // our main contract is last
     deploy("CapabilityFactory", accounts["CapabilityFactory"]!, "../contracts/CapabilityFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
 }
 
 // BEGIN SECTION: Helper functions. All of the following were taken from

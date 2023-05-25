@@ -7,8 +7,8 @@ pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
 pub let app = "app"
 pub let child = "child"
 pub let nftFactory = "nftFactory"
+
 pub let exampleNFT = "ExampleNFT"
-pub let flowToken = "FlowToken"
 pub let capabilityFilter = "CapabilityFilter"
 
 pub let FilterKindAll = "all"
@@ -31,6 +31,13 @@ pub fun testSetupFactory() {
     setupNFTCollection(tmp)
 
     scriptExecutor("factory/get_provider_from_factory.cdc", [tmp.address])
+}
+
+pub fun testSetupFactoryWithFT() {
+    let tmp = blockchain.createAccount()
+    setupFactoryManager(tmp)
+
+    scriptExecutor("factory/get_ft_provider_from_factory.cdc", [tmp.address])
 }
 
 pub fun testSetupChildAccount() {
@@ -93,6 +100,16 @@ pub fun testProxyAccount_hasChildAccounts() {
         (scriptExecutor("hybrid-custody/has_child_accounts.cdc", [parent.address]) as! Bool?)!,
         message: "parent should have child accounts after configured"
     )
+}
+
+pub fun testProxyAccount_getFTCapability() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupFTProvider(child)
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    scriptExecutor("hybrid-custody/get_ft_provider_capability.cdc", [parent.address, child.address])
 }
 
 pub fun testProxyAccount_getCapability() {
@@ -434,6 +451,46 @@ pub fun testSetupChildAndParentMultiSig() {
     assert(isParent(child: child, parent: parent), message: "parent account not found")
 }
 
+pub fun testSendChildFtsWithParentSigner() {
+    let parent = blockchain.createAccount()
+    let child = blockchain.createAccount()
+    let child2 = blockchain.createAccount()
+    let exampleToken = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let mintAmount: UFix64 = 100.0
+    let amount: UFix64 = 10.0
+    setupFT(child2)
+    setupFT(child)
+    setupFTProvider(child)
+    
+    txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, mintAmount], nil, nil)
+    let balance: UFix64? = getBalance(child)
+    assert(balance == mintAmount, message: "balance should be".concat(mintAmount.toString()))
+
+    let recipientBalanceBefore: UFix64? = getBalance(child2)
+    assert(recipientBalanceBefore == 0.0, message: "recipient balance should be 0")
+
+    txExecutor("hybrid-custody/send_child_ft_with_parent.cdc", [parent], [amount, child2.address, child.address], nil, nil)
+
+    let recipientBalanceAfter: UFix64? = getBalance(child2)
+    assert(recipientBalanceAfter == amount, message: "recipient balance should be".concat(amount.toString()))
+}
+
+pub fun testAddExampleTokenToBalance() {
+    let child = blockchain.createAccount()
+    let exampleToken = blockchain.createAccount()
+
+    setupFT(child)
+
+    let amount: UFix64 = 100.0
+    txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, amount], nil, nil)
+
+    let balance: UFix64? = getBalance(child)
+    assert(balance == amount, message: "balance should be".concat(amount.toString()))
+}
+
 pub fun testSetupChildWithDisplay() {
     let acct = blockchain.createAccount()
 
@@ -489,6 +546,8 @@ pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
     setupFactoryManager(factory)
 
     setupNFTCollection(acct)
+    setupFT(acct)
+
 
     txExecutor("hybrid-custody/setup_child_account.cdc", [acct], [], nil, nil)
 }
@@ -508,6 +567,14 @@ pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, de
 
 pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
+}
+
+pub fun setupFT(_ acct: Test.Account) {
+    txExecutor("example-token/setup.cdc", [acct], [], nil, nil)
+}
+
+pub fun setupFTProvider(_ acct: Test.Account) {
+    txExecutor("example-token/setup_provider.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupFilter(_ acct: Test.Account, _ kind: String) {
@@ -589,6 +656,11 @@ pub fun checkforAddresses(child: Test.Account, parent: Test.Account): Bool{
     let parentAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_parent_addresses.cdc", [child.address])) as! [Address]?
     assert(parentAddressResult?.contains(parent.address) == true, message: "parent address not found")
     return true
+}
+
+pub fun getBalance(_ acct: Test.Account): UFix64 {
+    let balance: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [acct.address])! as! UFix64)
+    return balance!
 }
 
 // ---------------- End script wrapper functions
@@ -691,6 +763,7 @@ pub fun setup() {
     let cpFactory = blockchain.createAccount()
     let providerFactory = blockchain.createAccount()
     let cpAndProviderFactory = blockchain.createAccount()
+    let ftProviderFactory = blockchain.createAccount()
 
     // the account to store a factory manager
     let nftCapFactory = blockchain.createAccount()
@@ -707,6 +780,8 @@ pub fun setup() {
     
     // other contracts used in tests
     let exampleNFT = blockchain.createAccount()
+    let exampleToken = blockchain.createAccount()
+
     
     // actual test accounts
     let parent = blockchain.createAccount()
@@ -724,10 +799,12 @@ pub fun setup() {
         "NFTCollectionPublicFactory": cpFactory,
         "NFTProviderAndCollectionFactory": providerFactory,
         "NFTProviderFactory": cpAndProviderFactory,
+        "FTProviderFactory": ftProviderFactory,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
         "ExampleNFT": exampleNFT,
+        "ExampleToken": exampleToken,
         "parent": parent,
         "child1": child1,
         "child2": child2,
@@ -749,7 +826,9 @@ pub fun setup() {
         "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
         "NFTProviderAndCollectionFactory": accounts["NFTProviderAndCollectionFactory"]!.address,
         "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
-        "ExampleNFT": accounts["ExampleNFT"]!.address
+        "FTProviderFactory": accounts["FTProviderFactory"]!.address,
+        "ExampleNFT": accounts["ExampleNFT"]!.address,
+        "ExampleToken": accounts["ExampleToken"]!.address
     }))
 
     // deploy standard libs first
@@ -764,6 +843,7 @@ pub fun setup() {
 
     // helper nft contract so we can actually talk to nfts with tests
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleToken", accounts["ExampleToken"]!, "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last
     deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
@@ -772,6 +852,7 @@ pub fun setup() {
     deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
     deploy("HybridCustody", accounts["HybridCustody"]!, "../contracts/HybridCustody.cdc")
 }
 
@@ -851,4 +932,3 @@ pub fun range(_ start: Int, _ end: Int): [Int]{
     })
     return res
 }
- 
