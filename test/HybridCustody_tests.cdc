@@ -523,17 +523,14 @@ pub fun testGetProxyAccountNFTCapabilities(){
   
 
     let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-    assert(false, message: nftIdentifier)// nftTypeIds[child.address]![0])
     assert(
         nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![0] == nftIdentifier,
-        message: "typeId"
+        message: "typeId should be: ".concat(nftIdentifier)
     )
      assert(
         nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![1] == nftIdentifier2,
-        message: "typeId2"
+        message: "typeId should be: ".concat(nftIdentifier2)
     )
-  //  assert(nftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
-   // assert(nftTypeIds[child.address]![1] == nftIdentifier2, message: "typeId should be: ".concat(nftIdentifier2))
 
 }
 
