@@ -12,9 +12,9 @@ transaction {
         }
 
         acct.unlink(d.publicPath)
-        acct.link<&ExampleNFT2.Collection{ExampleNFT2.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>(d.publicPath, target: d.storagePath)
+        acct.link<&ExampleNFT2.Collection{ExampleNFT2.ExampleNFT2CollectionPublic, NonFungibleToken.CollectionPublic}>(d.publicPath, target: d.storagePath)
 
         acct.unlink(d.providerPath)
-        acct.link<&ExampleNFT2.Collection{ExampleNFT2.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.providerPath, target: d.storagePath)
+        acct.link<&ExampleNFT2.Collection{ExampleNFT2.ExampleNFT2CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.providerPath, target: d.storagePath)
     }
 }
