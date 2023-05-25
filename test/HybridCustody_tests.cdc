@@ -10,6 +10,8 @@ pub let child = "child"
 pub let nftFactory = "nftFactory"
 
 pub let exampleNFT = "ExampleNFT"
+pub let exampleNFT2 = "ExampleNFT2"
+pub let exampleToken = "ExampleToken"
 pub let capabilityFilter = "CapabilityFilter"
 
 pub let FilterKindAll = "all"
@@ -508,31 +510,46 @@ pub fun testSetupChildWithDisplay() {
     txExecutor("hybrid-custody/setup_child_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
     assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
 }
+
+// TODO fix test after adding ExampleNFT2
 pub fun testGetProxyAccountNFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    let nftIdentifier2 = buildTypeIdentifier(getTestAccount(exampleNFT2), exampleNFT2, "Collection")
+
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    setupNFTCollection(child)
+  
 
     let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-    assert(nftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
+    assert(false, message: nftIdentifier)// nftTypeIds[child.address]![0])
+    assert(
+        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![0] == nftIdentifier,
+        message: "typeId"
+    )
+     assert(
+        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![1] == nftIdentifier2,
+        message: "typeId2"
+    )
+  //  assert(nftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
+   // assert(nftTypeIds[child.address]![1] == nftIdentifier2, message: "typeId should be: ".concat(nftIdentifier2))
+
 }
 
-// TODO UNCOMMENT after #27 is merged
-// pub fun testGetProxyAccountFTCapabilities(){
-//     let child = blockchain.createAccount()
-//     let parent = blockchain.createAccount()
+pub fun testGetProxyAccountFTCapabilities(){
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleToken), exampleToken, "Vault")
 
-//     setupChildAndParent_FilterKindAll(child: child, parent: parent)
-//     setupFTProvider(child)
 
-//     let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-//      // TODO remove hardcoded typeID, use buildTypeIdentifier
-//      assert(ftTypeIds[child.address]![0] == "A.e9dd1081676bbc90.ExampleToken.Vault", message: "typeId should be A.e9dd1081676bbc90.ExampleToken.Vault")
-// }
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    setupFTProvider(child)
+
+    let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+    assert(ftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
+
+}
 
 pub fun testBlockchainNativeOnboarding() {
     let filter = getTestAccount(FilterKindAll)
@@ -609,6 +626,8 @@ pub fun setupFactoryManager(_ acct: Test.Account) {
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil, nil)
+    //TODO move this
+      txExecutor("example-nft-2/setup_full.cdc", [acct], [], nil, nil)
 }
 
 pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
@@ -831,6 +850,7 @@ pub fun setup() {
     
     // other contracts used in tests
     let exampleNFT = blockchain.createAccount()
+    let exampleNFT2 = blockchain.createAccount()
     let exampleToken = blockchain.createAccount()
 
     
@@ -855,6 +875,7 @@ pub fun setup() {
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
         "ExampleNFT": exampleNFT,
+        "ExampleNFT2": exampleNFT2,
         "ExampleToken": exampleToken,
         "parent": parent,
         "child1": child1,
@@ -880,6 +901,7 @@ pub fun setup() {
         "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
         "FTProviderFactory": accounts["FTProviderFactory"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address,
+        "ExampleNFT2": accounts["ExampleNFT2"]!.address,
         "ExampleToken": accounts["ExampleToken"]!.address
     }))
 
@@ -895,6 +917,7 @@ pub fun setup() {
 
     // helper nft contract so we can actually talk to nfts with tests
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT2", accounts["ExampleNFT2"]!, "../contracts/standard/ExampleNFT2.cdc")
     deploy("ExampleToken", accounts["ExampleToken"]!, "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last
