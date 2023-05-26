@@ -3,6 +3,7 @@ import Test
 pub var accounts: {String: Test.Account} = {}
 pub var blockchain = Test.newEmulatorBlockchain()
 pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
+pub let flowTokenAddress: Address = 0x0ae53cb6e3f42a79
 
 pub let app = "app"
 pub let child = "child"
@@ -305,7 +306,7 @@ pub fun testGetAddresses() {
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
-    checkforAddresses(child: child, parent: parent)
+    checkForAddresses(child: child, parent: parent)
 }
 
 pub fun testRemoveChildAccount() {
@@ -313,7 +314,7 @@ pub fun testRemoveChildAccount() {
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
-    checkforAddresses(child: child, parent: parent)
+    checkForAddresses(child: child, parent: parent)
 
 
     assert(isParent(child: child, parent: parent) == true, message: "is not parent of child account")
@@ -508,6 +509,31 @@ pub fun testSetupChildWithDisplay() {
     assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
 }
 
+pub fun testBlockchainNativeOnboarding() {
+    let filter = getTestAccount(FilterKindAll)
+    let factory = getTestAccount(nftFactory)
+
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
+
+    let app = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+    
+    let pubKeyStr = "1290b0382db250ffb4c2992039b1c9ed3b60e15afd4181ee0e0b9d5263e3a8aef4e91b1214f7baa44e30a31a1ce83489d37d5b0af64d848f4e2ce4e89818059e"
+    let expectedPubKey = PublicKey(
+            publicKey: pubKeyStr.decodeHex(),
+            signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
+        )
+
+    txExecutor("hybrid-custody/onboarding/blockchain-native.cdc", [parent, app], [pubKeyStr, 0.0, factory.address, filter.address], nil, nil)
+
+    let childAddresses = scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]) as! [Address]?
+        ?? panic("problem adding blockchain native child account to signing parent")
+    let child = Test.Account(address: childAddresses[0], publicKey: expectedPubKey)
+    
+    assert(checkForAddresses(child: child, parent: parent), message: "child account not linked to parent")
+}
+
 // --------------- End Test Cases --------------- 
 
 
@@ -649,7 +675,7 @@ pub fun getOwner(child: Test.Account): Address? {
     return res! as! Address
 }
 
-pub fun checkforAddresses(child: Test.Account, parent: Test.Account): Bool{
+pub fun checkForAddresses(child: Test.Account, parent: Test.Account): Bool {
     let childAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address])) as! [Address]?
     assert(childAddressResult?.contains(child.address) == true, message: "child address not found")
 
@@ -814,6 +840,7 @@ pub fun setup() {
     blockchain.useConfiguration(Test.Configuration({
         "FungibleToken": fungibleTokenAddress,
         "NonFungibleToken": accounts["NonFungibleToken"]!.address,
+        "FlowToken": flowTokenAddress,
         "MetadataViews": accounts["MetadataViews"]!.address,
         "ViewResolver": accounts["ViewResolver"]!.address,
         "ArrayUtils": accounts["ArrayUtils"]!.address,
@@ -932,3 +959,4 @@ pub fun range(_ start: Int, _ end: Int): [Int]{
     })
     return res
 }
+ 
