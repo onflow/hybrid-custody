@@ -5,7 +5,6 @@ import "FungibleToken"
 // identifies private paths with an accessible FungibleToken.Provider, and returns the corresponding typeIds
 pub fun main(addr: Address):AnyStruct {
   let account = getAuthAccount(addr)
-  let stored = {} as {String: Type} // remove
   let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
   var typeIdsWithProvider = {} as {Address: [String]} 
@@ -20,7 +19,6 @@ pub fun main(addr: Address):AnyStruct {
     // get all private paths
     addr.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
 			// Check which private paths have FT Provider AND can be borrowed
-      stored[path.toString()] = type
       if !type.isSubtype(of: providerType){
         return true
       }
