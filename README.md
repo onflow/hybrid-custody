@@ -2,6 +2,8 @@
 
 **NOTE: This contract is still under development, its address is likely to be redeployed to testnet once it is finished**
 
+**Please see [Flow's documentation about account linking](https://developers.flow.com/concepts/hybrid-custody/guides/linking-accounts) for more information and examples.**
+
 This repo contains a primary contract for managing ChildAccounts to permit
 hybrid custody in scenarios where apps only want to share a subset of resources on their
 accounts with various parents. In many cases, this will be a user's primary wallet outside of the
@@ -17,3 +19,4 @@ maintains control of their managed accounts, but they can:
 | Network |  Address           |
 |---------|--------------------|
 | Testnet | [0x96b15ff6dfde11fe](https://testnet.contractbrowser.com/account/0x96b15ff6dfde11fe) |
+
