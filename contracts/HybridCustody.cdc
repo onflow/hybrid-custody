@@ -173,7 +173,6 @@ pub contract HybridCustody {
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
-        access(contract) fun setDisplay(_ d: MetadataViews.Display)
         access(contract) fun parentRemoveChildCallback(parent: Address)
     }
 
@@ -317,13 +316,6 @@ pub contract HybridCustody {
             // Don't emit an event if nothing was removed
         }
 
-        pub fun setChildDisplay(child: Address, display: MetadataViews.Display) {
-            let acct = self.borrowAccount(addr: child)
-                ?? panic("child account not found")
-
-            acct.setDisplay(display)
-        }
-
         pub fun giveOwnerShip(addr: Address, to: Address) {
             let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
@@ -401,9 +393,6 @@ pub contract HybridCustody {
         // A bucket of resources so that the ProxyAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        // display is its own field on the ProxyAccount resource because only the parent should be able to set this field.
-        access(self) var display: MetadataViews.Display?
-
         pub let parent: Address
 
         pub fun getAddress(): Address {
@@ -424,10 +413,6 @@ pub contract HybridCustody {
 
         pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
-        }
-
-        access(contract) fun setDisplay(_ d: MetadataViews.Display) {
-            self.display = d
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
@@ -494,10 +479,6 @@ pub contract HybridCustody {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            switch view {
-                case Type<MetadataViews.Display>():
-                    return self.display
-            }
             return nil
         }
 
@@ -533,7 +514,6 @@ pub contract HybridCustody {
 
             self.data = {}
             self.resources <- {}
-            self.display = nil
         }
 
         destroy () {
