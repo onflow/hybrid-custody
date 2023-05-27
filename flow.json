@@ -68,6 +68,13 @@
 				"mainnet": "0xf233dcee88fe0abe"
 			}
 		},
+		"FlowToken": {
+			"aliases": {
+				"emulator": "0x0ae53cb6e3f42a79",
+				"testnet": "0x7e60df042a9c0868",
+				"mainnet": "0x1654653399040a61"
+			}
+		},
 		"AddressUtils": {
 			"source": "./modules/flow-utils/cadence/contracts/AddressUtils.cdc",
 			"aliases": {
