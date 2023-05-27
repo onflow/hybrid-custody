@@ -18,46 +18,46 @@ transaction(
 
     prepare(parent: AuthAccount, app: AuthAccount) {
         /* --- Account Creation --- */
-		//
-		// Create the child account, funding via the signing app account
-		let newAccount = AuthAccount(payer: app)
-		// Create a public key for the proxy account from string value in the provided arg
-		// **NOTE:** You may want to specify a different signature algo for your use case
-		let key = PublicKey(
-			publicKey: pubKey.decodeHex(),
-			signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
-		)
-		// Add the key to the new account
-		// **NOTE:** You may want to specify a different hash algo & weight best for your use case
-		newAccount.keys.add(
-			publicKey: key,
-			hashAlgorithm: HashAlgorithm.SHA3_256,
-			weight: 1000.0
-		)
+        //
+        // Create the child account, funding via the signing app account
+        let newAccount = AuthAccount(payer: app)
+        // Create a public key for the proxy account from string value in the provided arg
+        // **NOTE:** You may want to specify a different signature algo for your use case
+        let key = PublicKey(
+            publicKey: pubKey.decodeHex(),
+            signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
+        )
+        // Add the key to the new account
+        // **NOTE:** You may want to specify a different hash algo & weight best for your use case
+        newAccount.keys.add(
+            publicKey: key,
+            hashAlgorithm: HashAlgorithm.SHA3_256,
+            weight: 1000.0
+        )
 
-		/* --- (Optional) Additional Account Funding --- */
-		//
-		// Fund the new account if specified
-		if initialFundingAmt > 0.0 {
-			// Get a vault to fund the new account
-			let fundingProvider = app.borrow<&FlowToken.Vault{FungibleToken.Provider}>(
-					from: /storage/flowTokenVault
-				)!
-			// Fund the new account with the initialFundingAmount specified
-			newAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        /* --- (Optional) Additional Account Funding --- */
+        //
+        // Fund the new account if specified
+        if initialFundingAmt > 0.0 {
+            // Get a vault to fund the new account
+            let fundingProvider = app.borrow<&FlowToken.Vault{FungibleToken.Provider}>(
+                    from: /storage/flowTokenVault
+                )!
+            // Fund the new account with the initialFundingAmount specified
+            newAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
                 .borrow()!
-			    .deposit(
+                .deposit(
                     from: <-fundingProvider.withdraw(
                         amount: initialFundingAmt
                     )
                 )
-		}
+        }
 
-		/* Continue with use case specific setup */
-		//
-		// At this point, the newAccount can further be configured as suitable for
-		// use in your dapp (e.g. Setup a Collection, Mint NFT, Configure Vault, etc.)
-		// ...
+        /* Continue with use case specific setup */
+        //
+        // At this point, the newAccount can further be configured as suitable for
+        // use in your dapp (e.g. Setup a Collection, Mint NFT, Configure Vault, etc.)
+        // ...
 
         /* --- Link the AuthAccount Capability --- */
         //
