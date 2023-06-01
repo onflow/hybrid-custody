@@ -50,7 +50,7 @@ pub contract HybridCustody {
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
-    pub resource interface Account {
+    pub resource interface OwnedAccount {
         pub fun getAddress(): Address
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParentsAddresses(): [Address]
@@ -185,7 +185,7 @@ pub contract HybridCustody {
         pub fun removeOwned(addr: Address)
 
         // TODO: Owned account methods
-        pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}?
         pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
     }
 
@@ -210,7 +210,7 @@ pub contract HybridCustody {
     */
     pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
-        pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
+        pub let ownedAccounts: {Address: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
 
         // A bucket of structs so that the Manager resource can be easily extended with new functionality.
         pub let data: {String: AnyStruct}
@@ -264,7 +264,7 @@ pub contract HybridCustody {
             emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
         }
 
-        pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
+        pub fun addOwnedAccount(_ cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -298,7 +298,7 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}? {
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}? {
             if let cap = self.ownedAccounts[addr] {
                 return cap.borrow()
             }
@@ -550,7 +550,7 @@ pub contract HybridCustody {
     marking the account as owned by no one. Note that even if there isn't an owner, the parent accounts would still exist, allowing
     a form of Hybrid Custody which has no true owner over an account, but shared partial ownership.
     */
-    pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
+    pub resource ChildAccount: OwnedAccount, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
         priv var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
@@ -700,7 +700,7 @@ pub contract HybridCustody {
             let acct = self.borrowAccount()
 
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.link<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
+            let cap = acct.link<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(PrivatePath(identifier: identifier)!, target: HybridCustody.ChildStoragePath)
                 ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
