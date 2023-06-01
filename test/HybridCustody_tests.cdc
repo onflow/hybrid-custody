@@ -564,7 +564,7 @@ pub fun testBlockchainNativeOnboarding() {
             signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
         )
 
-    txExecutor("hybrid-custody/onboarding/blockchain-native.cdc", [parent, app], [pubKeyStr, 0.0, factory.address, filter.address], nil, nil)
+    txExecutor("hybrid-custody/onboarding/blockchain_native.cdc", [parent, app], [pubKeyStr, 0.0, factory.address, filter.address], nil, nil)
 
     let childAddresses = scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]) as! [Address]?
         ?? panic("problem adding blockchain native child account to signing parent")
