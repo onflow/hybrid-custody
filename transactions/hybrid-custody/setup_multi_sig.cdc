@@ -8,7 +8,7 @@ import "CapabilityFilter"
 
 import "MetadataViews"
 
-transaction(parentFilterAddress: Address, childAccountFactoryAddress: Address, childAccountFilterAddress: Address) {
+transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, childAccountFilterAddress: Address) {
     prepare(childAcct: AuthAccount, parentAcct: AuthAccount) {
         // --------------------- End setup of child account ---------------------
         var acctCap = childAcct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
@@ -33,7 +33,7 @@ transaction(parentFilterAddress: Address, childAccountFactoryAddress: Address, c
         // --------------------- Begin setup of parent account ---------------------
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
         if parentFilterAddress != nil {
-            filter = getAccount(parentFilterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+            filter = getAccount(parentFilterAddress!).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
         }
 
         if parentAcct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
