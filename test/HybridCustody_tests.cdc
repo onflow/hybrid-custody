@@ -591,43 +591,6 @@ pub fun testGetProxyAccountFTCapabilities(){
 
 }
 
-pub fun testGetProxyAccountNFTCapabilities(){
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
-    let nftIdentifier2 = buildTypeIdentifier(getTestAccount(exampleNFT2), exampleNFT2, "Collection")
-    
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    let isPublic = true
-    setupNFT2Collection(child)
-    addNFT2CollectionToProxy(child: child, parent: parent, isPublic: isPublic)
-
-    let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-    assert(
-        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![0] == nftIdentifier,
-        message: "typeId should be: ".concat(nftIdentifier)
-    )
-     assert(
-        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![1] == nftIdentifier2,
-        message: "typeId should be: ".concat(nftIdentifier2)
-    )
-
-}
-
-pub fun testGetProxyAccountFTCapabilities(){
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleToken), exampleToken, "Vault")
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-    setupFTProvider(child)
-
-    let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
-    assert(ftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
-
-}
-
 pub fun testBlockchainNativeOnboarding() {
     let filter = getTestAccount(FilterKindAll)
     let factory = getTestAccount(nftFactory)
@@ -703,10 +666,6 @@ pub fun setupFactoryManager(_ acct: Test.Account) {
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil, nil)
-}
-
-pub fun setupNFT2Collection(_ acct: Test.Account) {
-    txExecutor("example-nft-2/setup_full.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupNFT2Collection(_ acct: Test.Account) {
