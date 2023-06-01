@@ -134,7 +134,8 @@
 				"CapabilityFactory",
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
-				"NFTCollectionPublicFactory"
+				"NFTCollectionPublicFactory",
+				"FTProviderFactory"
 			]
 		}
 	}
