@@ -19,6 +19,8 @@ pub let FilterKindAllowList = "allowlist"
 pub let FilterKindDenyList = "denylist"
 
 pub let exampleNFTPublicIdentifier = "ExampleNFTCollection"
+pub let exampleNFT2PublicIdentifier = "ExampleNFT2Collection"
+
 
 
 // --------------- Test cases --------------- 
@@ -535,6 +537,47 @@ pub fun testGetProxyAccountNFTCapabilities(){
 
 }
 
+pub fun testGetNFTsAccessibleFromProxyAccount(){
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    let nftIdentifier2 = buildTypeIdentifier(getTestAccount(exampleNFT2), exampleNFT2, "Collection")
+    
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    setupNFT2Collection(child)
+
+    mintNFTDefault(accounts[exampleNFT]!, receiver: child)
+
+    let expectedChildIDs = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
+    let expectedParentIDs: [UInt64] = []
+    let expectedAddressToIDs: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs}
+
+    scriptExecutor(
+        "test/test_get_nft_display_view_from_public.cdc",
+        [parent.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
+    )
+
+    // Test we have capabilities to access the minted NFTs
+    scriptExecutor("test/test_get_accessible_proxy_nfts.cdc", [parent.address, expectedAddressToIDs])
+    
+    // Mint new nfts from ExampleNFT2 and assert that get_accessible_proxy_nfts.cdc does not return these nfts.
+    mintExampleNFT2Default(accounts[exampleNFT2]!, receiver: child)
+    let expectedChildIDs2 = (scriptExecutor("example-nft-2/get_ids.cdc", [child.address]) as! [UInt64]?)!
+    let expectedAddressToIDs2: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs2}
+
+    scriptExecutor(
+        "test/test_get_nft_display_view_from_public.cdc",
+        [parent.address, PublicPath(identifier: exampleNFT2PublicIdentifier)!, expectedAddressToIDs2]
+    )
+
+    let error = expectScriptFailure("test/test_get_accessible_proxy_nfts.cdc", [parent.address, expectedAddressToIDs2])
+    assert(contains(error, "Resulting ID does not match expected ID!"), message: "failed to find expected error message")
+}
+
+
+
 pub fun testGetProxyAccountFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -636,6 +679,15 @@ pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, de
 
 pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
+}
+
+pub fun mintExampleNFT2(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+    let filepath: String = "example-nft-2/mint_to_account.cdc"
+    txExecutor(filepath, [minter], [receiver.address, name, description, thumbnail], nil, nil)
+}
+
+pub fun mintExampleNFT2Default(_ minter: Test.Account, receiver: Test.Account) {
+    return mintExampleNFT2(minter, receiver: receiver, name: "example nft 2", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
 }
 
 pub fun setupFT(_ acct: Test.Account) {
