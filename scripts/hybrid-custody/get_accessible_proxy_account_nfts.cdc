@@ -6,10 +6,11 @@ import "MetadataViews"
 // This script iterates through a parent's child accounts, 
 // identifies private paths with an accessible NonFungibleToken.Provider, and returns the corresponding typeIds
 pub fun main(addr: Address):AnyStruct {
-  let account = getAuthAccount(addr)
   let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
-  var typeIdsWithProvider = {} as {Address: [String]} 
+  var typeIdsWithProvider = {} as {Address: [String]}
+
+  // Address -> nft UUID -> Display
   var nftViews = {} as {Address: {UInt64: MetadataViews.Display}} 
 
   
@@ -32,6 +33,7 @@ pub fun main(addr: Address):AnyStruct {
         let providerCap = cap as! Capability<&{NonFungibleToken.Provider}> 
 
         if !providerCap.check(){
+          // if this isn't a provider capability, exit the account iteration function for this path
           return true
         }
         foundTypes.append(cap.borrow<&AnyResource>()!.getType().identifier)
@@ -44,7 +46,7 @@ pub fun main(addr: Address):AnyStruct {
     acct.forEachStored(fun (path: StoragePath, type: Type): Bool {
 
       if typeIdsWithProvider[address] == nil {
-      return true
+        return true
       }
 
       for key in typeIdsWithProvider.keys {
