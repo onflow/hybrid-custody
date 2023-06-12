@@ -60,7 +60,7 @@ pub contract CapabilityProxy {
         }
 
         pub fun getAllPrivate(): [Capability] {
-            return self.publicCapabilities.values
+            return self.privateCapabilities.values
         }
 
         pub fun findFirstPublicType(_ type: Type): Type? {
@@ -85,6 +85,9 @@ pub contract CapabilityProxy {
         // ------- End Getter methods
 
         pub fun addCapability(cap: Capability, isPublic: Bool) {
+            pre {
+                cap.check<&AnyResource>(): "Invalid Capability provided"
+            }
             if isPublic {
                 self.publicCapabilities.insert(key: cap.getType(), cap)
             } else {

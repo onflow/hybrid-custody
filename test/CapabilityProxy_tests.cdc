@@ -28,6 +28,19 @@ pub fun testShareExampleNFTCollectionPublic() {
     sharePublicExampleNFT(signer)
     getExampleNFTCollectionFromProxy(signer)
     findExampleNFTCollectionType(signer)
+    getAllPublicContainsCollection(signer)
+}
+
+pub fun testShareExampleNFTCollectionPrivate() {
+    let signer = accounts["creator"]!
+    setupProxy(signer)
+
+    setupNFTCollection(signer)
+
+    sharePrivateExampleNFT(signer)
+    getExampleNFTProviderFromProxy(signer)
+    findExampleNFTProviderType(signer)
+    getAllPrivateContainsProvider(signer)
 }
 
 // END SECTION - Test Cases
@@ -192,6 +205,11 @@ pub fun sharePublicExampleNFT(_ acct: Test.Account) {
     txExecutor(txCode, [acct], [], nil, nil)
 }
 
+pub fun sharePrivateExampleNFT(_ acct: Test.Account) {
+    let txCode = loadCode("proxy/add_private_nft_collection.cdc", "transactions")
+    txExecutor(txCode, [acct], [], nil, nil)
+}
+
 pub fun setupNFTCollection(_ acct: Test.Account) {
     let txCode = loadCode("example-nft/setup_full.cdc", "transactions")
     txExecutor(txCode, [acct], [], nil, nil)
@@ -216,8 +234,28 @@ pub fun getExampleNFTCollectionFromProxy(_ owner: Test.Account) {
     assert(borrowed, message: "failed to borrow proxy")
 }
 
+pub fun getExampleNFTProviderFromProxy(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("proxy/get_nft_provider.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow proxy")
+}
+
+pub fun getAllPublicContainsCollection(_ owner: Test.Account) {
+    let success = scriptExecutor("proxy/get_all_public_caps.cdc", [owner.address])! as! Bool
+    assert(success, message: "failed to borrow proxy")
+}
+
+pub fun getAllPrivateContainsProvider(_ owner: Test.Account) {
+    let success = scriptExecutor("proxy/get_all_private_capts.cdc", [owner.address])! as! Bool
+    assert(success, message: "failed to borrow proxy")
+}
+
 pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
     let borrowed = scriptExecutor("proxy/find_nft_collection_cap.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow proxy")
+}
+
+pub fun findExampleNFTProviderType(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("proxy/find_nft_provider_cap.cdc", [owner.address])! as! Bool
     assert(borrowed, message: "failed to borrow proxy")
 }
 
