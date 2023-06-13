@@ -140,9 +140,13 @@ pub contract HybridCustody {
         // addCapabilityToProxy
         // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
         // permitting anyone to borrow it.
-        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
+        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool) {
+            pre {
+                cap.check<&AnyResource>(): "Invalid Capability provided"
+            }
+        }
 
-        pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
+        pub fun removeCapabilityFromProxy(parent: Address, cap: Capability)
     }
 
     // Public methods exposed on a proxy account resource. ChildAccountPublic will share
@@ -172,7 +176,11 @@ pub contract HybridCustody {
         pub fun getPublicCapFromProxy(type: Type): Capability?
 
         access(contract) fun redeemedCallback(_ addr: Address)
-        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
+        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
+            pre {
+                managerCapabilityFilter == nil || managerCapabilityFilter!.check(): "Invalid Manager Capability Filter"
+            }
+        }
         access(contract) fun setDisplay(_ d: MetadataViews.Display)
         access(contract) fun parentRemoveChildCallback(parent: Address)
     }
@@ -186,7 +194,11 @@ pub contract HybridCustody {
 
         // TODO: Owned account methods
         pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}?
-        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
+        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+            pre {
+                cap == nil || cap!.check(): "Invalid Manager Capability Filter"
+            }
+        }
     }
 
     // Functions anyone can call on a manager to get information about an account such as
@@ -222,7 +234,7 @@ pub contract HybridCustody {
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
         pub let filter: Capability<&{CapabilityFilter.Filter}>?
 
-        pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
+        pub fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
                 self.accounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -264,7 +276,7 @@ pub contract HybridCustody {
             emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
         }
 
-        pub fun addOwnedAccount(_ cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
+        pub fun addOwnedAccount(cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -349,6 +361,9 @@ pub contract HybridCustody {
         }
 
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
+            pre {
+                filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
+            }
             self.accounts = {}
             self.ownedAccounts = {}
             self.filter = filter
@@ -418,11 +433,11 @@ pub contract HybridCustody {
             self.managerCapabilityFilter = managerCapabilityFilter
         }
 
-        pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+        pub fun setCapabilityFactory(cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
             self.factory = cap
         }
 
-        pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>) {
+        pub fun setCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
         }
 
@@ -524,6 +539,12 @@ pub contract HybridCustody {
             _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>,
             _ parent: Address
         ) {
+            pre {
+                childCap.check(): "Provided childCap Capability is invalid"
+                factory.check(): "Provided factory Capability is invalid"
+                filter.check(): "Provided filter Capability is invalid"
+                proxy.check(): "Provided proxy Capability is invalid"
+            }
             self.childCap = childCap
             self.factory = factory
             self.filter = filter
@@ -767,12 +788,12 @@ pub contract HybridCustody {
 
         pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
             let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
-            p.setCapabilityFactory(cap)
+            p.setCapabilityFactory(cap: cap)
         }
 
         pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
             let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
-            p.setCapabilityFilter(cap)
+            p.setCapabilityFilter(cap: cap)
         }
 
         pub fun borrowCapabilityProxyForParent(parent: Address): &CapabilityProxy.Proxy? {
@@ -780,13 +801,13 @@ pub contract HybridCustody {
             return self.borrowAccount().borrow<&CapabilityProxy.Proxy>(from: StoragePath(identifier: identifier)!)
         }
 
-        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool) {
+        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool) {
             let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
             let proxy = self.borrowCapabilityProxyForParent(parent: parent) ?? panic("could not borrow capability proxy resource for parent address")
             proxy.addCapability(cap: cap, isPublic: isPublic)
         }
 
-        pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability) {
+        pub fun removeCapabilityFromProxy(parent: Address, cap: Capability) {
             let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
             let proxy = self.borrowCapabilityProxyForParent(parent: parent) ?? panic("could not borrow capability proxy resource for parent address")
             proxy.removeCapability(cap: cap)
@@ -858,6 +879,9 @@ pub contract HybridCustody {
     }
 
     pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
+        pre {
+            filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
+        }
         let manager <- create Manager(filter: filter)
         emit CreatedManager(id: manager.uuid)
         return <- manager

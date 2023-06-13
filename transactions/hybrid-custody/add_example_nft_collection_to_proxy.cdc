@@ -15,6 +15,6 @@ transaction(parent: Address, isPublic: Bool) {
         acct.link<&ExampleNFT.Collection>(path, target: ExampleNFT.CollectionStoragePath)
         let cap = acct.getCapability<&ExampleNFT.Collection>(path)
 
-        c.addCapabilityToProxy(parent: parent, cap, isPublic: isPublic)
+        c.addCapabilityToProxy(parent: parent, cap: cap, isPublic: isPublic)
     }
 }

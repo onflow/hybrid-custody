@@ -68,6 +68,6 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         let manager = parentAcct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")
 
-        manager.addAccount(cap)
+        manager.addAccount(cap: cap)
     }
 }

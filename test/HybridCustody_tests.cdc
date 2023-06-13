@@ -139,6 +139,16 @@ pub fun testProxyAccount_getPublicCapability() {
     scriptExecutor("hybrid-custody/get_nft_collection_public_capability.cdc", [parent.address, child.address])
 }
 
+pub fun testCreateManagerWithInvalidFilterFails() {
+    let parent = blockchain.createAccount()
+
+    let error = expectScriptFailure("test/create_manager_with_invalid_filter.cdc", [parent.address])
+    assert(
+        contains(error, "Invalid CapabilityFilter Filter capability provided"),
+        message: "Manager init did not fail as expected on invalid Filter Capability"
+    )
+}
+
 pub fun testCheckParentRedeemedStatus() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
