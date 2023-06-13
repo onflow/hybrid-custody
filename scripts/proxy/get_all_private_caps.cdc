@@ -4,7 +4,7 @@ import "NonFungibleToken"
 import "ExampleNFT"
 
 pub fun main(address: Address): Bool {
-    let privateCaps: [Capability] = getAuthAccount(addr).getCapability<&CapabilityProxy.Proxy>(CapabilityProxy.PrivatePath)
+    let privateCaps: [Capability] = getAuthAccount(address).getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath)
         .borrow()
         ?.getAllPrivate()
         ?? panic("could not borrow proxy")

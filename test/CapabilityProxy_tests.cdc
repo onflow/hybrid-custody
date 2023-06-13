@@ -245,7 +245,7 @@ pub fun getAllPublicContainsCollection(_ owner: Test.Account) {
 }
 
 pub fun getAllPrivateContainsProvider(_ owner: Test.Account) {
-    let success = scriptExecutor("proxy/get_all_private_capts.cdc", [owner.address])! as! Bool
+    let success = scriptExecutor("proxy/get_all_private_caps.cdc", [owner.address])! as! Bool
     assert(success, message: "failed to borrow proxy")
 }
 
