@@ -140,7 +140,11 @@ pub contract HybridCustody {
         // addCapabilityToProxy
         // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
         // permitting anyone to borrow it.
-        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool)
+        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool) {
+            pre {
+                cap.check<&AnyResource>(): "Invalid Capability provided"
+            }
+        }
 
         pub fun removeCapabilityFromProxy(parent: Address, cap: Capability)
     }
