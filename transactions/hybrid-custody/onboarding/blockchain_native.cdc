@@ -127,7 +127,7 @@ transaction(
         // Get a reference to the Manager and add the account
         let managerRef = parent.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")
-        managerRef.addAccount(cap)
+        managerRef.addAccount(cap: cap)
     }
 }
  
