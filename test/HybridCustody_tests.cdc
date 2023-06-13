@@ -625,9 +625,7 @@ pub fun testSetDefaultManagerFilter() {
 
     let filter = getTestAccount(FilterKindDenyList)
     setupFilter(filter, FilterKindDenyList)
-    
-    // TODO: make a new child account and claim it on the parent
-    // TODO: try to get a provider that is no longer accessible (the default propagated)
+
     txExecutor("hybrid-custody/set_default_manager_cap.cdc", [parent], [filter.address], nil, nil)
 
     let child2 = blockchain.createAccount()
