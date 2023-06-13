@@ -140,7 +140,11 @@ pub contract HybridCustody {
         // addCapabilityToProxy
         // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
         // permitting anyone to borrow it.
-        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
+        pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool) {
+            pre {
+                cap.check<&AnyResource>(): "Invalid Capability provided"
+            }
+        }
 
         pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
     }
@@ -172,7 +176,11 @@ pub contract HybridCustody {
         pub fun getPublicCapFromProxy(type: Type): Capability?
 
         access(contract) fun redeemedCallback(_ addr: Address)
-        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
+        access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
+            pre {
+                managerCapabilityFilter == nil || managerCapabilityFilter!.check(): "Invalid Manager Capability Filter"
+            }
+        }
         access(contract) fun setDisplay(_ d: MetadataViews.Display)
         access(contract) fun parentRemoveChildCallback(parent: Address)
     }
@@ -186,7 +194,11 @@ pub contract HybridCustody {
 
         // TODO: Owned account methods
         pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}?
-        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
+        pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+            pre {
+                cap == nil || cap!.check(): "Invalid Manager Capability Filter"
+            }
+        }
     }
 
     // Functions anyone can call on a manager to get information about an account such as
@@ -349,6 +361,9 @@ pub contract HybridCustody {
         }
 
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
+            pre {
+                filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
+            }
             self.accounts = {}
             self.ownedAccounts = {}
             self.filter = filter
@@ -524,6 +539,12 @@ pub contract HybridCustody {
             _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>,
             _ parent: Address
         ) {
+            pre {
+                childCap.check(): "Provided childCap Capability is invalid"
+                factory.check(): "Provided factory Capability is invalid"
+                filter.check(): "Provided filter Capability is invalid"
+                proxy.check(): "Provided proxy Capability is invalid"
+            }
             self.childCap = childCap
             self.factory = factory
             self.filter = filter
@@ -858,6 +879,9 @@ pub contract HybridCustody {
     }
 
     pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
+        pre {
+            filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
+        }
         let manager <- create Manager(filter: filter)
         emit CreatedManager(id: manager.uuid)
         return <- manager
