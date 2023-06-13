@@ -220,7 +220,7 @@ pub contract HybridCustody {
 
         // An optional filter to gate what capabilities are permitted to be returned from a proxy account
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
-        pub let filter: Capability<&{CapabilityFilter.Filter}>?
+        pub var filter: Capability<&{CapabilityFilter.Filter}>?
 
         pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
@@ -243,6 +243,14 @@ pub contract HybridCustody {
                 ?? panic("child account not found")
 
             acct.setManagerCapabilityFilter(cap)
+        }
+
+        pub fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
+            pre {
+                cap == nil || cap!.check(): "supplied capability must be nil or check must pass"
+            }
+
+            self.filter = cap
         }
 
         pub fun removeChild(addr: Address) {
