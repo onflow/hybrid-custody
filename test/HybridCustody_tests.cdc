@@ -305,7 +305,7 @@ pub fun testMetadata_ChildAccount_Metadata() {
     assert(name == resolvedName, message: "names do not match")
 }
 
-pub fun testGetAddresses() {
+pub fun testGetChildAddresses() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
