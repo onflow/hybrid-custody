@@ -4,10 +4,10 @@ import "NonFungibleToken"
 import "ExampleNFT"
 
 pub fun main(address: Address): Bool {
-    let proxy = getAuthAccount(address).getCapability<&{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath).borrow()
-        ?? panic("proxy not found")
-
-    let privateCaps: [Capability] = proxy.getAllPrivate()
+    let privateCaps: [Capability] = getAuthAccount(address).getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath)
+        .borrow()
+        ?.getAllPrivate()
+        ?? panic("could not borrow proxy")
 
     let desiredType: Type = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()
 

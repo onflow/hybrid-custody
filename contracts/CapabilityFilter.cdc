@@ -41,7 +41,7 @@ pub contract CapabilityFilter {
                 return !self.deniedTypes.containsKey(item.getType())
             }
 
-            return true
+            return false
         }
 
         pub fun getDetails(): AnyStruct {
