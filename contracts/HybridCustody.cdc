@@ -732,6 +732,7 @@ pub contract HybridCustody {
             self.acctOwner = to
             self.relinquishedOwnership = false
 
+            emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: to, proxy: false, active: false)
             emit OwnershipGranted(id: self.uuid, child: self.acct.address, owner: to)
         }
 
