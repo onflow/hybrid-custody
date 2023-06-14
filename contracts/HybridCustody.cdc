@@ -271,7 +271,7 @@ pub contract HybridCustody {
             
             if !cap.check() {
                 // Emit event if invalid capability
-                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, owner: nil,proxy: true, active: false)
+                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, owner: nil, proxy: true, active: false)
                 return
             }
 
