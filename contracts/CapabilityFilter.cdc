@@ -32,8 +32,9 @@ pub contract CapabilityFilter {
         }
 
         pub fun removeType(_ type: Type) {
-            self.deniedTypes.remove(key: type)
-            emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            if let removed = self.deniedTypes.remove(key: type) {
+                emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            }
         }
 
         pub fun allowed(cap: Capability): Bool {
@@ -70,8 +71,9 @@ pub contract CapabilityFilter {
         }
 
         pub fun removeType(_ type: Type) {
-            self.allowedTypes.remove(key: type)
-            emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            if let removed = self.allowedTypes.remove(key: type) {
+                emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            }
         }
 
         pub fun allowed(cap: Capability): Bool {
