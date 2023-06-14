@@ -586,8 +586,6 @@ pub fun testGetNFTsAccessibleFromProxyAccount(){
     assert(contains(error, "Resulting ID does not match expected ID!"), message: "failed to find expected error message")
 }
 
-
-
 pub fun testGetProxyAccountFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -624,6 +622,31 @@ pub fun testBlockchainNativeOnboarding() {
     let child = Test.Account(address: childAddresses[0], publicKey: expectedPubKey)
     
     assert(checkForAddresses(child: child, parent: parent), message: "child account not linked to parent")
+}
+
+pub fun testSetDefaultManagerFilter() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindDenyList)
+    setupFilter(filter, FilterKindDenyList)
+
+    txExecutor("hybrid-custody/set_default_manager_cap.cdc", [parent], [filter.address], nil, nil)
+
+    let child2 = blockchain.createAccount()
+    setupChildAndParent_FilterKindAll(child: child2, parent: parent)
+    setupNFTCollection(child2)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child2.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
 }
 
 // --------------- End Test Cases --------------- 
