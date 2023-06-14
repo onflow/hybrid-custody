@@ -296,10 +296,6 @@ pub contract HybridCustody {
             emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
         }
 
-        pub fun getAddresses(): [Address] {
-            return self.accounts.keys
-        }
-
         pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}? {
             let cap = self.accounts[addr]
             if cap == nil {
