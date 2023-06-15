@@ -20,6 +20,19 @@ pub fun testGetProviderCapability() {
     scriptExecutor("factory/get_nft_provider_from_factory.cdc", [signer.address])
 }
 
+pub fun testGetSupportedTypesFromManager() {
+    let tmp = blockchain.createAccount()
+    setupNFTCollection(tmp)
+
+    setupCapabilityFactoryManager(tmp)
+
+    let supportedTypes = (scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address]) as! [Type]?)!
+    assert(
+        supportedTypes.length == 4,
+        message: "Removing NFTProviderFactory failed"
+    )
+}
+
 pub fun testAddFactoryFails() {
     let tmp = blockchain.createAccount()
     setupNFTCollection(tmp)
