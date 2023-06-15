@@ -8,9 +8,11 @@ pub fun main(address: Address): Bool {
     let managerRef = getAuthAccount(address).borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
         ?? panic("CapabilityFactory Manager not found")
     
-    let nftProviderFactory = NFTProviderFactory.Factory()
+    let expectedType = Type<NFTProviderFactory.Factory>()
     
-    managerRef.addFactory(Type<&{NonFungibleToken.Provider}>(), nftProviderFactory)
+    if let removed = managerRef.removeFactory(Type<&{NonFungibleToken.Provider}>()) {
+        return removed.getType() == expectedType
+    }
 
-    return true
+    return false
 }

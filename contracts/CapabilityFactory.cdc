@@ -28,6 +28,7 @@ pub contract CapabilityFactory {
     /// Getter defines an interface for retrieval of a Factory if contained within the implementing resource
     ///
     pub resource interface Getter {
+        pub fun getSupportedTypes(): [Type]
         pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
     }
 
@@ -37,6 +38,22 @@ pub contract CapabilityFactory {
     pub resource Manager: Getter {
         /// Mapping of Factories indexed on Type of Capability they retrieve
         pub let factories: {Type: {CapabilityFactory.Factory}}
+
+        /// Retrieves a list of Types supported by contained Factories
+        ///
+        /// @return List of Types supported by the Manager
+        ///
+        pub fun getSupportedTypes(): [Type] {
+            return self.factories.keys
+        }
+
+        /// Retrieves a Factory from the Manager, returning it or nil if it doesn't exist
+        ///
+        /// @param t: Type the Factory is indexed on
+        ///
+        pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}? {
+            return self.factories[t]
+        }
 
         /// Adds a Factory to the Manager, conditioned on the Factory not already existing
         ///
@@ -59,12 +76,12 @@ pub contract CapabilityFactory {
             self.factories[t] = f
         }
 
-        /// Removes a Factory from the Manager, returning it or nil if it doesn't exist
+        /// Removes a Factory from the Manager, returning it or nil if it didn't exist
         ///
         /// @param t: Type the Factory is indexed on
         ///
-        pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}? {
-            return self.factories[t]
+        pub fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
+            return self.factories.remove(key: t)
         }
 
         init () {

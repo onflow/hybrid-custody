@@ -42,6 +42,18 @@ pub fun testUpdateNFTProviderFactory() {
     scriptExecutor("test/update_nft_provider_factory.cdc", [tmp.address])
 }
 
+pub fun testRemoveNFTProviderFactory() {
+    let tmp = blockchain.createAccount()
+    setupNFTCollection(tmp)
+
+    setupCapabilityFactoryManager(tmp)
+
+    assert(
+        (scriptExecutor("test/remove_nft_provider_factory.cdc", [tmp.address]) as! Bool?)!,
+        message: "Removing NFTProviderFactory failed"
+    )
+}
+
 // END SECTION - Test Cases
 
 pub fun setup() {
