@@ -26,13 +26,6 @@ transaction {
 
         let manager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("manager not found")
-        
-        let factoryMapping = {
-            Type<&{NonFungibleToken.CollectionPublic}>(): NFTCollectionPublicFactory.Factory(),
-            Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(): NFTProviderAndCollectionFactory.Factory(),
-            Type<&{NonFungibleToken.Provider}>(): NFTProviderFactory.Factory(),
-            Type<&{FungibleToken.Provider}>(): FTProviderFactory.Factory()
-        }
 
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
         manager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
