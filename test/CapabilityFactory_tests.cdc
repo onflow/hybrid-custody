@@ -20,11 +20,35 @@ pub fun testGetProviderCapability() {
     scriptExecutor("factory/get_nft_provider_from_factory.cdc", [signer.address])
 }
 
+pub fun testAddFactoryFails() {
+    let tmp = blockchain.createAccount()
+    setupNFTCollection(tmp)
+
+    setupCapabilityFactoryManager(tmp)
+
+    let error = expectScriptFailure("test/add_nft_provider_factory.cdc", [tmp.address])
+    assert(
+        contains(error, "Factory of given type already exists"),
+        message: "Adding existing Factory should have failed"
+    )
+}
+
+pub fun testUpdateNFTProviderFactory() {
+    let tmp = blockchain.createAccount()
+    setupNFTCollection(tmp)
+
+    setupCapabilityFactoryManager(tmp)
+
+    scriptExecutor("test/update_nft_provider_factory.cdc", [tmp.address])
+}
+
 // END SECTION - Test Cases
 
 pub fun setup() {
     // main contract account being tested
     let capabilityFactory = blockchain.createAccount()
+    let nftCollectionPublicFactory = blockchain.createAccount()
+    let nftProviderAndCollectionFactory = blockchain.createAccount()
     let nftProviderFactory = blockchain.createAccount()
     let ftProviderFactory = blockchain.createAccount()
 
@@ -52,6 +76,8 @@ pub fun setup() {
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
         "CapabilityFactory": capabilityFactory,
+        "NFTCollectionPublicFactory": nftCollectionPublicFactory,
+        "NFTProviderAndCollectionFactory": nftProviderAndCollectionFactory,
         "NFTProviderFactory": nftProviderFactory,
         "FTProviderFactory": ftProviderFactory,
         "ArrayUtils": arrayUtils,
@@ -71,6 +97,8 @@ pub fun setup() {
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
         "CapabilityFactory": accounts["CapabilityFactory"]!.address,
+        "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
+        "NFTProviderAndCollectionFactory": accounts["NFTProviderAndCollectionFactory"]!.address,
         "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
         "FTProviderFactory": accounts["FTProviderFactory"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
@@ -92,6 +120,8 @@ pub fun setup() {
 
     // our main contract is last
     deploy("CapabilityFactory", accounts["CapabilityFactory"]!, "../contracts/CapabilityFactory.cdc")
+    deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
+    deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
     deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
 }
@@ -176,6 +206,42 @@ pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
 pub fun loadCode(_ fileName: String, _ baseDirectory: String): String {
     return Test.readFile("../".concat(baseDirectory).concat("/").concat(fileName))
 }
+
+// Copied functions from flow-utils so we can assert on error conditions
+// https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/StringUtils.cdc
+pub fun contains(_ s: String, _ substr: String): Bool {
+    if let index =  index(s, substr, 0) {
+        return true
+    }
+    return false
+}
+
+ // https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/StringUtils.cdc
+pub fun index(_ s : String, _ substr : String, _ startIndex: Int): Int?{
+    for i in range(startIndex,s.length-substr.length+1){
+        if s[i]==substr[0] && s.slice(from:i, upTo:i+substr.length) == substr{
+            return i
+        }
+    }
+    return nil
+}
+
+// https://github.com/green-goo-dao/flow-utils/blob/main/cadence/contracts/ArrayUtils.cdc
+pub fun rangeFunc(_ start: Int, _ end: Int, _ f : ((Int):Void) ) {
+    var current = start
+    while current < end{
+        f(current)
+        current = current + 1
+    }
+}
+
+pub fun range(_ start: Int, _ end: Int): [Int]{
+    var res:[Int] = []
+    rangeFunc(start, end, fun (i:Int){
+        res.append(i)
+    })
+    return res
+}
 // END SECTION - Helper functions
 
 // BEGIN SECTION - transactions used in tests
@@ -198,6 +264,11 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: flowtyThumbnail)
 }
 
+pub fun setupCapabilityFactoryManager(_ acct: Test.Account) {
+    let txCode = loadCode("factory/setup.cdc", "transactions")
+    txExecutor(txCode, [acct], [], nil, nil)
+}
+
 // END SECTION - transactions use in tests
 
 
@@ -211,6 +282,14 @@ pub fun getExampleNFTCollectionFromProxy(_ owner: Test.Account) {
 pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
     let borrowed = scriptExecutor("proxy/find_nft_collection_cap.cdc", [owner.address])! as! Bool
     assert(borrowed, message: "failed to borrow proxy")
+}
+
+pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {
+    let scriptCode = loadCode(scriptName, "scripts")
+    let scriptResult = blockchain.executeScript(scriptCode, arguments)
+
+    assert(scriptResult.error != nil, message: "script error was expected but there is no error message")
+    return scriptResult.error!.message
 }
 
 // END SECTION - scripts used in tests
