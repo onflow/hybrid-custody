@@ -620,6 +620,9 @@ pub contract HybridCustody {
             factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
         ) {
+            pre{
+                self.parents[parentAddress] == nil: "Address pending or already redeemed as parent"
+            }
             let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parentAddress)
 
             let capProxyStorage = StoragePath(identifier: capProxyIdentifier)!
