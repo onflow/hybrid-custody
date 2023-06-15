@@ -646,7 +646,7 @@ pub contract HybridCustody {
             let s = StoragePath(identifier: identifier)!
             let p = PrivatePath(identifier: identifier)!
 
-            acct.save(<-proxyAcct, to: s) // TODO: Handle case where ProxyAccount is already saved, e.g. previously published for parentAddress
+            acct.save(<-proxyAcct, to: s)
             acct.link<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p, target: s)
             
             let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p)
