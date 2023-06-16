@@ -207,6 +207,7 @@ pub fun testTransferOwnership() {
 
     txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+    assert(getPendingOwner(child: child) == nil, message: "pending owner was not cleared after claiming ownership")
 
     assert(
         (scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [owner.address]) as! Bool?)!,
@@ -808,11 +809,8 @@ pub fun getOwner(child: Test.Account): Address? {
 
 pub fun getPendingOwner(child: Test.Account): Address? {
     let res = scriptExecutor("hybrid-custody/get_pending_owner_of_child.cdc", [child.address])
-    if res == nil {
-        return nil
-    }
 
-    return res! as! Address
+    return res as! Address?
 }
 
 pub fun checkForAddresses(child: Test.Account, parent: Test.Account): Bool {
