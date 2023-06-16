@@ -598,16 +598,16 @@ pub contract HybridCustody {
     ownership.
     */
     pub resource ChildAccount: OwnedAccount, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
-        priv var acct: Capability<&AuthAccount>
+        access(self) var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
         pub var acctOwner: Address?
         pub var relinquishedOwnership: Bool
 
-        // A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
+        /// A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
 
-        // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
+        /// A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
         access(contract) fun setRedeemed(_ addr: Address) {
@@ -768,16 +768,33 @@ pub contract HybridCustody {
             return self.acctOwner != nil ? self.acctOwner! : self.owner!.address
         }
 
+        /// This method is used to transfer ownership of the child account to a new address.
+        /// Ownership here means that one has unrestricted access on this ChildAccount resource, giving them full
+        /// access to the account.
+        ///
+        /// @param to: The address of the new owner
+        ///
+        /// **NOTE:** The existence of this method does not imply that it is the only way to receive access to a
+        /// ChildAccount Capability or that only the labeled 'acctOwner' has said access. Rather, this is a convenient
+        /// mechanism intended to easily transfer 'root' access on this account to another account and an attempt to
+        /// minimize access vectors.
+        ///
         pub fun giveOwnership(to: Address) {
             self.seal()
             
             let acct = self.borrowAccount()
-
+            // Unlink existing owner's Capability if owner exists
+            if self.acctOwner != nil {
+                acct.unlink(
+                    PrivatePath(identifier: HybridCustody.getOwnerIdentifier(self.acctOwner!))!
+                )
+            }
+            // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
             let cap = acct.link<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(
                     PrivatePath(identifier: identifier)!,
                     target: HybridCustody.ChildStoragePath
-                )?? panic("failed to link child account capability")
+                ) ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
             self.acctOwner = to
