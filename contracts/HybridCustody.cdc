@@ -862,15 +862,15 @@ pub contract HybridCustody {
     // Utility function to get the path identifier for a parent address when interacting with a 
     // child account and its parents
     pub fun getProxyAccountIdentifier(_ addr: Address): String {
-        return "ProxyAccount".concat(addr.toString())
+        return "ProxyAccount_".concat(addr.toString())
     }
 
     pub fun getCapabilityProxyIdentifier(_ addr: Address): String {
-        return "ChildCapabilityProxy".concat(addr.toString())
+        return "ChildCapabilityProxy_".concat(addr.toString())
     }
 
     pub fun getOwnerIdentifier(_ addr: Address): String {
-        return "HybridCustodyOwnedAccount".concat(HybridCustody.account.address.toString()).concat(addr.toString())
+        return "HybridCustodyOwnedAccount_".concat(HybridCustody.account.address.toString()).concat(addr.toString())
     }
 
     pub fun createChildAccount(
