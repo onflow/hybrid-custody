@@ -64,6 +64,7 @@ pub contract HybridCustody {
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParentsAddresses(): [Address]
         pub fun borrowAccount(): &AuthAccount?
+        access(contract) fun setOwnerCallback(_ addr: Address)
     }
 
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
@@ -305,6 +306,8 @@ pub contract HybridCustody {
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
             self.ownedAccounts[cap.address] = cap
+
+            acct.setOwnerCallback(self.owner!.address)
 
             emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
         }
@@ -601,8 +604,9 @@ pub contract HybridCustody {
         access(self) var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
+        pub var pendingOwner: Address?
         pub var acctOwner: Address?
-        pub var relinquishedOwnership: Bool
+        pub var currentlyOwned: Bool
 
         /// A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
@@ -618,6 +622,14 @@ pub contract HybridCustody {
             self.parents[addr] = true
 
             emit ChildAccountRedeemed(id: self.uuid, child: self.acct.address, parent: addr)
+        }
+
+        access(contract) fun setOwnerCallback(_ addr: Address) {
+            pre {
+                self.pendingOwner == addr: "Address does not match pending owner!"
+            }
+            self.pendingOwner = nil
+            self.acctOwner = addr
         }
 
         /*
@@ -761,8 +773,12 @@ pub contract HybridCustody {
             return self.acct.address
         }
 
+        pub fun getPendingOwner(): Address? {
+            return self.pendingOwner
+        }
+
         pub fun getOwner(): Address? {
-            if self.relinquishedOwnership {
+            if !self.currentlyOwned {
                 return nil
             }
             return self.acctOwner != nil ? self.acctOwner! : self.owner!.address
@@ -797,8 +813,9 @@ pub contract HybridCustody {
                 ) ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
-            self.acctOwner = to
-            self.relinquishedOwnership = false
+
+            self.pendingOwner = to
+            self.currentlyOwned = true
 
             emit OwnershipGranted(id: self.uuid, child: self.acct.address, owner: to)
         }
@@ -854,7 +871,7 @@ pub contract HybridCustody {
 
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
 
-            self.relinquishedOwnership = true
+            self.currentlyOwned = false
         }
 
         pub fun borrowProxyAccount(parent: Address): &ProxyAccount? {
@@ -921,8 +938,9 @@ pub contract HybridCustody {
             self.acct = acct
 
             self.parents = {}
+            self.pendingOwner = nil
             self.acctOwner = nil
-            self.relinquishedOwnership = false
+            self.currentlyOwned = true
 
             self.data = {}
             self.resources <- {}

@@ -203,7 +203,7 @@ pub fun testTransferOwnership() {
     )
 
     txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
-    assert(getOwner(child: child)! == owner.address, message: "child account ownership was not updated correctly")
+    assert(getPendingOwner(child: child)! == owner.address, message: "child account pending ownership was not updated correctly")
 
     txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
     assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
@@ -799,6 +799,15 @@ pub fun checkAuthAccountDefaultCap(account: Test.Account): Bool {
 
 pub fun getOwner(child: Test.Account): Address? {
     let res = scriptExecutor("hybrid-custody/get_owner_of_child.cdc", [child.address])
+    if res == nil {
+        return nil
+    }
+
+    return res! as! Address
+}
+
+pub fun getPendingOwner(child: Test.Account): Address? {
+    let res = scriptExecutor("hybrid-custody/get_pending_owner_of_child.cdc", [child.address])
     if res == nil {
         return nil
     }
