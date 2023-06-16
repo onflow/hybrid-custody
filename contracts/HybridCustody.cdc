@@ -689,6 +689,17 @@ pub contract HybridCustody {
 
             acct.inbox.publish(proxyCap, name: identifier, recipient: parentAddress)
             self.parents[parentAddress] = false
+
+            emit ProxyAccountPublished(
+                childAcctID: self.uuid,
+                proxyAcctID: proxyCap.borrow()!.uuid,
+                capProxyID: proxy.borrow()!.uuid,
+                factoryID: factory.borrow()!.uuid,
+                filterID: filter.borrow()!.uuid,
+                filterType: filter.borrow()!.getType(),
+                child: self.getAddress(),
+                pendingParent: parentAddress
+            )
         }
 
         pub fun check(): Bool {
