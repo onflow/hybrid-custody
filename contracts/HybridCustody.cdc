@@ -67,6 +67,7 @@ pub contract HybridCustody {
         pub fun getOwner(): Address?
         pub fun getPendingOwner(): Address?
         access(contract) fun setOwnerCallback(_ addr: Address)
+        pub fun rotateAuthAccount()
     }
 
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
@@ -301,6 +302,9 @@ pub contract HybridCustody {
 
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
+
+            // for safety, rotate the auth account capability to prevent any outstanding capabilities from the previous owner
+            acct.rotateAuthAccount()
             self.ownedAccounts[cap.address] = cap
 
             emit OwnershipUpdated(id: acct.uuid, child: cap.address, previousOwner: acct.getOwner(), owner: self.owner!.address, active: true)

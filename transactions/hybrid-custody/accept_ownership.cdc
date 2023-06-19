@@ -1,3 +1,5 @@
+#allowAccountLinking
+
 import "HybridCustody"
 import "CapabilityFilter"
 import "MetadataViews"
