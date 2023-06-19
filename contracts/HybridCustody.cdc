@@ -207,7 +207,6 @@ pub contract HybridCustody {
         pub fun removeChild(addr: Address)
         pub fun removeOwned(addr: Address)
 
-        // TODO: Owned account methods
         pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}?
         pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
@@ -222,9 +221,6 @@ pub contract HybridCustody {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
         pub fun getChildAddresses(): [Address]
         pub fun getOwnedAddresses(): [Address]
-        // TODO: Owned account public methods
-        // TODO: What questions do we expect we should be able to ask the owner of an account? For instance
-        // Should I be able to borrow typed public capabilities of an account owned by the manager?
     }
 
     /*
@@ -232,8 +228,6 @@ pub contract HybridCustody {
     A resource for an account which fills the Parent role of the Child-Parent account
     management Model. A Manager can redeem or remove child accounts, and obtain any capabilities
     exposed by the child account to them.
-
-    TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
     */
     pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
@@ -342,7 +336,7 @@ pub contract HybridCustody {
         pub fun removeOwned(addr: Address) {
             if let acct = self.ownedAccounts.remove(key: addr) {
                 if acct.check() {
-                    acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
+                    acct.borrow()!.seal()
                 }
                 let id: UInt64? = acct.borrow()?.uuid ?? nil
 
@@ -695,6 +689,7 @@ pub contract HybridCustody {
                 )
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
             let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
+
             let s = StoragePath(identifier: identifier)!
             let p = PrivatePath(identifier: identifier)!
 
@@ -826,26 +821,16 @@ pub contract HybridCustody {
             emit OwnershipUpdated(id: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), owner: to, active: false)
         }
 
-        // seal
-        // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one
-        // and replaces the @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent
-        // accounts can still operate normally. Unless this method is executed via the giveOwnership function, this will
-        // leave an account **without** an owner. USE WITH EXTREME CAUTION.
-        pub fun seal() {
-            // NOTE: Until Capability controllers are released, it is possible that the owner of an account could obtain
-            // a capability to the path that this method will create. Because of that, an app could fake giving
-            // ownership away fully, preventing a user from knowing that another entity has access they shouldn't have.
-
+        // rotateAuthAccount
+        // Cancels all existing AuthAccount capabilities, and creates a new one. The newly created capability
+        // will then be used by the child account for accessing its AuthAccount going forward.
+        //
+        // This is used when altering ownership of an account, and can also be used as a safeguard for anyone
+        // who assumes ownership of an account to guarantee that the previous owner doesn't maintain
+        // admin access to the account.
+        pub fun rotateAuthAccount() {
             let acct = self.borrowAccount()
 
-            // Revoke all keys
-            acct.keys.forEach(fun (key: AccountKey): Bool {
-                if !key.isRevoked {
-                    acct.keys.revoke(keyIndex: key.keyIndex)
-                }
-                return true
-            })
-            
             // Find all active AuthAccount capabilities so they can be removed after we make the new auth account cap
             let pathsToUnlink: [PrivatePath] = []
             acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
@@ -856,14 +841,9 @@ pub contract HybridCustody {
             })
 
             // Link a new AuthAccount Capability
-            // NOTE: This path cannot be sufficiently randomly generated, an app calling this function could build a
-            // capability to this path before it is made, thus maintaining ownership despite making it look like they
-            // gave it away. Until capability controllers, this method should not be fully trusted. TODO: make an
-            // additional function for the owner to rotate the auth account capability so they can mitigate this
-            // behavior (still not perfect)
-            let authAcctPath = "HybridCustodyRelinquished_"
-                .concat(HybridCustody.account.address.toString())
-                .concat(getCurrentBlock().height.toString())
+            // NOTE: This path cannot be sufficiently randomly generated, an app calling this function could build a capability to this path before
+            // it is made, thus maintaining ownership despite making it look like they gave it away. Until capability controllers, this method should not be fully trusted.
+            let authAcctPath = "HybridCustodyRelinquished".concat(HybridCustody.account.address.toString()).concat(getCurrentBlock().height.toString())
             let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
 
             self.acct = acctCap
@@ -874,6 +854,24 @@ pub contract HybridCustody {
             for  p in pathsToUnlink {
                 newAcct.unlink(p)
             }
+        }
+
+        // seal
+        // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
+        // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
+        // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
+        // USE WITH EXTREME CAUTION.
+        pub fun seal() {
+            self.rotateAuthAccount()
+            let acct = self.borrowAccount()
+
+            // Revoke all keys
+            acct.keys.forEach(fun (key: AccountKey): Bool {
+                if !key.isRevoked {
+                    acct.keys.revoke(keyIndex: key.keyIndex)
+                }
+                return true
+            })
 
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
 
