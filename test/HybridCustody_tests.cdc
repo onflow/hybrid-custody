@@ -25,10 +25,6 @@ pub let exampleNFT2PublicIdentifier = "ExampleNFT2Collection"
 
 // --------------- Test cases --------------- 
 
-pub fun testFailCodes() {
-    assert(false, message: "test to make sure flow's testing framework will fail our gh actions")
-}
-
 pub fun testImports() {
     let res = scriptExecutor("test_imports.cdc", [])! as! Bool
     assert(res, message: "import test failed")
