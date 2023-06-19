@@ -68,6 +68,7 @@ pub contract HybridCustody {
         pub fun getPendingOwner(): Address?
         access(contract) fun setOwnerCallback(_ addr: Address)
         pub fun rotateAuthAccount()
+        pub fun revokeAllKeys()
     }
 
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
@@ -304,7 +305,10 @@ pub contract HybridCustody {
                 ?? panic("cannot add invalid account")
 
             // for safety, rotate the auth account capability to prevent any outstanding capabilities from the previous owner
+            // and revoke all outstanding keys.
             acct.rotateAuthAccount()
+            acct.revokeAllKeys()
+
             self.ownedAccounts[cap.address] = cap
 
             emit OwnershipUpdated(id: acct.uuid, child: cap.address, previousOwner: acct.getOwner(), owner: self.owner!.address, active: true)
@@ -825,6 +829,18 @@ pub contract HybridCustody {
             emit OwnershipUpdated(id: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), owner: to, active: false)
         }
 
+        pub fun revokeAllKeys() {
+            let acct = self.borrowAccount()
+
+            // Revoke all keys
+            acct.keys.forEach(fun (key: AccountKey): Bool {
+                if !key.isRevoked {
+                    acct.keys.revoke(keyIndex: key.keyIndex)
+                }
+                return true
+            })
+        }
+
         // rotateAuthAccount
         // Cancels all existing AuthAccount capabilities, and creates a new one. The newly created capability
         // will then be used by the child account for accessing its AuthAccount going forward.
@@ -867,18 +883,8 @@ pub contract HybridCustody {
         // USE WITH EXTREME CAUTION.
         pub fun seal() {
             self.rotateAuthAccount()
-            let acct = self.borrowAccount()
-
-            // Revoke all keys
-            acct.keys.forEach(fun (key: AccountKey): Bool {
-                if !key.isRevoked {
-                    acct.keys.revoke(keyIndex: key.keyIndex)
-                }
-                return true
-            })
-
+            self.revokeAllKeys()
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
-
             self.currentlyOwned = false
         }
 
