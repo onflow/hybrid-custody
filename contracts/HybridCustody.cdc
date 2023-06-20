@@ -42,7 +42,7 @@ pub contract HybridCustody {
     //
     pub event CreatedManager(id: UInt64)
     pub event CreatedChildAccount(id: UInt64, child: Address)
-    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
+    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     pub event ProxyAccountPublished(
         childAcctID: UInt64,
         proxyAcctID: UInt64,
@@ -55,7 +55,7 @@ pub contract HybridCustody {
     )
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
-    pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
+    pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
@@ -64,6 +64,8 @@ pub contract HybridCustody {
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParentsAddresses(): [Address]
         pub fun borrowAccount(): &AuthAccount?
+        pub fun getOwner(): Address?
+        pub fun getPendingOwner(): Address?
         access(contract) fun setOwnerCallback(_ addr: Address)
     }
 
@@ -258,7 +260,7 @@ pub contract HybridCustody {
 
             self.accounts[cap.address] = cap
             
-            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: true, active: true)
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, active: true)
 
             acct.redeemedCallback(self.owner!.address)
             acct.setManagerCapabilityFilter(self.filter)
@@ -285,7 +287,7 @@ pub contract HybridCustody {
             
             if !cap.check() {
                 // Emit event if invalid capability
-                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, active: false)
                 return
             }
 
@@ -295,7 +297,7 @@ pub contract HybridCustody {
 
             acct.parentRemoveChildCallback(parent: self.owner!.address) 
 
-            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, active: false)
         }
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
@@ -307,9 +309,8 @@ pub contract HybridCustody {
                 ?? panic("cannot add invalid account")
             self.ownedAccounts[cap.address] = cap
 
+            emit OwnershipUpdated(id: acct.uuid, child: cap.address, previousOwner: acct.getOwner(), owner: self.owner!.address, active: true)
             acct.setOwnerCallback(self.owner!.address)
-
-            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
         }
 
         pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}? {
@@ -344,7 +345,8 @@ pub contract HybridCustody {
                     acct.borrow()!.seal() // TODO: this should probably not fail, otherwise the owner cannot get rid of a broken link
                 }
                 let id: UInt64? = acct.borrow()?.uuid ?? nil
-                emit AccountUpdated(id: id, child: addr, parent: self.owner!.address, proxy: false, active: false)
+
+                emit OwnershipUpdated(id: id!, child: addr, previousOwner: self.owner!.address, owner: nil, active: false)
             }
             // Don't emit an event if nothing was removed
         }
@@ -715,6 +717,7 @@ pub contract HybridCustody {
                 child: self.getAddress(),
                 pendingParent: parentAddress
             )
+            emit AccountUpdated(id: self.uuid, child: self.owner!.address, parent: parentAddress, active: false)
         }
 
         pub fun check(): Bool {
@@ -820,7 +823,7 @@ pub contract HybridCustody {
             self.pendingOwner = to
             self.currentlyOwned = true
 
-            emit OwnershipGranted(id: self.uuid, child: self.acct.address, owner: to)
+            emit OwnershipUpdated(id: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), owner: to, active: false)
         }
 
         // seal
