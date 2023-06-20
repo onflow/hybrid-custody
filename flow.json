@@ -10,6 +10,10 @@
 			"address": "f8d6e0586b0a20c7",
 			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
 		},
+		"emulator-ft": {
+			"address": "ee82856bf20e2aa6",
+			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
 		"hc-testnet": {
 		  "address": "0x96b15ff6dfde11fe",
 		  "key": {
@@ -117,6 +121,9 @@
 				"ExampleNFT",
 				"ExampleNFT2",
 				"ExampleToken"
+			],
+			"emulator-ft": [
+				"FungibleToken"
 			]
 		},
 		"testnet": {

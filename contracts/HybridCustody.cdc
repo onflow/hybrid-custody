@@ -65,6 +65,7 @@ pub contract HybridCustody {
         pub fun getParentsAddresses(): [Address]
         pub fun borrowAccount(): &AuthAccount?
         pub fun getOwner(): Address?
+        pub fun getPendingOwner(): Address?
         access(contract) fun setOwnerCallback(_ addr: Address)
     }
 
