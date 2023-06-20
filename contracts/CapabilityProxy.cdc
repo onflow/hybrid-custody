@@ -119,7 +119,7 @@ pub contract CapabilityProxy {
     }
     
     init() {
-        let identifier = "CapabilityProxy".concat(self.account.address.toString())
+        let identifier = "CapabilityProxy_".concat(self.account.address.toString())
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PrivatePath = PrivatePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
