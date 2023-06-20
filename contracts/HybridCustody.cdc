@@ -44,15 +44,15 @@ pub contract HybridCustody {
     pub event CreatedChildAccount(id: UInt64, child: Address)
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
     pub event ProxyAccountPublished(
-            childAcctID: UInt64,
-            proxyAcctID: UInt64,
-            capProxyID: UInt64,
-            factoryID: UInt64,
-            filterID: UInt64,
-            filterType: Type,
-            child: Address,
-            pendingParent: Address
-        )
+        childAcctID: UInt64,
+        proxyAcctID: UInt64,
+        capProxyID: UInt64,
+        factoryID: UInt64,
+        filterID: UInt64,
+        filterType: Type,
+        child: Address,
+        pendingParent: Address
+    )
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
     pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
