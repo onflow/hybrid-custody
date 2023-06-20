@@ -46,7 +46,7 @@ pub contract HybridCustody {
     pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address)
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
-    pub event OwnershipUpdated(id: UInt64, child: Address, owner: Address, active: Bool)
+    pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
@@ -55,6 +55,7 @@ pub contract HybridCustody {
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParentsAddresses(): [Address]
         pub fun borrowAccount(): &AuthAccount?
+        pub fun getOwner(): Address?
     }
 
     // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
@@ -293,8 +294,7 @@ pub contract HybridCustody {
                 ?? panic("cannot add invalid account")
             self.ownedAccounts[cap.address] = cap
 
-            emit OwnershipUpdated(id: acct.uuid, child: cap.address, owner: self.owner!.address, active: true)
-            //emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: false, active: true)
+            emit OwnershipUpdated(id: acct.uuid, child: cap.address, previousOwner: acct.getOwner(), owner: self.owner!.address, active: true)
         }
 
         pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}? {
@@ -330,9 +330,7 @@ pub contract HybridCustody {
                 }
                 let id: UInt64? = acct.borrow()?.uuid ?? nil
 
-                emit OwnershipUpdated(id: id!, child: addr, owner: self.owner!.address, active: false)
-                // Do we need both events?
-                emit AccountUpdated(id: id, child: addr, parent: self.owner!.address, proxy: false, active: false)
+                emit OwnershipUpdated(id: id!, child: addr, previousOwner: self.owner!.address, owner: nil, active: false)
             }
             // Don't emit an event if nothing was removed
         }
@@ -736,9 +734,7 @@ pub contract HybridCustody {
             self.acctOwner = to
             self.relinquishedOwnership = false
 
-            emit OwnershipUpdated(id: self.uuid, child: self.acct.address, owner: to, active: false)
-            //TODO do we need both events
-            emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: to, proxy: false, active: false)
+            emit OwnershipUpdated(id: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), owner: to, active: false)
         }
 
         // seal
