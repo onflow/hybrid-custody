@@ -299,6 +299,12 @@ pub fun testMetadata_ProxyAccount_Metadata() {
 
     let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_proxy_display_name.cdc", [parent.address, child.address])! as! String
     assert(name == resolvedName, message: "names do not match")
+
+    // set it again to make sure overrides work
+    let name2 = "another name"
+    txExecutor("hybrid-custody/metadata/set_proxy_account_display.cdc", [parent], [child.address, name2, desc, url], nil, nil)
+    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_proxy_display_name.cdc", [parent.address, child.address])! as! String
+    assert(name2 == resolvedName2, message: "names do not match")
 }
 
 pub fun testMetadata_ChildAccount_Metadata() {
@@ -314,6 +320,12 @@ pub fun testMetadata_ChildAccount_Metadata() {
 
     let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
     assert(name == resolvedName, message: "names do not match")
+
+    // set it again to make sure overrides work
+    let name2 = "another name"
+    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [child], [name2, desc, url], nil, nil)
+    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
+    assert(name2 == resolvedName2, message: "names do not match")
 }
 
 pub fun testGetChildAddresses() {
