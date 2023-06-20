@@ -614,6 +614,9 @@ pub contract HybridCustody {
         /// A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
+        // display is its own field on the ChildAccount resource because only the owner of the child account should be able to set this field.
+        access(self) var display: MetadataViews.Display?
+
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
                 self.parents[addr] != nil: "address is not waiting to be redeemed"
@@ -920,16 +923,13 @@ pub contract HybridCustody {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.Display>():
-                    if let item = self.data["display"] {
-                        return item as? MetadataViews.Display
-                    }
-                    break
+                    return self.display
             }
             return nil
         }
 
         pub fun setDisplay(_ d: MetadataViews.Display) {
-            self.data.insert(key: "display", d)
+            self.display = d
         }
 
         init(
@@ -944,6 +944,7 @@ pub contract HybridCustody {
 
             self.data = {}
             self.resources <- {}
+            self.display = nil
         }
 
         destroy () {
