@@ -20,6 +20,6 @@ jobs:
       with:
         go-version: 1.18
     - name: Install Flow CLI
-      run: bash -ci "$(curl -fsSL https://raw.githubusercontent.com/onflow/flow-cli/master/install.sh)" -- v0.48.0
+      run: bash -ci "$(curl -fsSL https://raw.githubusercontent.com/onflow/flow-cli/master/install.sh)" -- v1.3.0
     - name: Run tests
       run: sh ./test.sh
