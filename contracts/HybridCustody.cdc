@@ -714,6 +714,7 @@ pub contract HybridCustody {
                 child: self.getAddress(),
                 pendingParent: parentAddress
             )
+            emit AccountUpdated(id: self.uuid, child: self.owner!.address, parent: parentAddress, active: false)
         }
 
         pub fun check(): Bool {
