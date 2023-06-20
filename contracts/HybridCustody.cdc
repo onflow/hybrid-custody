@@ -588,7 +588,7 @@ pub contract HybridCustody {
         // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        // display is its own field on the ChildAccount resource because only the parent should be able to set this field.
+        // display is its own field on the ChildAccount resource because only the owner of the child account should be able to set this field.
         access(self) var display: MetadataViews.Display?
 
         access(contract) fun setRedeemed(_ addr: Address) {
