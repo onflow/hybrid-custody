@@ -42,7 +42,7 @@ pub contract HybridCustody {
     //
     pub event CreatedManager(id: UInt64)
     pub event CreatedChildAccount(id: UInt64, child: Address)
-    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool) // TODO do we need proxy variable if we are splitting Proxy/Owned events?
+    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address)
     pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
     pub event RemovedParent(id: UInt64, child: Address, parent: Address)
@@ -245,7 +245,7 @@ pub contract HybridCustody {
 
             self.accounts[cap.address] = cap
             
-            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, proxy: true, active: true)
+            emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, active: true)
 
             acct.redeemedCallback(self.owner!.address)
             acct.setManagerCapabilityFilter(self.filter)
@@ -272,7 +272,7 @@ pub contract HybridCustody {
             
             if !cap.check() {
                 // Emit event if invalid capability
-                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+                emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, active: false)
                 return
             }
 
@@ -282,7 +282,7 @@ pub contract HybridCustody {
 
             acct.parentRemoveChildCallback(parent: self.owner!.address) 
 
-            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, proxy: true, active: false)
+            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, active: false)
         }
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
