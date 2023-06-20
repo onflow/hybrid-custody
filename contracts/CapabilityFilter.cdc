@@ -127,7 +127,7 @@ pub contract CapabilityFilter {
     }
 
     init() {
-        let identifier = "CapabilityFilter".concat(self.account.address.toString())
+        let identifier = "CapabilityFilter_".concat(self.account.address.toString())
         
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!

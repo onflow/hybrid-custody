@@ -895,15 +895,15 @@ pub contract HybridCustody {
     }
 
     init() {
-        let identifier = "HybridCustodyChild".concat(self.account.address.toString())
+        let identifier = "HybridCustodyChild_".concat(self.account.address.toString())
         self.ChildStoragePath = StoragePath(identifier: identifier)!
         self.ChildPrivatePath = PrivatePath(identifier: identifier)!
         self.ChildPublicPath = PublicPath(identifier: identifier)!
 
-        self.LinkedAccountPrivatePath = PrivatePath(identifier: "LinkedAccountPrivatePath".concat(identifier))!
-        self.BorrowableAccountPrivatePath = PrivatePath(identifier: "BorrowableAccountPrivatePath".concat(identifier))!
+        self.LinkedAccountPrivatePath = PrivatePath(identifier: "LinkedAccountPrivatePath_".concat(identifier))!
+        self.BorrowableAccountPrivatePath = PrivatePath(identifier: "BorrowableAccountPrivatePath_".concat(identifier))!
 
-        let managerIdentifier = "HybridCustodyManager".concat(self.account.address.toString())
+        let managerIdentifier = "HybridCustodyManager_".concat(self.account.address.toString())
         self.ManagerStoragePath = StoragePath(identifier: managerIdentifier)!
         self.ManagerPublicPath = PublicPath(identifier: managerIdentifier)!
         self.ManagerPrivatePath = PrivatePath(identifier: managerIdentifier)!
