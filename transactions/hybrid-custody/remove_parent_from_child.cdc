@@ -2,7 +2,7 @@ import "HybridCustody"
 
 transaction(parent: Address) {
     prepare(acct: AuthAccount) {
-        let child = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
+        let child = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
             ?? panic("child not found")
 
         child.removeParent(parent: parent)

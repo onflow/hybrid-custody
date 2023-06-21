@@ -64,22 +64,22 @@ transaction(
         var acctCap = newAccount.linkAccount(HybridCustody.LinkedAccountPrivatePath)
             ?? panic("problem linking account Capability for new account")
 
-        // Create a ChildAccount & link Capabilities
-        let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap)
-        newAccount.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
+        // Create a OwnedAccount & link Capabilities
+        let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
+        newAccount.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
         newAccount
-            .link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(
                 HybridCustody.ChildPrivatePath,
                 target: HybridCustody.ChildStoragePath
             )
         newAccount
-            .link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.ChildAccountPublic}>(
                 HybridCustody.ChildPublicPath, 
                 target: HybridCustody.ChildStoragePath
             )
 
-        // Get a reference to the ChildAccount resource
-        let child = newAccount.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)!
+        // Get a reference to the OwnedAccount resource
+        let child = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)!
 
         // Get the CapabilityFactory.Manager Capability
         let factory = getAccount(factoryAddress)

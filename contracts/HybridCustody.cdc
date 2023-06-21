@@ -9,14 +9,14 @@ import "CapabilityFilter"
 /*
 HybridCustody defines a framework for sharing accounts via account linking. In the contract,
 you will find three main resources being used:
-1. ChildAccount - A resource which maintains an AuthAccount Capability, and handles publishing
+1. OwnedAccount - A resource which maintains an AuthAccount Capability, and handles publishing
     and revoking access of that account via another resource called a ProxyAccount
-2. ProxyAccount - A second resource which exists on the same accounta as the ChildAccount. The ProxyAccount
+2. ProxyAccount - A second resource which exists on the same accounta as the OwnedAccount. The ProxyAccount
     resource is the capability which is shared to a parent account. Each proxy has its own set of rules
     designating what Capability types can be retrieved, and what underlying type the capability points to can be
     given.
 3. Manager - A resource setup by the parent which manages all child accounts shared with it. The Manager resource
-    also maintains a set of accounts that it "owns", meaning it has a capability to the full ChildAccount resource and
+    also maintains a set of accounts that it "owns", meaning it has a capability to the full OwnedAccount resource and
     would then also be able to manage the child account's links as it sees fit.
 
 Contributors (please add to this list if you contribute!):
@@ -57,7 +57,7 @@ pub contract HybridCustody {
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
     // An interface which gets shared to a Manager when it is given full ownership of an account.
-    pub resource interface OwnedAccount {
+    pub resource interface OwnedAccountPrivate {
         pub fun getAddress(): Address
         pub fun isChildOf(_ addr: Address): Bool
         pub fun getParentsAddresses(): [Address]
@@ -69,7 +69,7 @@ pub contract HybridCustody {
         pub fun revokeAllKeys()
     }
 
-    // A ChildAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
+    // A OwnedAccount shares the BorrowableAccount capability to itelf with ProxyAccount resources
     pub resource interface BorrowableAccount {
         access(contract) fun borrowAccount(): &AuthAccount
         pub fun check(): Bool
@@ -95,7 +95,7 @@ pub contract HybridCustody {
         access(contract) fun setRedeemed(_ addr: Address)
     }
 
-    // Accessible to the owner of the ChildAccount.
+    // Accessible to the owner of the OwnedAccount.
     pub resource interface ChildAccountPrivate {
         // removeParent
         // Deletes the proxy account resource being used to share access to this child account with the
@@ -126,7 +126,7 @@ pub contract HybridCustody {
 
         // seal
         // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one
-        // and replaces the @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent
+        // and replaces the @OwnedAccount's underlying AuthAccount Capability with the new one to ensure that all parent
         // accounts can still operate normally. Unless this method is executed via the giveOwnership function, this will
         // leave an account **without** an owner.
         // USE WITH EXTREME CAUTION.
@@ -207,7 +207,7 @@ pub contract HybridCustody {
         pub fun removeChild(addr: Address)
         pub fun removeOwned(addr: Address)
 
-        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}?
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, ChildAccountPublic, ChildAccountPrivate}?
         pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
                 cap == nil || cap!.check(): "Invalid Manager Capability Filter"
@@ -232,7 +232,7 @@ pub contract HybridCustody {
     */
     pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
         pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
-        pub let ownedAccounts: {Address: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
+        pub let ownedAccounts: {Address: Capability<&{OwnedAccountPrivate, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
 
         // A bucket of structs so that the Manager resource can be easily extended with new functionality.
         pub let data: {String: AnyStruct}
@@ -299,7 +299,7 @@ pub contract HybridCustody {
             self.accounts.remove(key: child)
         }
 
-        pub fun addOwnedAccount(cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
+        pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -336,7 +336,7 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccount, ChildAccountPublic, ChildAccountPrivate}? {
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, ChildAccountPublic, ChildAccountPrivate}? {
             if let cap = self.ownedAccounts[addr] {
                 return cap.borrow()
             }
@@ -524,7 +524,7 @@ pub contract HybridCustody {
 
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!.borrowAccount()
-            if let m = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
+            if let m = acct.borrow<&OwnedAccount>(from: HybridCustody.ChildStoragePath) {
                 m.setRedeemed(addr)
             }
         }
@@ -561,7 +561,7 @@ pub contract HybridCustody {
             }
 
             let acct = child.borrowAccount()
-            if let childAcct = acct.borrow<&ChildAccount>(from: HybridCustody.ChildStoragePath) {
+            if let childAcct = acct.borrow<&OwnedAccount>(from: HybridCustody.ChildStoragePath) {
                 childAcct.removeParent(parent: parent)
             }
         }
@@ -597,16 +597,16 @@ pub contract HybridCustody {
     }
 
     /*
-    ChildAccount
+    OwnedAccount
     A resource which sits on the account it manages to make it easier for apps to configure the behavior they want to
-    permit. A ChildAccount can be used to create ProxyAccount resources and share them publish them to other addresses.
+    permit. A OwnedAccount can be used to create ProxyAccount resources and share them publish them to other addresses.
 
-    The ChildAccount can also be used to pass ownership of an account off to another address, or to relinquish ownership
+    The OwnedAccount can also be used to pass ownership of an account off to another address, or to relinquish ownership
     entirely, marking the account as owned by no one. Note that even if there isn't an owner, the parent accounts would
     still exist, allowing a form of Hybrid Custody which has no true owner over an account, but shared partial
     ownership.
     */
-    pub resource ChildAccount: OwnedAccount, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
+    pub resource OwnedAccount: OwnedAccountPrivate, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver {
         access(self) var acct: Capability<&AuthAccount>
 
         pub let parents: {Address: Bool}
@@ -614,13 +614,13 @@ pub contract HybridCustody {
         pub var acctOwner: Address?
         pub var currentlyOwned: Bool
 
-        /// A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
+        /// A bucket of structs so that the OwnedAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
 
-        /// A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
+        /// A bucket of resources so that the OwnedAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        // display is its own field on the ChildAccount resource because only the owner of the child account should be able to set this field.
+        // display is its own field on the OwnedAccount resource because only the owner of the child account should be able to set this field.
         access(self) var display: MetadataViews.Display?
 
         access(contract) fun setRedeemed(_ addr: Address) {
@@ -642,7 +642,7 @@ pub contract HybridCustody {
         /*
         publishToParent
         A helper method to make it easier to manage what parents an account has configured. The steps to sharing this
-        ChildAccount with a new parent are:
+        OwnedAccount with a new parent are:
 
         1. Create a new CapabilityProxy for the ProxyAccount resource being created. We make a new one here because
            CapabilityProxy types are meant to be shared explicitly. Making one shared base-line of capabilities might
@@ -652,7 +652,7 @@ pub contract HybridCustody {
         2. Create a new Capability<&{BorrowableAccount}> which has its own unique path for the parent to share this
            child account with. We make new ones each time so that you can revoke access from one parent, without
            destroying them all. A new Link is made each time based on the address being shared to allow this
-           fine-grained control, but it is all managed by the ChildAccount resource itself.
+           fine-grained control, but it is all managed by the OwnedAccount resource itself.
         3. A new @ProxyAccount resource is created and saved, using the CapabilityProxy made in step one, and our
            CapabilityFactory and CapabilityFilter Capabilities. Once saved, public and private links are configured for
            the ProxyAccount.
@@ -804,13 +804,13 @@ pub contract HybridCustody {
         }
 
         /// This method is used to transfer ownership of the child account to a new address.
-        /// Ownership here means that one has unrestricted access on this ChildAccount resource, giving them full
+        /// Ownership here means that one has unrestricted access on this OwnedAccount resource, giving them full
         /// access to the account.
         ///
         /// @param to: The address of the new owner
         ///
         /// **NOTE:** The existence of this method does not imply that it is the only way to receive access to a
-        /// ChildAccount Capability or that only the labeled 'acctOwner' has said access. Rather, this is a convenient
+        /// OwnedAccount Capability or that only the labeled 'acctOwner' has said access. Rather, this is a convenient
         /// mechanism intended to easily transfer 'root' access on this account to another account and an attempt to
         /// minimize access vectors.
         ///
@@ -826,7 +826,7 @@ pub contract HybridCustody {
             }
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.link<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(
+            let cap = acct.link<&{OwnedAccountPrivate, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>(
                     PrivatePath(identifier: identifier)!,
                     target: HybridCustody.ChildStoragePath
                 ) ?? panic("failed to link child account capability")
@@ -888,7 +888,7 @@ pub contract HybridCustody {
 
         // seal
         // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
-        // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
+        // @OwnedAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
         // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
         // USE WITH EXTREME CAUTION.
         pub fun seal() {
@@ -989,12 +989,12 @@ pub contract HybridCustody {
 
     pub fun createChildAccount(
         acct: Capability<&AuthAccount>
-    ): @ChildAccount {
+    ): @OwnedAccount {
         pre {
             acct.check(): "invalid auth account capability"
         }
 
-        let childAcct <- create ChildAccount(acct)
+        let childAcct <- create OwnedAccount(acct)
         emit CreatedChildAccount(id: childAcct.uuid, child: acct.borrow()!.address)
         return <- childAcct
     }

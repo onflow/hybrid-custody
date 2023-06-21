@@ -6,7 +6,7 @@ import "ExampleNFT2"
 
 transaction(parent: Address, isPublic: Bool) {
     prepare(acct: AuthAccount) {
-        let c = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
+        let c = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
             ?? panic("child account not found")
         let proxy = c.borrowProxyAccount(parent: parent)
             ?? panic("proxy account not found")

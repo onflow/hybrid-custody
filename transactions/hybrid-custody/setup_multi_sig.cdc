@@ -16,17 +16,17 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
             acctCap = childAcct.linkAccount(HybridCustody.LinkedAccountPrivatePath)!
         }
 
-        if childAcct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath) == nil {
-            let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap)
-            childAcct.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
+        if childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath) == nil {
+            let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
+            childAcct.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
         }
 
         // check that paths are all configured properly
         childAcct.unlink(HybridCustody.ChildPrivatePath)
-        childAcct.link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
 
         childAcct.unlink(HybridCustody.ChildPublicPath)
-        childAcct.link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
 
         // --------------------- Begin setup of child account ---------------------
 
@@ -49,7 +49,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         // --------------------- End setup of parent account ---------------------
 
         // Publish account to parent
-        let child = childAcct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
+        let child = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
             ?? panic("child account not found")
 
         let factory = getAccount(childAccountFactoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
