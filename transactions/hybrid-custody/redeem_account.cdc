@@ -21,9 +21,9 @@ transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPa
             acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
         }
 
-        let inboxName = HybridCustody.getProxyAccountIdentifier(acct.address)
-        let cap = acct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAddress)
-            ?? panic("proxy account cap not found")
+        let inboxName = HybridCustody.getChildAccountIdentifier(acct.address)
+        let cap = acct.inbox.claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAddress)
+            ?? panic("child account cap not found")
 
         let manager = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")

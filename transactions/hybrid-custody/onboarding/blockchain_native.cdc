@@ -21,7 +21,7 @@ transaction(
         //
         // Create the child account, funding via the signing app account
         let newAccount = AuthAccount(payer: app)
-        // Create a public key for the proxy account from string value in the provided arg
+        // Create a public key for the child account from string value in the provided arg
         // **NOTE:** You may want to specify a different signature algo for your use case
         let key = PublicKey(
             publicKey: pubKey.decodeHex(),
@@ -115,14 +115,14 @@ transaction(
             target: HybridCustody.ManagerStoragePath
         )
         
-        // Claim the ProxyAccount Capability
-        let inboxName = HybridCustody.getProxyAccountIdentifier(parent.address)
+        // Claim the ChildAccount Capability
+        let inboxName = HybridCustody.getChildAccountIdentifier(parent.address)
         let cap = parent
             .inbox
-            .claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(
+            .claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(
                 inboxName,
                 provider: newAccount.address
-            ) ?? panic("proxy account cap not found")
+            ) ?? panic("child account cap not found")
         
         // Get a reference to the Manager and add the account
         let managerRef = parent.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)

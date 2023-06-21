@@ -4,9 +4,9 @@ import "ExampleNFT"
 
 pub fun main(parent: Address, child: Address) {
     let acct = getAuthAccount(parent)
-    let inboxIdentifier = HybridCustody.getProxyAccountIdentifier(parent)
+    let inboxIdentifier = HybridCustody.getChildAccountIdentifier(parent)
 
-    let cap = acct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate}>(inboxIdentifier, provider: child)
+    let cap = acct.inbox.claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate}>(inboxIdentifier, provider: child)
         ?? panic("no inbox entry found")
 
     cap.borrow()!.getCapability(path: ExampleNFT.CollectionPublicPath, type: Type<&{NonFungibleToken.CollectionPublic}>())

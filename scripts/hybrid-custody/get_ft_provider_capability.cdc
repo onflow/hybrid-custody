@@ -3,7 +3,7 @@ import "HybridCustody"
 import "FungibleToken"
 import "ExampleToken"
 
-// Verify that a child address borrowed as a proxy will let the parent borrow an FT provider capability
+// Verify that a child address borrowed as a child will let the parent borrow an FT provider capability
 pub fun main(parent: Address, child: Address) {
     let acct = getAuthAccount(parent)
     let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)

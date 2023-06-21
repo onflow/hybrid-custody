@@ -1,7 +1,7 @@
 import "HybridCustody"
 
 /*
-Verify that a child address borrowed as a proxy matches the address
+Verify that a owned address borrowed as a child matches the address
 it is mapped to in the account manager
 */
 pub fun main(parent: Address, child: Address) {

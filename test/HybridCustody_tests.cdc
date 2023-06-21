@@ -713,15 +713,15 @@ pub fun testPublishToParent_alreadyExists() {
 
     let parent = blockchain.createAccount()
 
-    // put a resource in the ProxyAccount storage slot for the parent to guarantee that publishing will not work
+    // put a resource in the ChildAccount storage slot for the parent to guarantee that publishing will not work
     txExecutor("hybrid-custody/misc/save_resource_to_parent_proxy_storage_slot.cdc", [tmp], [parent.address], nil, nil)
 
-    // this should fail because something is already stored where the proxy account is located
+    // this should fail because something is already stored where the child account is located
     txExecutor(
         "hybrid-custody/publish_to_parent.cdc",
         [tmp],
         [parent.address, factory.address, filter.address],
-        "conflicting resource found in proxy account storage slot for parentAddress",
+        "conflicting resource found in child account storage slot for parentAddress",
         ErrorType.TX_ASSERT
     )
 }

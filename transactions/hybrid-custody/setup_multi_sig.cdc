@@ -61,9 +61,9 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         child.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForProxy)
 
         // claim the account on the parent
-        let inboxName = HybridCustody.getProxyAccountIdentifier(parentAcct.address)
-        let cap = parentAcct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAcct.address)
-            ?? panic("proxy account cap not found")
+        let inboxName = HybridCustody.getChildAccountIdentifier(parentAcct.address)
+        let cap = parentAcct.inbox.claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAcct.address)
+            ?? panic("child account cap not found")
 
         let manager = parentAcct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")
