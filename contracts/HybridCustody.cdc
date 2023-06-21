@@ -53,8 +53,6 @@ pub contract HybridCustody {
         child: Address,
         pendingParent: Address
     )
-    pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
-    pub event RemovedParent(id: UInt64, child: Address, parent: Address)
     pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
@@ -223,6 +221,7 @@ pub contract HybridCustody {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
         pub fun getChildAddresses(): [Address]
         pub fun getOwnedAddresses(): [Address]
+        access(contract) fun removeParentCallback(child: Address)
     }
 
     /*
@@ -278,7 +277,7 @@ pub contract HybridCustody {
         }
 
         pub fun removeChild(addr: Address) {
-            let cap = self.accounts.remove(key: addr) 
+            let cap = self.accounts.remove(key: addr)
                 ?? panic("child account not found")
             
             if !cap.check() {
@@ -294,6 +293,10 @@ pub contract HybridCustody {
             acct.parentRemoveChildCallback(parent: self.owner!.address) 
 
             emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, active: false)
+        }
+
+        access(contract) fun removeParentCallback(child: Address) {
+            self.accounts.remove(key: child)
         }
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccount, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
@@ -627,8 +630,6 @@ pub contract HybridCustody {
             }
 
             self.parents[addr] = true
-
-            emit ChildAccountRedeemed(id: self.uuid, child: self.acct.address, parent: addr)
         }
 
         access(contract) fun setOwnerCallback(_ addr: Address) {
@@ -669,8 +670,15 @@ pub contract HybridCustody {
             }
             let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parentAddress)
 
+            let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
+            let proxyAccountStorage = StoragePath(identifier: identifier)!
+
             let capProxyStorage = StoragePath(identifier: capProxyIdentifier)!
             let acct = self.borrowAccount()
+
+            assert(acct.borrow<&AnyResource>(from: capProxyStorage) == nil, message: "conflicting resource found in capability proxy storage slot for parentAddress")
+            assert(acct.borrow<&AnyResource>(from: proxyAccountStorage) == nil, message: "conflicting resource found in proxy account storage slot for parentAddress")
+
             if acct.borrow<&CapabilityProxy.Proxy>(from: capProxyStorage) == nil {
                 let proxy <- CapabilityProxy.createProxy()
                 acct.save(<-proxy, to: capProxyStorage)
@@ -688,23 +696,21 @@ pub contract HybridCustody {
                 target: capProxyStorage
             )
             let proxy = acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(
-                    capProxyPrivate
-                )
+                capProxyPrivate
+            )
             assert(proxy.check(), message: "failed to setup capability proxy for parent address")
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, ChildAccountPublic}>(
-                    HybridCustody.ChildPrivatePath
-                )
+                HybridCustody.ChildPrivatePath
+            )
             let proxyAcct <- create ProxyAccount(borrowableCap, factory, filter, proxy, parentAddress)
-            let identifier = HybridCustody.getProxyAccountIdentifier(parentAddress)
 
-            let s = StoragePath(identifier: identifier)!
-            let p = PrivatePath(identifier: identifier)!
+            let proxyAccountPrivatePath = PrivatePath(identifier: identifier)!
 
-            acct.save(<-proxyAcct, to: s)
-            acct.link<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p, target: s)
+            acct.save(<-proxyAcct, to: proxyAccountStorage)
+            acct.link<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(proxyAccountPrivatePath, target: proxyAccountStorage)
             
-            let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(p)
+            let proxyCap = acct.getCapability<&ProxyAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(proxyAccountPrivatePath)
             assert(proxyCap.check(), message: "Proxy capability check failed")
 
             acct.inbox.publish(proxyCap, name: identifier, recipient: parentAddress)
@@ -773,7 +779,12 @@ pub contract HybridCustody {
             destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capProxyIdentifier)!)
 
             self.parents.remove(key: parent)
-            emit RemovedParent(id: self.uuid, child: self.acct.address, parent: parent)
+            emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: parent, active: false)
+
+            let parentManager = getAccount(parent).getCapability<&Manager{ManagerPublic}>(HybridCustody.ManagerPublicPath)
+            if parentManager.check() {
+                parentManager.borrow()?.removeParentCallback(child: self.owner!.address)
+            }
 
             return true
         }

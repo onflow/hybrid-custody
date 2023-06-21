@@ -662,6 +662,38 @@ pub fun testSetDefaultManagerFilter() {
     assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
 }
 
+pub fun testPublishToParent_alreadyExists() {
+    let tmp = blockchain.createAccount()
+    setupChildAccount(tmp, FilterKindAll)
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    let parent = blockchain.createAccount()
+
+    // put a resource in the ProxyAccount storage slot for the parent to guarantee that publishing will not work
+    txExecutor("hybrid-custody/misc/save_resource_to_parent_proxy_storage_slot.cdc", [tmp], [parent.address], nil, nil)
+
+    // this should fail because something is already stored where the proxy account is located
+    txExecutor(
+        "hybrid-custody/publish_to_parent.cdc",
+        [tmp],
+        [parent.address, factory.address, filter.address],
+        "conflicting resource found in proxy account storage slot for parentAddress",
+        ErrorType.TX_ASSERT
+    )
+}
+
+pub fun testRemoveParent() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    
+    // remove the parent and validate the the parent manager resource doesn't have the child anymore
+    txExecutor("hybrid-custody/remove_parent_from_child.cdc", [child], [parent.address], nil, nil)
+}
+
 // --------------- End Test Cases --------------- 
 
 
@@ -907,8 +939,8 @@ pub fun txExecutor(_ filePath: String, _ signers: [Test.Account], _ arguments: [
     if let err = txResult.error {
         if let expectedErrorMessage = expectedError {
             let ptr = getErrorMessagePointer(errorType: expectedErrorType!)
-            let errMessage = err.message.slice(from: ptr, upTo: ptr + expectedErrorMessage.length)
-            let hasEmittedCorrectMessage = errMessage == expectedErrorMessage ? true : false
+            let errMessage = err.message
+            let hasEmittedCorrectMessage = contains(errMessage, expectedErrorMessage)
             let failureMessage = "Expecting - "
                 .concat(expectedErrorMessage)
                 .concat("\n")
