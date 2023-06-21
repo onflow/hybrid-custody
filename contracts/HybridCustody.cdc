@@ -363,10 +363,9 @@ pub contract HybridCustody {
             acct.setDisplay(display)
         }
 
-        pub fun giveOwnerShip(addr: Address, to: Address) {
+        pub fun giveOwnership(addr: Address, to: Address) {
             let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
-            self.ownedAccounts.remove(key: acct.address)
 
             acct.borrow()!.giveOwnership(to: to)
         }
