@@ -146,16 +146,45 @@ pub contract HybridCustody {
             }
         }
 
-        // TODO: add comments for all methods
+        // removeCapabilityFromProxy
+        // removes a capability from the CapabilityProxy used by the specified parent address
         pub fun removeCapabilityFromProxy(parent: Address, cap: Capability)
+
+        // getAddress
+        // return the address of this OwnedAccount
         pub fun getAddress(): Address
+        
+        // isChildOf
+        // checks if this OwnedAccount is a child of the specified address
         pub fun isChildOf(_ addr: Address): Bool
+
+        // getParentsAddresses
+        // returns all addresses which are parents of this OwnedAccount
         pub fun getParentsAddresses(): [Address]
+
+        // borrowAccount
+        // borrows this OwnedAccount's AuthAccount Capability
         pub fun borrowAccount(): &AuthAccount?
+
+        // getOwned
+        // returns the current owner of this account, if there is one
         pub fun getOwner(): Address?
+
+        // getPendingOwner
+        // returns the pending owner of this account, if there is one
         pub fun getPendingOwner(): Address?
+
+        // setOwnerCallback
+        // a callback which is invoked when a parent redeems an owned account
         access(contract) fun setOwnerCallback(_ addr: Address)
+        
+        // rotateAuthAccount
+        // destroys all outstanding AuthAccount capabilities on this owned account,
+        // and creates a new one for the OwnedAccount to use
         pub fun rotateAuthAccount()
+
+        // revokeAllKeys
+        // revokes all keys on this account
         pub fun revokeAllKeys()
     }
 
