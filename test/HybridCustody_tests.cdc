@@ -215,6 +215,48 @@ pub fun testTransferOwnership() {
     )
 }
 
+pub fun testTransferOwnershipFromManager() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let owner = blockchain.createAccount()
+    setupAccountManager(owner)
+
+    assert(
+        !(scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [owner.address]) as! Bool?)!,
+        message: "owner should not have owned accounts before transfer"
+    )
+
+    txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil, nil)
+    assert(getPendingOwner(child: child)! == owner.address, message: "child account pending ownership was not updated correctly")
+
+    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil, nil)
+    assert(getOwner(child: child)! == owner.address, message: "child account ownership is not correct")
+    assert(getPendingOwner(child: child) == nil, message: "pending owner was not cleared after claiming ownership")
+
+    assert(
+        (scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [owner.address]) as! Bool?)!,
+        message: "parent should have owned accounts after transfer"
+    )
+
+    let newOwner = blockchain.createAccount()
+    setupAccountManager(newOwner)
+
+    assert(
+        !(scriptExecutor("hybrid-custody/has_owned_accounts.cdc", [newOwner.address]) as! Bool?)!,
+        message: "owner should not have owned accounts before transfer"
+    )
+
+    txExecutor("hybrid-custody/transfer_ownership_from_manager.cdc", [owner], [child.address, newOwner.address], nil, nil)
+    assert(getPendingOwner(child: child)! == newOwner.address, message: "child account pending ownership was not updated correctly")
+
+    txExecutor("hybrid-custody/accept_ownership.cdc", [newOwner], [child.address, nil, nil], nil, nil)
+    assert(getOwner(child: child)! == newOwner.address, message: "child account ownership is not correct")
+    assert(getPendingOwner(child: child) == nil, message: "pending owner was not cleared after claiming ownership")
+}
+
 pub fun testGetCapability_ManagerFilterAllowed() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -546,6 +588,7 @@ pub fun testGetProxyAccountNFTCapabilities(){
 
     let isPublic = true
     setupNFT2Collection(child)
+    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
     addNFT2CollectionToProxy(child: child, parent: parent, isPublic: isPublic)
 
     let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
@@ -553,11 +596,10 @@ pub fun testGetProxyAccountNFTCapabilities(){
         nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![0] == nftIdentifier,
         message: "typeId should be: ".concat(nftIdentifier)
     )
-     assert(
+    assert(
         nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![1] == nftIdentifier2,
         message: "typeId should be: ".concat(nftIdentifier2)
     )
-
 }
 
 pub fun testGetNFTsAccessibleFromProxyAccount(){
