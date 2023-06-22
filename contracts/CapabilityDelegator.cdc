@@ -86,7 +86,7 @@ pub contract CapabilityDelegator {
 
         pub fun addCapability(cap: Capability, isPublic: Bool) {
             pre {
-                cap.check<&AnyResource>(): "Invalid Capability vided"
+                cap.check<&AnyResource>(): "Invalid Capability provided"
             }
             if isPublic {
                 self.publicCapabilities.insert(key: cap.getType(), cap)

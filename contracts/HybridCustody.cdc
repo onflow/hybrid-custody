@@ -257,7 +257,7 @@ pub contract HybridCustody {
     exposed by the child account to them.
     */
     pub resource Manager: ManagerPrivate, ManagerPublic, MetadataViews.Resolver {
-        pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
+        pub let childAccounts: {Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
         pub let ownedAccounts: {Address: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>}
 
         // A bucket of structs so that the Manager resource can be easily extended with new functionality.
@@ -273,13 +273,13 @@ pub contract HybridCustody {
 
         pub fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
-                self.accounts[cap.address] == nil: "There is already a child account with this address"
+                self.childAccounts[cap.address] == nil: "There is already a child account with this address"
             }
 
             let acct = cap.borrow()
                 ?? panic("child account capability could not be borrowed")
 
-            self.accounts[cap.address] = cap
+            self.childAccounts[cap.address] = cap
             
             emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, active: true)
 
@@ -303,7 +303,7 @@ pub contract HybridCustody {
         }
 
         pub fun removeChild(addr: Address) {
-            let cap = self.accounts.remove(key: addr)
+            let cap = self.childAccounts.remove(key: addr)
                 ?? panic("child account not found")
             
             if !cap.check() {
@@ -322,7 +322,7 @@ pub contract HybridCustody {
         }
 
         access(contract) fun removeParentCallback(child: Address) {
-            self.accounts.remove(key: child)
+            self.childAccounts.remove(key: child)
         }
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>) {
@@ -345,7 +345,7 @@ pub contract HybridCustody {
         }
 
         pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}? {
-            let cap = self.accounts[addr]
+            let cap = self.childAccounts[addr]
             if cap == nil {
                 return nil
             }
@@ -354,7 +354,7 @@ pub contract HybridCustody {
         }
 
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}? {
-            let cap = self.accounts[addr]
+            let cap = self.childAccounts[addr]
             if cap == nil {
                 return nil
             }
@@ -397,7 +397,7 @@ pub contract HybridCustody {
         }
 
         pub fun getChildAddresses(): [Address] {
-            return self.accounts.keys
+            return self.childAccounts.keys
         }
 
         pub fun getOwnedAddresses(): [Address] {
@@ -416,7 +416,7 @@ pub contract HybridCustody {
             pre {
                 filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
             }
-            self.accounts = {}
+            self.childAccounts = {}
             self.ownedAccounts = {}
             self.filter = filter
 
