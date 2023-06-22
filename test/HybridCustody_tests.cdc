@@ -47,12 +47,12 @@ pub fun testSetupFactoryWithFT() {
 
 pub fun testSetupChildAccount() {
     let tmp = blockchain.createAccount()
-    setupChildAccount(tmp, FilterKindAll)
+    setupOwnedAccount(tmp, FilterKindAll)
 }
 
 pub fun testPublishAccount() {
     let tmp = blockchain.createAccount()
-    setupChildAccount(tmp, FilterKindAll)
+    setupOwnedAccount(tmp, FilterKindAll)
 
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
@@ -66,7 +66,7 @@ pub fun testPublishAccount() {
 
 pub fun testRedeemAccount() {
     let child = blockchain.createAccount()
-    setupChildAccount(child, FilterKindAll)
+    setupOwnedAccount(child, FilterKindAll)
 
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
@@ -81,16 +81,16 @@ pub fun testRedeemAccount() {
     scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
 }
 
-pub fun testProxyAccount_getAddress() {
+pub fun testChildAccount_getAddress() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
-    scriptExecutor("hybrid-custody/verify_proxy_address.cdc", [parent.address, child.address])
+    scriptExecutor("hybrid-custody/verify_child_address.cdc", [parent.address, child.address])
 }
 
-pub fun testProxyAccount_hasChildAccounts() {
+pub fun testOwnedAccount_hasChildAccounts() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -107,7 +107,7 @@ pub fun testProxyAccount_hasChildAccounts() {
     )
 }
 
-pub fun testProxyAccount_getFTCapability() {
+pub fun testChildAccount_getFTCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -117,7 +117,7 @@ pub fun testProxyAccount_getFTCapability() {
     scriptExecutor("hybrid-custody/get_ft_provider_capability.cdc", [parent.address, child.address])
 }
 
-pub fun testProxyAccount_getCapability() {
+pub fun testChildAccount_getCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -128,7 +128,7 @@ pub fun testProxyAccount_getCapability() {
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
 }
 
-pub fun testProxyAccount_getPublicCapability() {
+pub fun testChildAccount_getPublicCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -155,7 +155,7 @@ pub fun testCheckParentRedeemedStatus() {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
 
-    setupChildAccount(child, FilterKindAll)
+    setupOwnedAccount(child, FilterKindAll)
 
     setupAccountManager(parent)
     assert(!isParent(child: child, parent: parent), message: "parent is already pending")
@@ -278,7 +278,6 @@ pub fun testGetCapability_ManagerFilterAllowed() {
 
     addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-
 }
 
 pub fun testGetCapability_ManagerFilterNotAllowed() {
@@ -302,7 +301,7 @@ pub fun testGetCapability_ManagerFilterNotAllowed() {
     assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
 }
 
-pub fun testGetPrivateCapabilityFromProxy() {
+pub fun testGetPrivateCapabilityFromDelegator() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -310,9 +309,9 @@ pub fun testGetPrivateCapabilityFromProxy() {
 
     let isPublic = false
     setupNFTCollection(child)
-    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
+    addNFTCollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
 
-    scriptExecutor("hybrid-custody/get_examplenft_collection_from_proxy.cdc", [parent.address, child.address, isPublic])
+    scriptExecutor("hybrid-custody/get_examplenft_collection_from_delegator.cdc", [parent.address, child.address, isPublic])
 }
 
 pub fun testGetPublicCapabilityFromProxy() {
@@ -323,30 +322,9 @@ pub fun testGetPublicCapabilityFromProxy() {
 
     let isPublic = true
     setupNFTCollection(child)
-    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
+    addNFTCollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
 
-    scriptExecutor("hybrid-custody/get_examplenft_collection_from_proxy.cdc", [parent.address, child.address, isPublic])
-}
-
-pub fun testMetadata_ProxyAccount_Metadata() {
-    let child = blockchain.createAccount()
-    let parent = blockchain.createAccount()
-
-    setupChildAndParent_FilterKindAll(child: child, parent: parent)
-
-    let name = "my name"
-    let desc = "lorem ipsum"
-    let url = "http://example.com/image.png"
-    txExecutor("hybrid-custody/metadata/set_proxy_account_display.cdc", [parent], [child.address, name, desc, url], nil, nil)
-
-    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_proxy_display_name.cdc", [parent.address, child.address])! as! String
-    assert(name == resolvedName, message: "names do not match")
-
-    // set it again to make sure overrides work
-    let name2 = "another name"
-    txExecutor("hybrid-custody/metadata/set_proxy_account_display.cdc", [parent], [child.address, name2, desc, url], nil, nil)
-    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_proxy_display_name.cdc", [parent.address, child.address])! as! String
-    assert(name2 == resolvedName2, message: "names do not match")
+    scriptExecutor("hybrid-custody/get_examplenft_collection_from_delegator.cdc", [parent.address, child.address, isPublic])
 }
 
 pub fun testMetadata_ChildAccount_Metadata() {
@@ -358,15 +336,36 @@ pub fun testMetadata_ChildAccount_Metadata() {
     let name = "my name"
     let desc = "lorem ipsum"
     let url = "http://example.com/image.png"
-    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [child], [name, desc, url], nil, nil)
+    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [parent], [child.address, name, desc, url], nil, nil)
 
-    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
+    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [parent.address, child.address])! as! String
     assert(name == resolvedName, message: "names do not match")
 
     // set it again to make sure overrides work
     let name2 = "another name"
-    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [child], [name2, desc, url], nil, nil)
-    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [child.address])! as! String
+    txExecutor("hybrid-custody/metadata/set_child_account_display.cdc", [parent], [child.address, name2, desc, url], nil, nil)
+    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_child_display_name.cdc", [parent.address, child.address])! as! String
+    assert(name2 == resolvedName2, message: "names do not match")
+}
+
+pub fun testMetadata_OwnedAccount_Metadata() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let name = "my name"
+    let desc = "lorem ipsum"
+    let url = "http://example.com/image.png"
+    txExecutor("hybrid-custody/metadata/set_owned_account_display.cdc", [child], [name, desc, url], nil, nil)
+
+    let resolvedName = scriptExecutor("hybrid-custody/metadata/resolve_owned_display_name.cdc", [child.address])! as! String
+    assert(name == resolvedName, message: "names do not match")
+
+    // set it again to make sure overrides work
+    let name2 = "another name"
+    txExecutor("hybrid-custody/metadata/set_owned_account_display.cdc", [child], [name2, desc, url], nil, nil)
+    let resolvedName2 = scriptExecutor("hybrid-custody/metadata/resolve_owned_display_name.cdc", [child.address])! as! String
     assert(name2 == resolvedName2, message: "names do not match")
 }
 
@@ -561,7 +560,7 @@ pub fun testAddExampleTokenToBalance() {
     assert(balance == amount, message: "balance should be".concat(amount.toString()))
 }
 
-pub fun testSetupChildWithDisplay() {
+pub fun testSetupOwnedAccountWithDisplay() {
     let acct = blockchain.createAccount()
 
     let factory = getTestAccount(nftFactory)
@@ -574,11 +573,11 @@ pub fun testSetupChildWithDisplay() {
     let desc = "description"
     let thumbnail = "https://example.com/test.jpeg"
 
-    txExecutor("hybrid-custody/setup_child_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
-    assert(scriptExecutor("hybrid-custody/metadata/assert_child_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
+    txExecutor("hybrid-custody/setup_owned_account_with_display.cdc", [acct], [name, desc, thumbnail], nil, nil)
+    assert(scriptExecutor("hybrid-custody/metadata/assert_owned_account_display.cdc", [acct.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
 }
 
-pub fun testGetProxyAccountNFTCapabilities(){
+pub fun testGetChildAccountNFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
@@ -588,16 +587,16 @@ pub fun testGetProxyAccountNFTCapabilities(){
 
     let isPublic = true
     setupNFT2Collection(child)
-    addNFTCollectionToProxy(child: child, parent: parent, isPublic: isPublic)
-    addNFT2CollectionToProxy(child: child, parent: parent, isPublic: isPublic)
+    addNFTCollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
+    addNFT2CollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
 
-    let nftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+    let nftTypeIds = scriptExecutor("hybrid-custody/get_child_account_nft_capabilities.cdc", [parent.address])! as! {Address: [String]}
     assert(
-        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![0] == nftIdentifier,
+        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]!.contains(nftIdentifier),
         message: "typeId should be: ".concat(nftIdentifier)
     )
     assert(
-        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]![1] == nftIdentifier2,
+        nftTypeIds.containsKey(child.address) && nftTypeIds[child.address]!.contains(nftIdentifier2),
         message: "typeId should be: ".concat(nftIdentifier2)
     )
 }
@@ -617,7 +616,7 @@ pub fun testGetNFTsAccessibleFromProxyAccount(){
 
     let expectedChildIDs = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
     let expectedParentIDs: [UInt64] = []
-    let expectedAddressToIDs: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs}
+    let expectedAddressToIDs: {Address: [UInt64]} = {child.address: expectedChildIDs, parent.address: expectedParentIDs}
 
     scriptExecutor(
         "test/test_get_nft_display_view_from_public.cdc",
@@ -625,19 +624,30 @@ pub fun testGetNFTsAccessibleFromProxyAccount(){
     )
 
     // Test we have capabilities to access the minted NFTs
-    scriptExecutor("test/test_get_accessible_proxy_nfts.cdc", [parent.address, expectedAddressToIDs])
+    scriptExecutor("test/test_get_accessible_child_nfts.cdc", [
+        parent.address,
+        {child.address: expectedChildIDs} as! {Address: [UInt64]}
+    ])
     
-    // Mint new nfts from ExampleNFT2 and assert that get_accessible_proxy_nfts.cdc does not return these nfts.
+    // Mint new nfts from ExampleNFT2 and assert that get_accessible_child_nfts.cdc does not return these nfts.
     mintExampleNFT2Default(accounts[exampleNFT2]!, receiver: child)
     let expectedChildIDs2 = (scriptExecutor("example-nft-2/get_ids.cdc", [child.address]) as! [UInt64]?)!
-    let expectedAddressToIDs2: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs2}
+    let expectedAddressToIDs2: {Address: [UInt64]} = {child.address: expectedChildIDs2, parent.address: expectedParentIDs}
 
     scriptExecutor(
         "test/test_get_nft_display_view_from_public.cdc",
         [parent.address, PublicPath(identifier: exampleNFT2PublicIdentifier)!, expectedAddressToIDs2]
     )
 
-    let error = expectScriptFailure("test/test_get_accessible_proxy_nfts.cdc", [parent.address, expectedAddressToIDs2])
+    // revoke the ExampleNFT2 provider capability, preventing it from being returned.
+    let paths: [CapabilityPath] = [
+        /private/exampleNFT2Collection,
+        /private/exampleNFTCollection
+    ]
+    txExecutor("misc/unlink_paths.cdc", [child], [paths], nil, nil)
+
+    let expectedAddressToIDsFails: {Address: [UInt64]} = {child.address: expectedChildIDs2}
+    let error = expectScriptFailure("test/test_get_accessible_child_nfts.cdc", [parent.address, expectedAddressToIDsFails])
     assert(contains(error, "Resulting ID does not match expected ID!"), message: "failed to find expected error message")
 }
 
@@ -649,7 +659,7 @@ pub fun testGetProxyAccountFTCapabilities(){
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
     setupFTProvider(child)
 
-    let ftTypeIds = scriptExecutor("hybrid-custody/get_proxy_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
+    let ftTypeIds = scriptExecutor("hybrid-custody/get_child_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
     assert(ftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
 
 }
@@ -706,7 +716,7 @@ pub fun testSetDefaultManagerFilter() {
 
 pub fun testPublishToParent_alreadyExists() {
     let tmp = blockchain.createAccount()
-    setupChildAccount(tmp, FilterKindAll)
+    setupOwnedAccount(tmp, FilterKindAll)
 
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
@@ -714,7 +724,7 @@ pub fun testPublishToParent_alreadyExists() {
     let parent = blockchain.createAccount()
 
     // put a resource in the ChildAccount storage slot for the parent to guarantee that publishing will not work
-    txExecutor("hybrid-custody/misc/save_resource_to_parent_proxy_storage_slot.cdc", [tmp], [parent.address], nil, nil)
+    txExecutor("hybrid-custody/misc/save_resource_to_parent_child_storage_slot.cdc", [tmp], [parent.address], nil, nil)
 
     // this should fail because something is already stored where the child account is located
     txExecutor(
@@ -745,7 +755,7 @@ pub fun setupChildAndParent_FilterKindAll(child: Test.Account, parent: Test.Acco
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
 
-    setupChildAccount(child, FilterKindAll)
+    setupOwnedAccount(child, FilterKindAll)
 
     setupAccountManager(parent)
 
@@ -766,7 +776,7 @@ pub fun setManagerFilterOnChild(child: Test.Account, parent: Test.Account, filte
     txExecutor("hybrid-custody/set_manager_filter_cap.cdc", [parent], [filterAddress, child.address], nil, nil)
 }
 
-pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
+pub fun setupOwnedAccount(_ acct: Test.Account, _ filterKind: String) {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(filterKind)
 
@@ -777,7 +787,7 @@ pub fun setupChildAccount(_ acct: Test.Account, _ filterKind: String) {
     setupFT(acct)
 
 
-    txExecutor("hybrid-custody/setup_child_account.cdc", [acct], [], nil, nil)
+    txExecutor("hybrid-custody/setup_owned_account.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupFactoryManager(_ acct: Test.Account) {
@@ -853,12 +863,12 @@ pub fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: Stri
     txExecutor(filePath, [acct], [identifier], nil, nil)
 }
 
-pub fun addNFTCollectionToProxy(child: Test.Account, parent: Test.Account, isPublic: Bool) {
-    txExecutor("hybrid-custody/add_example_nft_collection_to_proxy.cdc", [child], [parent.address, isPublic], nil, nil)
+pub fun addNFTCollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
+    txExecutor("hybrid-custody/add_example_nft_collection_to_delegator.cdc", [child], [parent.address, isPublic], nil, nil)
 }
 
-pub fun addNFT2CollectionToProxy(child: Test.Account, parent: Test.Account, isPublic: Bool) {
-    txExecutor("hybrid-custody/add_example_nft2_collection_to_proxy.cdc", [child], [parent.address, isPublic], nil, nil)
+pub fun addNFT2CollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
+    txExecutor("hybrid-custody/add_example_nft2_collection_to_delegator.cdc", [child], [parent.address, isPublic], nil, nil)
 }
 // ---------------- End Transaction wrapper functions
 
@@ -1044,7 +1054,7 @@ pub fun setup() {
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
         "HybridCustody": hybridCustodyAccount,
-        "CapabilityProxy": capabilityProxyAccount,
+        "CapabilityDelegator": capabilityProxyAccount,
         "CapabilityFilter": capabilityFilterAccount,
         "CapabilityFactory": capabilityFactoryAccount,
         "NFTCollectionPublicFactory": cpFactory,
@@ -1073,7 +1083,7 @@ pub fun setup() {
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
         "HybridCustody": accounts["HybridCustody"]!.address,
-        "CapabilityProxy": accounts["CapabilityProxy"]!.address,
+        "CapabilityDelegator": accounts["CapabilityDelegator"]!.address,
         "CapabilityFilter": accounts["CapabilityFilter"]!.address,
         "CapabilityFactory": accounts["CapabilityFactory"]!.address,
         "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
@@ -1101,7 +1111,7 @@ pub fun setup() {
     deploy("ExampleToken", accounts["ExampleToken"]!, "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last
-    deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
+    deploy("CapabilityDelegator", accounts["CapabilityDelegator"]!, "../contracts/CapabilityDelegator.cdc")
     deploy("CapabilityFilter", accounts["CapabilityFilter"]!, "../contracts/CapabilityFilter.cdc")
     deploy("CapabilityFactory", accounts["CapabilityFactory"]!, "../contracts/CapabilityFactory.cdc")
     deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")

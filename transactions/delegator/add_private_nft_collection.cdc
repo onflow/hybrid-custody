@@ -1,4 +1,4 @@
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 import "NonFungibleToken"
 import "MetadataViews"
@@ -6,7 +6,7 @@ import "ExampleNFT"
 
 transaction {
     prepare(acct: AuthAccount) {
-        let child = acct.borrow<&CapabilityProxy.Proxy>(from: CapabilityProxy.StoragePath)
+        let child = acct.borrow<&CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
             ?? panic("child not found")
         
         let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData

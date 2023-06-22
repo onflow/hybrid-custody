@@ -7,7 +7,7 @@ import "MetadataViews"
 import "HybridCustody"
 import "CapabilityFactory"
 import "CapabilityFilter"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 transaction(
     pubKey: String,

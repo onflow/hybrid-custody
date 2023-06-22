@@ -1,24 +1,24 @@
 /*
-CapabilityProxy is a contract used to share Capabiltities to other
+CapabilityDelegator is a contract used to share Capabiltities to other
 accounts. It is used by the RestrictedChildAccount contract to allow
 more flexible sharing of Capabilities when an app wants to share things that
 aren't the NFT-standard interface types.
 
-Inside of CapabilityProxy is a resource called Proxy which 
+Inside of CapabilityDelegator is a resource called Delegator which 
 maintains a mapping of public and private capabilities. They cannot and should
-not be mixed. A public proxy is able to be borrowed by anyone, whereas a private proxy
+not be mixed. A public delegator is able to be borrowed by anyone, whereas a private delegator
 can only be borrowed on the RestrictedChildAccount when you have access to the full
 RestrictedAccount resource.
 */
-pub contract CapabilityProxy {
+pub contract CapabilityDelegator {
     pub let StoragePath: StoragePath
     pub let PrivatePath: PrivatePath
     pub let PublicPath: PublicPath
     
     /* Events */
     //
-    pub event ProxyCreated(id: UInt64)
-    pub event ProxyUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
+    pub event DelegatorCreated(id: UInt64)
+    pub event DelegatorUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
 
     pub resource interface GetterPrivate {
         pub fun getPrivateCapability(_ type: Type): Capability? {
@@ -42,7 +42,7 @@ pub contract CapabilityProxy {
         pub fun getAllPublic(): [Capability]
     }
 
-    pub resource Proxy: GetterPublic, GetterPrivate {
+    pub resource Delegator: GetterPublic, GetterPrivate {
         access(self) let privateCapabilities: {Type: Capability}
         access(self) let publicCapabilities: {Type: Capability}
 
@@ -86,23 +86,23 @@ pub contract CapabilityProxy {
 
         pub fun addCapability(cap: Capability, isPublic: Bool) {
             pre {
-                cap.check<&AnyResource>(): "Invalid Capability provided"
+                cap.check<&AnyResource>(): "Invalid Capability vided"
             }
             if isPublic {
                 self.publicCapabilities.insert(key: cap.getType(), cap)
             } else {
                 self.privateCapabilities.insert(key: cap.getType(), cap)
             }
-            emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: isPublic, active: true)
+            emit DelegatorUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: isPublic, active: true)
         }
 
         pub fun removeCapability(cap: Capability) {
             if let removedPublic = self.publicCapabilities.remove(key: cap.getType()) {
-                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
+                emit DelegatorUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
             }
             
             if let removedPrivate = self.privateCapabilities.remove(key: cap.getType()) {
-                emit ProxyUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: false, active: false)
+                emit DelegatorUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: false, active: false)
             }
         }
 
@@ -112,14 +112,14 @@ pub contract CapabilityProxy {
         }
     }
 
-    pub fun createProxy(): @Proxy {
-        let proxy <- create Proxy()
-        emit ProxyCreated(id: proxy.uuid)
-        return <- proxy
+    pub fun createDelegator(): @Delegator {
+        let delegator <- create Delegator()
+        emit DelegatorCreated(id: delegator.uuid)
+        return <- delegator
     }
     
     init() {
-        let identifier = "CapabilityProxy_".concat(self.account.address.toString())
+        let identifier = "CapabilityDelegator_".concat(self.account.address.toString())
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PrivatePath = PrivatePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!

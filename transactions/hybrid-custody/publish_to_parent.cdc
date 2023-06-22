@@ -1,7 +1,7 @@
 import "HybridCustody"
 import "CapabilityFactory"
 import "CapabilityFilter"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 transaction(parent: Address, factoryAddress: Address, filterAddress: Address) {
     prepare(acct: AuthAccount) {

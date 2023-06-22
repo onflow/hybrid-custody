@@ -1,11 +1,11 @@
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 import "NonFungibleToken"
 import "ExampleNFT"
 
 transaction {
     prepare(acct: AuthAccount) {
-        let child = acct.borrow<&CapabilityProxy.Proxy>(from: CapabilityProxy.StoragePath)
+        let child = acct.borrow<&CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
             ?? panic("child not found")
 
         let sharedCap 

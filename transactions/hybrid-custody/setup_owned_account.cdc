@@ -3,12 +3,10 @@
 import "HybridCustody"
 
 import "CapabilityFactory"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 import "CapabilityFilter"
 
-import "MetadataViews"
-
-transaction(name: String, desc: String, thumbnailURL: String) {
+transaction {
     prepare(acct: AuthAccount) {
         var acctCap = acct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
         if !acctCap.check() {
@@ -26,12 +24,6 @@ transaction(name: String, desc: String, thumbnailURL: String) {
 
         acct.unlink(HybridCustody.ChildPublicPath)
         acct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
-
-        let child = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)!
-
-        let thumbnail = MetadataViews.HTTPFile(url: thumbnailURL)
-        let display = MetadataViews.Display(name: name, description: desc, thumbnail: thumbnail)
-        child.setDisplay(display)
     }
 }
  

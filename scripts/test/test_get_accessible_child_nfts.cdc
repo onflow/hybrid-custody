@@ -1,6 +1,7 @@
 import "HybridCustody"
 import "NonFungibleToken"
 import "MetadataViews"
+import "StringUtils"
 
 /* 
  * TEST SCRIPT
@@ -11,34 +12,29 @@ import "MetadataViews"
 /// Assertion method to ensure passing test
 ///
 pub fun assertPassing(result: {Address: {UInt64: MetadataViews.Display}}, expectedAddressToIDs: {Address: [UInt64]}) {
+  for address in expectedAddressToIDs.keys {
+    let expectedIDs: [UInt64] = expectedAddressToIDs[address]!
 
-    for address in result.keys {
-
-        if expectedAddressToIDs[address] == nil {
-            panic("Address ".concat(address.toString()).concat(" found but not expected!"))
-        }
-        let expectedIDs: [UInt64] = expectedAddressToIDs[address]!
-
-        for i, id in result[address]!.keys {
-            if expectedIDs[i] != id {
-              panic("Resulting ID does not match expected ID!")
-            }
-        }
+    for i, id in expectedAddressToIDs[address]! {
+      if result[address]![id] == nil {
+        panic("Resulting ID does not match expected ID!")
+      }
     }
+  }
 }
 
 pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
-  let account = getAuthAccount(addr)
   let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
   var typeIdsWithProvider = {} as {Address: [String]} 
   var nftViews = {} as {Address: {UInt64: MetadataViews.Display}} 
 
-  
   let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
   let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
 
   // Iterate through child accounts
+  let children = manager.getChildAddresses()
+
   for address in manager.getChildAddresses() {
     let acct = getAuthAccount(address)
     let foundTypes: [String] = []
@@ -50,12 +46,14 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
       if !type.isSubtype(of: providerType){
         return true
       }
-      if let cap = childAcct.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
+
+      if let cap: Capability = childAcct.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
         let providerCap = cap as! Capability<&{NonFungibleToken.Provider}> 
 
         if !providerCap.check(){
           return true
         }
+
         foundTypes.append(cap.borrow<&AnyResource>()!.getType().identifier)
       }
       return true
@@ -66,7 +64,7 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
     acct.forEachStored(fun (path: StoragePath, type: Type): Bool {
 
       if typeIdsWithProvider[address] == nil {
-      return true
+        return true
       }
 
       for key in typeIdsWithProvider.keys {

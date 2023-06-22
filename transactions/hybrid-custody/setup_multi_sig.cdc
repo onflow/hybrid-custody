@@ -3,7 +3,7 @@
 import "HybridCustody"
 
 import "CapabilityFactory"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 import "CapabilityFilter"
 
 import "MetadataViews"

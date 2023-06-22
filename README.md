@@ -14,7 +14,7 @@ custody might not be the form of hybrid custody that they want. In this model, t
 maintains control of their managed accounts, but they can:
 
 1. Share capabilities freely, with a few built-in controls over the types of capabilities that can be returned with some helper contracts (the `CapabilityFactory`, and `CapabilityFilter`)
-1. Share additional capabilities (public or private) with a parent account via a `CapabilityProxy` resource
+1. Share additional capabilities (public or private) with a parent account via a `CapabilityDelegator` resource
 
 | Network |  Address           |
 |---------|--------------------|

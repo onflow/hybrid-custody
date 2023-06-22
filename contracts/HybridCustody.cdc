@@ -3,7 +3,7 @@ import "MetadataViews"
 
 // HC-owned imports
 import "CapabilityFactory"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 import "CapabilityFilter"
 
 /*
@@ -44,9 +44,9 @@ pub contract HybridCustody {
     pub event CreatedChildAccount(id: UInt64, child: Address)
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     pub event ChildAccountPublished(
+        ownedAcctID: UInt64,
         childAcctID: UInt64,
-        proxyAcctID: UInt64,
-        capProxyID: UInt64,
+        capDelegatorID: UInt64,
         factoryID: UInt64,
         filterID: UInt64,
         filterType: Type,
@@ -92,7 +92,7 @@ pub contract HybridCustody {
         // publicToParent
         // Sets up a new ChildAccount resource for the given parentAddress to redeem.
         // This child account uses the supplied factory and filter to manage what can be obtained
-        // from the child account, and a new CapabilityProxy resource is created for the sharing of one-off
+        // from the child account, and a new CapabilityDelegator resource is created for the sharing of one-off
         // capabilities. Each of these pieces of access control are managed through the child account.
         pub fun publishToParent(
             parentAddress: Address,
@@ -137,18 +137,18 @@ pub contract HybridCustody {
             }
         }
 
-        // addCapabilityToProxy
+        // addCapabilityToDelegator
         // Adds a capability to a parent's managed @ChildAccount resource. The Capability can be made public,
         // permitting anyone to borrow it.
-        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool) {
+        pub fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
             pre {
                 cap.check<&AnyResource>(): "Invalid Capability provided"
             }
         }
 
-        // removeCapabilityFromProxy
-        // removes a capability from the CapabilityProxy used by the specified parent address
-        pub fun removeCapabilityFromProxy(parent: Address, cap: Capability)
+        // removeCapabilityFromDelegator
+        // removes a capability from the CapabilityDelegator used by the specified parent address
+        pub fun removeCapabilityFromDelegator(parent: Address, cap: Capability)
 
         // getAddress
         // return the address of this OwnedAccount
@@ -192,7 +192,7 @@ pub contract HybridCustody {
     // some methods here, but isn't necessarily the same
     pub resource interface AccountPublic {
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
-        pub fun getPublicCapFromProxy(type: Type): Capability?
+        pub fun getPublicCapFromDelegator(type: Type): Capability?
         pub fun getAddress(): Address
     }
 
@@ -207,14 +207,14 @@ pub contract HybridCustody {
 
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
-        pub fun getPrivateCapFromProxy(type: Type): Capability? {
+        pub fun getPrivateCapFromDelegator(type: Type): Capability? {
             post {
                 result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
                     "Capability is not allowed by this account's Parent"
             }
         }
 
-        pub fun getPublicCapFromProxy(type: Type): Capability?
+        pub fun getPublicCapFromDelegator(type: Type): Capability?
 
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
@@ -453,12 +453,12 @@ pub contract HybridCustody {
         // not all of them.
         pub var filter: Capability<&{CapabilityFilter.Filter}>
 
-        // The CapabilityProxy is a way to share one-off capabilities by the child account. These capabilities can be
+        // The CapabilityDelegator is a way to share one-off capabilities by the child account. These capabilities can be
         // public OR private and are separate from the factory which returns a capability at a given path as a certain
-        // type. When using the CapabilityProxy, you do not have the ability to specify which path a capability came
+        // type. When using the CapabilityDelegator, you do not have the ability to specify which path a capability came
         // from. For instance, Dapper Wallet might choose to expose a Capability to their Full TopShot collection, but
         // only to the path that the collection exists in.
-        pub let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
+        pub let delegator: Capability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>
 
         // managerCapabilityFilter is a component optionally given to a child account when a manager redeems it. If this
         // filter is not nil, any Capability returned through the `getCapability` function checks that the manager
@@ -525,16 +525,16 @@ pub contract HybridCustody {
             return cap
         }
 
-        pub fun getPrivateCapFromProxy(type: Type): Capability? {
-            if let p = self.proxy.borrow() {
+        pub fun getPrivateCapFromDelegator(type: Type): Capability? {
+            if let p = self.delegator.borrow() {
                 return p.getPrivateCapability(type)
             }
 
             return nil
         }
 
-        pub fun getPublicCapFromProxy(type: Type): Capability? {
-            if let p = self.proxy.borrow() {
+        pub fun getPublicCapFromDelegator(type: Type): Capability? {
+            if let p = self.delegator.borrow() {
                 return p.getPublicCapability(type)
             }
             return nil
@@ -555,9 +555,9 @@ pub contract HybridCustody {
             }
         }
 
-        pub fun borrowCapabilityProxy(): &CapabilityProxy.Proxy? {
-            let path = HybridCustody.getCapabilityProxyIdentifier(self.parent)
-            return self.childCap.borrow()!.borrowAccount().borrow<&CapabilityProxy.Proxy>(
+        pub fun borrowCapabilityDelegator(): &CapabilityDelegator.Delegator? {
+            let path = HybridCustody.getCapabilityDelegatorIdentifier(self.parent)
+            return self.childCap.borrow()!.borrowAccount().borrow<&CapabilityDelegator.Delegator>(
                 from: StoragePath(identifier: path)!
             )
         }
@@ -596,19 +596,19 @@ pub contract HybridCustody {
             _ childCap: Capability<&{BorrowableAccount, OwnedAccountPublic}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>,
-            _ proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>,
+            _ delegator: Capability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>,
             _ parent: Address
         ) {
             pre {
                 childCap.check(): "Provided childCap Capability is invalid"
                 factory.check(): "Provided factory Capability is invalid"
                 filter.check(): "Provided filter Capability is invalid"
-                proxy.check(): "Provided proxy Capability is invalid"
+                delegator.check(): "Provided delegator Capability is invalid"
             }
             self.childCap = childCap
             self.factory = factory
             self.filter = filter
-            self.proxy = proxy
+            self.delegator = delegator
             self.managerCapabilityFilter = nil // this will get set when a parent account redeems
             self.parent = parent
 
@@ -670,8 +670,8 @@ pub contract HybridCustody {
         A helper method to make it easier to manage what parents an account has configured. The steps to sharing this
         OwnedAccount with a new parent are:
 
-        1. Create a new CapabilityProxy for the ChildAccount resource being created. We make a new one here because
-           CapabilityProxy types are meant to be shared explicitly. Making one shared base-line of capabilities might
+        1. Create a new CapabilityDelegator for the ChildAccount resource being created. We make a new one here because
+           CapabilityDelegator types are meant to be shared explicitly. Making one shared base-line of capabilities might
            introuce an unforseen behavior where an app accidentally shared something to all accounts when it only meant
            to go to one of them. It is better for parent accounts to have less access than they might have anticipated,
            than for a child to have given out access it did not intend to.
@@ -679,7 +679,7 @@ pub contract HybridCustody {
            child account with. We make new ones each time so that you can revoke access from one parent, without
            destroying them all. A new Link is made each time based on the address being shared to allow this
            fine-grained control, but it is all managed by the OwnedAccount resource itself.
-        3. A new @ChildAccount resource is created and saved, using the CapabilityProxy made in step one, and our
+        3. A new @ChildAccount resource is created and saved, using the CapabilityDelegator made in step one, and our
            CapabilityFactory and CapabilityFilter Capabilities. Once saved, public and private links are configured for
            the ChildAccount.
         4. Publish the newly made private link to the designated parent's inbox for them to claim on their @Manager
@@ -693,58 +693,58 @@ pub contract HybridCustody {
             pre{
                 self.parents[parentAddress] == nil: "Address pending or already redeemed as parent"
             }
-            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parentAddress)
+            let capDelegatorIdentifier = HybridCustody.getCapabilityDelegatorIdentifier(parentAddress)
 
             let identifier = HybridCustody.getChildAccountIdentifier(parentAddress)
             let childAccountStorage = StoragePath(identifier: identifier)!
 
-            let capProxyStorage = StoragePath(identifier: capProxyIdentifier)!
+            let capDelegatorStorage = StoragePath(identifier: capDelegatorIdentifier)!
             let acct = self.borrowAccount()
 
-            assert(acct.borrow<&AnyResource>(from: capProxyStorage) == nil, message: "conflicting resource found in capability proxy storage slot for parentAddress")
+            assert(acct.borrow<&AnyResource>(from: capDelegatorStorage) == nil, message: "conflicting resource found in capability delegator storage slot for parentAddress")
             assert(acct.borrow<&AnyResource>(from: childAccountStorage) == nil, message: "conflicting resource found in child account storage slot for parentAddress")
 
-            if acct.borrow<&CapabilityProxy.Proxy>(from: capProxyStorage) == nil {
-                let proxy <- CapabilityProxy.createProxy()
-                acct.save(<-proxy, to: capProxyStorage)
+            if acct.borrow<&CapabilityDelegator.Delegator>(from: capDelegatorStorage) == nil {
+                let delegator <- CapabilityDelegator.createDelegator()
+                acct.save(<-delegator, to: capDelegatorStorage)
             }
 
-            let capProxyPublic = PublicPath(identifier: capProxyIdentifier)!
-            let capProxyPrivate = PrivatePath(identifier: capProxyIdentifier)!
+            let capDelegatorPublic = PublicPath(identifier: capDelegatorIdentifier)!
+            let capDelegatorPrivate = PrivatePath(identifier: capDelegatorIdentifier)!
 
-            acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic}>(
-                capProxyPublic,
-                target: capProxyStorage
+            acct.link<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic}>(
+                capDelegatorPublic,
+                target: capDelegatorStorage
             )
-            acct.link<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(
-                capProxyPrivate,
-                target: capProxyStorage
+            acct.link<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(
+                capDelegatorPrivate,
+                target: capDelegatorStorage
             )
-            let proxy = acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>(
-                capProxyPrivate
+            let delegator = acct.getCapability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(
+                capDelegatorPrivate
             )
-            assert(proxy.check(), message: "failed to setup capability proxy for parent address")
+            assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic}>(
                 HybridCustody.ChildPrivatePath
             )
-            let childAcct <- create ChildAccount(borrowableCap, factory, filter, proxy, parentAddress)
+            let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
 
             let childAccountPrivatePath = PrivatePath(identifier: identifier)!
 
             acct.save(<-childAcct, to: childAccountStorage)
             acct.link<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath, target: childAccountStorage)
             
-            let proxyCap = acct.getCapability<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath)
-            assert(proxyCap.check(), message: "Proxy capability check failed")
+            let delegatorCap = acct.getCapability<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath)
+            assert(delegatorCap.check(), message: "Delegator capability check failed")
 
-            acct.inbox.publish(proxyCap, name: identifier, recipient: parentAddress)
+            acct.inbox.publish(delegatorCap, name: identifier, recipient: parentAddress)
             self.parents[parentAddress] = false
 
             emit ChildAccountPublished(
-                childAcctID: self.uuid,
-                proxyAcctID: proxyCap.borrow()!.uuid,
-                capProxyID: proxy.borrow()!.uuid,
+                ownedAcctID: self.uuid,
+                childAcctID: delegatorCap.borrow()!.uuid,
+                capDelegatorID: delegator.borrow()!.uuid,
                 factoryID: factory.borrow()!.uuid,
                 filterID: filter.borrow()!.uuid,
                 filterType: filter.borrow()!.getType(),
@@ -791,17 +791,17 @@ pub contract HybridCustody {
                 return false
             }
             let identifier = HybridCustody.getChildAccountIdentifier(parent)
-            let capProxyIdentifier = HybridCustody.getCapabilityProxyIdentifier(parent)
+            let capDelegatorIdentifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
 
             let acct = self.borrowAccount()
             acct.unlink(PrivatePath(identifier: identifier)!)
             acct.unlink(PublicPath(identifier: identifier)!)
 
-            acct.unlink(PrivatePath(identifier: capProxyIdentifier)!)
-            acct.unlink(PublicPath(identifier: capProxyIdentifier)!)
+            acct.unlink(PrivatePath(identifier: capDelegatorIdentifier)!)
+            acct.unlink(PublicPath(identifier: capDelegatorIdentifier)!)
 
             destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: identifier)!)
-            destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capProxyIdentifier)!)
+            destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capDelegatorIdentifier)!)
 
             self.parents.remove(key: parent)
             emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: parent, active: false)
@@ -924,7 +924,7 @@ pub contract HybridCustody {
             self.currentlyOwned = false
         }
 
-        pub fun borrowProxyAccount(parent: Address): &ChildAccount? {
+        pub fun borrowChildAccount(parent: Address): &ChildAccount? {
             let identifier = HybridCustody.getChildAccountIdentifier(parent)
             return self.borrowAccount().borrow<&ChildAccount>(from: StoragePath(identifier: identifier)!)
         }
@@ -933,32 +933,32 @@ pub contract HybridCustody {
             parent: Address,
             cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
         ) {
-            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
             p.setCapabilityFactory(cap: cap)
         }
 
         pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
-            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
+            let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
             p.setCapabilityFilter(cap: cap)
         }
 
-        pub fun borrowCapabilityProxyForParent(parent: Address): &CapabilityProxy.Proxy? {
-            let identifier = HybridCustody.getCapabilityProxyIdentifier(parent)
-            return self.borrowAccount().borrow<&CapabilityProxy.Proxy>(from: StoragePath(identifier: identifier)!)
+        pub fun borrowCapabilityDelegatorForParent(parent: Address): &CapabilityDelegator.Delegator? {
+            let identifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
+            return self.borrowAccount().borrow<&CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
         }
 
-        pub fun addCapabilityToProxy(parent: Address, cap: Capability, isPublic: Bool) {
-            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
-            let proxy = self.borrowCapabilityProxyForParent(parent: parent)
-                ?? panic("could not borrow capability proxy resource for parent address")
-            proxy.addCapability(cap: cap, isPublic: isPublic)
+        pub fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
+            let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
+            let delegator = self.borrowCapabilityDelegatorForParent(parent: parent)
+                ?? panic("could not borrow capability delegator resource for parent address")
+            delegator.addCapability(cap: cap, isPublic: isPublic)
         }
 
-        pub fun removeCapabilityFromProxy(parent: Address, cap: Capability) {
-            let p = self.borrowProxyAccount(parent: parent) ?? panic("could not find parent address")
-            let proxy = self.borrowCapabilityProxyForParent(parent: parent)
-                ?? panic("could not borrow capability proxy resource for parent address")
-            proxy.removeCapability(cap: cap)
+        pub fun removeCapabilityFromDelegator(parent: Address, cap: Capability) {
+            let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
+            let delegator = self.borrowCapabilityDelegatorForParent(parent: parent)
+                ?? panic("could not borrow capability delegator resource for parent address")
+            delegator.removeCapability(cap: cap)
         }
 
         pub fun getViews(): [Type] {
@@ -1005,8 +1005,8 @@ pub contract HybridCustody {
         return "ChildAccount_".concat(addr.toString())
     }
 
-    pub fun getCapabilityProxyIdentifier(_ addr: Address): String {
-        return "ChildCapabilityProxy_".concat(addr.toString())
+    pub fun getCapabilityDelegatorIdentifier(_ addr: Address): String {
+        return "ChildCapabilityDelegator_".concat(addr.toString())
     }
 
     pub fun getOwnerIdentifier(_ addr: Address): String {

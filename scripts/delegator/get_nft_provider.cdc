@@ -1,4 +1,4 @@
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 import "NonFungibleToken"
 import "ExampleNFT"
@@ -7,7 +7,7 @@ pub fun main(addr: Address): Bool {
     let acct = getAuthAccount(addr)
 
     let proxy = 
-        acct.getCapability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPrivate}>(CapabilityProxy.PrivatePath).borrow()
+        acct.getCapability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.PrivatePath).borrow()
         ?? panic("could not borrow proxy")
 
     let capType = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()

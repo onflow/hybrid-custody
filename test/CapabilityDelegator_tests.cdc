@@ -14,31 +14,31 @@ pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-l
 
 // BEGIN SECTION - Test Cases
 
-pub fun testSetupProxy() {
+pub fun testSetupDelegator() {
     let signer = accounts["creator"]!
-    setupProxy(signer)
+    setupDelegator(signer)
 }
 
 pub fun testShareExampleNFTCollectionPublic() {
     let signer = accounts["creator"]!
-    setupProxy(signer)
+    setupDelegator(signer)
 
     setupNFTCollection(signer)
 
     sharePublicExampleNFT(signer)
-    getExampleNFTCollectionFromProxy(signer)
+    getExampleNFTCollectionFromDelegator(signer)
     findExampleNFTCollectionType(signer)
     getAllPublicContainsCollection(signer)
 }
 
 pub fun testShareExampleNFTCollectionPrivate() {
     let signer = accounts["creator"]!
-    setupProxy(signer)
+    setupDelegator(signer)
 
     setupNFTCollection(signer)
 
     sharePrivateExampleNFT(signer)
-    getExampleNFTProviderFromProxy(signer)
+    getExampleNFTProviderFromDelegator(signer)
     findExampleNFTProviderType(signer)
     getAllPrivateContainsProvider(signer)
 }
@@ -48,7 +48,7 @@ pub fun testShareExampleNFTCollectionPrivate() {
 pub fun setup() {
     // main contract account being tested
     let restrictedChildAccount = blockchain.createAccount()
-    let capabilityProxyAccount = blockchain.createAccount()
+    let capabilityDelegatorAccount = blockchain.createAccount()
 
     // flow-utils lib contracts
     let arrayUtils = blockchain.createAccount()
@@ -73,7 +73,7 @@ pub fun setup() {
         "NonFungibleToken": nonFungibleToken,
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
-        "CapabilityProxy": capabilityProxyAccount,
+        "CapabilityDelegator": capabilityDelegatorAccount,
         "ArrayUtils": arrayUtils,
         "StringUtils": stringUtils,
         "AddressUtils": addressUtils,
@@ -90,7 +90,7 @@ pub fun setup() {
         "ArrayUtils": accounts["ArrayUtils"]!.address,
         "StringUtils": accounts["StringUtils"]!.address,
         "AddressUtils": accounts["AddressUtils"]!.address,
-        "CapabilityProxy": accounts["CapabilityProxy"]!.address,
+        "CapabilityDelegator": accounts["CapabilityDelegator"]!.address,
         "ExampleNFT": accounts["ExampleNFT"]!.address
     }))
 
@@ -109,7 +109,7 @@ pub fun setup() {
     deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
-    deploy("CapabilityProxy", accounts["CapabilityProxy"]!, "../contracts/CapabilityProxy.cdc")
+    deploy("CapabilityDelegator", accounts["CapabilityDelegator"]!, "../contracts/CapabilityDelegator.cdc")
 }
 
 // BEGIN SECTION: Helper functions. All of the following were taken from
@@ -195,18 +195,18 @@ pub fun loadCode(_ fileName: String, _ baseDirectory: String): String {
 // END SECTION - Helper functions
 
 // BEGIN SECTION - transactions used in tests
-pub fun setupProxy(_ acct: Test.Account) {
-    let txCode = loadCode("proxy/setup.cdc", "transactions")
+pub fun setupDelegator(_ acct: Test.Account) {
+    let txCode = loadCode("delegator/setup.cdc", "transactions")
     txExecutor(txCode, [acct], [], nil, nil)
 }
 
 pub fun sharePublicExampleNFT(_ acct: Test.Account) {
-    let txCode = loadCode("proxy/add_public_nft_collection.cdc", "transactions")
+    let txCode = loadCode("delegator/add_public_nft_collection.cdc", "transactions")
     txExecutor(txCode, [acct], [], nil, nil)
 }
 
 pub fun sharePrivateExampleNFT(_ acct: Test.Account) {
-    let txCode = loadCode("proxy/add_private_nft_collection.cdc", "transactions")
+    let txCode = loadCode("delegator/add_private_nft_collection.cdc", "transactions")
     txExecutor(txCode, [acct], [], nil, nil)
 }
 
@@ -229,34 +229,34 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 
 // BEGIN SECTION - scripts used in tests
 
-pub fun getExampleNFTCollectionFromProxy(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/get_nft_collection.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+pub fun getExampleNFTCollectionFromDelegator(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("delegator/get_nft_collection.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
-pub fun getExampleNFTProviderFromProxy(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/get_nft_provider.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+pub fun getExampleNFTProviderFromDelegator(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("delegator/get_nft_provider.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
 pub fun getAllPublicContainsCollection(_ owner: Test.Account) {
-    let success = scriptExecutor("proxy/get_all_public_caps.cdc", [owner.address])! as! Bool
-    assert(success, message: "failed to borrow proxy")
+    let success = scriptExecutor("delegator/get_all_public_caps.cdc", [owner.address])! as! Bool
+    assert(success, message: "failed to borrow delegator")
 }
 
 pub fun getAllPrivateContainsProvider(_ owner: Test.Account) {
-    let success = scriptExecutor("proxy/get_all_private_caps.cdc", [owner.address])! as! Bool
-    assert(success, message: "failed to borrow proxy")
+    let success = scriptExecutor("delegator/get_all_private_caps.cdc", [owner.address])! as! Bool
+    assert(success, message: "failed to borrow delegator")
 }
 
 pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/find_nft_collection_cap.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+    let borrowed = scriptExecutor("delegator/find_nft_collection_cap.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
 pub fun findExampleNFTProviderType(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/find_nft_provider_cap.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+    let borrowed = scriptExecutor("delegator/find_nft_provider_cap.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
 // END SECTION - scripts used in tests
