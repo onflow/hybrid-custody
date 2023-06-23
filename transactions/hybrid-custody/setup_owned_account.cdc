@@ -6,6 +6,8 @@ import "CapabilityFactory"
 import "CapabilityDelegator"
 import "CapabilityFilter"
 
+import "MetadataViews"
+
 transaction {
     prepare(acct: AuthAccount) {
         var acctCap = acct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
@@ -20,7 +22,7 @@ transaction {
 
         // check that paths are all configured properly
         acct.unlink(HybridCustody.ChildPrivatePath)
-        acct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
+        acct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
 
         acct.unlink(HybridCustody.ChildPublicPath)
         acct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)

@@ -314,7 +314,7 @@ pub fun testGetPrivateCapabilityFromDelegator() {
     scriptExecutor("hybrid-custody/get_examplenft_collection_from_delegator.cdc", [parent.address, child.address, isPublic])
 }
 
-pub fun testGetPublicCapabilityFromProxy() {
+pub fun testGetPublicCapabilityFromChild() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
 
@@ -601,7 +601,7 @@ pub fun testGetChildAccountNFTCapabilities(){
     )
 }
 
-pub fun testGetNFTsAccessibleFromProxyAccount(){
+pub fun testGetNFTsAccessibleFromChildAccount(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
@@ -651,7 +651,7 @@ pub fun testGetNFTsAccessibleFromProxyAccount(){
     assert(contains(error, "Resulting ID does not match expected ID!"), message: "failed to find expected error message")
 }
 
-pub fun testGetProxyAccountFTCapabilities(){
+pub fun testGetChildAccountFTCapabilities(){
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleToken), exampleToken, "Vault")
@@ -1015,7 +1015,7 @@ pub fun setup() {
     // main contract account being tested
     let linkedAccount = blockchain.createAccount()
     let hybridCustodyAccount = blockchain.createAccount()
-    let capabilityProxyAccount = blockchain.createAccount()
+    let capabilityDelegatorAccount = blockchain.createAccount()
     let capabilityFilterAccount = blockchain.createAccount()
     let capabilityFactoryAccount = blockchain.createAccount()
 
@@ -1054,7 +1054,7 @@ pub fun setup() {
         "MetadataViews": metadataViews,
         "ViewResolver": viewResolver,
         "HybridCustody": hybridCustodyAccount,
-        "CapabilityDelegator": capabilityProxyAccount,
+        "CapabilityDelegator": capabilityDelegatorAccount,
         "CapabilityFilter": capabilityFilterAccount,
         "CapabilityFactory": capabilityFactoryAccount,
         "NFTCollectionPublicFactory": cpFactory,

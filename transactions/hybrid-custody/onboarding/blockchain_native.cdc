@@ -68,7 +68,7 @@ transaction(
         let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
         newAccount.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
         newAccount
-            .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(
                 HybridCustody.ChildPrivatePath,
                 target: HybridCustody.ChildStoragePath
             )

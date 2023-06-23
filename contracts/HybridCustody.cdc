@@ -440,7 +440,7 @@ pub contract HybridCustody {
     prevent it.
     */
     pub resource ChildAccount: AccountPrivate, AccountPublic, MetadataViews.Resolver {
-        access(self) let childCap: Capability<&{BorrowableAccount, OwnedAccountPublic}>
+        access(self) let childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>
 
         // The CapabilityFactory Manager is a ChildAccount's way of limiting what types can be asked for by its parent
         // account. The CapabilityFactory returns Capabilities which can be casted to their appropriate types once
@@ -593,7 +593,7 @@ pub contract HybridCustody {
         }
 
         init(
-            _ childCap: Capability<&{BorrowableAccount, OwnedAccountPublic}>,
+            _ childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>,
             _ factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>,
             _ delegator: Capability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>,
@@ -725,7 +725,7 @@ pub contract HybridCustody {
             )
             assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
-            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic}>(
+            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>(
                 HybridCustody.ChildPrivatePath
             )
             let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
@@ -919,7 +919,7 @@ pub contract HybridCustody {
         // USE WITH EXTREME CAUTION.
         pub fun seal() {
             self.rotateAuthAccount()
-            self.revokeAllKeys()
+            self.revokeAllKeys() // There needs to be a path to giving ownership that doesn't revoke keys   
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
             self.currentlyOwned = false
         }

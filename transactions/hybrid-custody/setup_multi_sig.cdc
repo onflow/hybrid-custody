@@ -23,10 +23,10 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
 
         // check that paths are all configured properly
         childAcct.unlink(HybridCustody.ChildPrivatePath)
-        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
 
         childAcct.unlink(HybridCustody.ChildPublicPath)
-        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
 
         // --------------------- Begin setup of child account ---------------------
 

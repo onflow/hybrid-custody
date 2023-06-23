@@ -32,9 +32,6 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
   let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
   let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
 
-  // Iterate through child accounts
-  let children = manager.getChildAddresses()
-
   for address in manager.getChildAddresses() {
     let acct = getAuthAccount(address)
     let foundTypes: [String] = []
