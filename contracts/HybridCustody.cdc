@@ -233,7 +233,7 @@ pub contract HybridCustody {
         pub fun removeChild(addr: Address)
         pub fun removeOwned(addr: Address)
 
-        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic}?
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}?
         pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
                 cap == nil || cap!.check(): "Invalid Manager Capability Filter"
@@ -362,7 +362,7 @@ pub contract HybridCustody {
             return cap!.borrow()
         }
 
-        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic}? {
+        pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}? {
             if let cap = self.ownedAccounts[addr] {
                 return cap.borrow()
             }
