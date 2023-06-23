@@ -5,7 +5,7 @@ import "StringUtils"
 
 /* 
  * TEST SCRIPT
- * This script is a replication of that found in hybrid-custody/get_accessible_proxy_nfts.cdc as it's the best as
+ * This script is a replication of that found in hybrid-custody/get_accessible_child_account_nfts.cdc as it's the best as
  * as can be done without accessing the script's return type in the Cadence testing framework
  */
 

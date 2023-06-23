@@ -2,8 +2,8 @@ import "HybridCustody"
 
 pub fun main(child: Address, parent: Address): Bool {
     let acct = getAuthAccount(child)
-    let m = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
-        ?? panic("child account not found")
+    let owned = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+        ?? panic("owned account not found")
 
-    return m.getRedeemedStatus(addr: parent) ?? panic("no status found")
+    return owned.getRedeemedStatus(addr: parent) ?? panic("no status found")
 }

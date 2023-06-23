@@ -27,9 +27,9 @@ Contributors (please add to this list if you contribute!):
 */
 pub contract HybridCustody {
 
-    pub let ChildStoragePath: StoragePath
-    pub let ChildPublicPath: PublicPath
-    pub let ChildPrivatePath: PrivatePath
+    pub let OwnedAccountStoragePath: StoragePath
+    pub let OwnedAccountPublicPath: PublicPath
+    pub let OwnedAccountPrivatePath: PrivatePath
 
     pub let ManagerStoragePath: StoragePath
     pub let ManagerPublicPath: PublicPath
@@ -550,7 +550,7 @@ pub contract HybridCustody {
 
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!.borrowAccount()
-            if let m = acct.borrow<&OwnedAccount>(from: HybridCustody.ChildStoragePath) {
+            if let m = acct.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
                 m.setRedeemed(addr)
             }
         }
@@ -587,7 +587,7 @@ pub contract HybridCustody {
             }
 
             let acct = child.borrowAccount()
-            if let childAcct = acct.borrow<&OwnedAccount>(from: HybridCustody.ChildStoragePath) {
+            if let childAcct = acct.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
                 childAcct.removeParent(parent: parent)
             }
         }
@@ -726,7 +726,7 @@ pub contract HybridCustody {
             assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>(
-                HybridCustody.ChildPrivatePath
+                HybridCustody.OwnedAccountPrivatePath
             )
             let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
 
@@ -854,7 +854,7 @@ pub contract HybridCustody {
             let identifier =  HybridCustody.getOwnerIdentifier(to)
             let cap = acct.link<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>(
                     PrivatePath(identifier: identifier)!,
-                    target: HybridCustody.ChildStoragePath
+                    target: HybridCustody.OwnedAccountStoragePath
                 ) ?? panic("failed to link child account capability")
 
             acct.inbox.publish(cap, name: identifier, recipient: to)
@@ -1036,9 +1036,9 @@ pub contract HybridCustody {
 
     init() {
         let identifier = "HybridCustodyChild_".concat(self.account.address.toString())
-        self.ChildStoragePath = StoragePath(identifier: identifier)!
-        self.ChildPrivatePath = PrivatePath(identifier: identifier)!
-        self.ChildPublicPath = PublicPath(identifier: identifier)!
+        self.OwnedAccountStoragePath = StoragePath(identifier: identifier)!
+        self.OwnedAccountPrivatePath = PrivatePath(identifier: identifier)!
+        self.OwnedAccountPublicPath = PublicPath(identifier: identifier)!
 
         self.LinkedAccountPrivatePath = PrivatePath(identifier: "LinkedAccountPrivatePath_".concat(identifier))!
         self.BorrowableAccountPrivatePath = PrivatePath(identifier: "BorrowableAccountPrivatePath_".concat(identifier))!

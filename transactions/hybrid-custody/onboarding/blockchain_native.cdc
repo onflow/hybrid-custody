@@ -66,20 +66,20 @@ transaction(
 
         // Create a OwnedAccount & link Capabilities
         let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
-        newAccount.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
+        newAccount.save(<-OwnedAccount, to: HybridCustody.OwnedAccountStoragePath)
         newAccount
             .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(
-                HybridCustody.ChildPrivatePath,
-                target: HybridCustody.ChildStoragePath
+                HybridCustody.OwnedAccountPrivatePath,
+                target: HybridCustody.OwnedAccountStoragePath
             )
         newAccount
             .link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(
-                HybridCustody.ChildPublicPath, 
-                target: HybridCustody.ChildStoragePath
+                HybridCustody.OwnedAccountPublicPath, 
+                target: HybridCustody.OwnedAccountStoragePath
             )
 
         // Get a reference to the OwnedAccount resource
-        let child = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)!
+        let child = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
 
         // Get the CapabilityFactory.Manager Capability
         let factory = getAccount(factoryAddress)
