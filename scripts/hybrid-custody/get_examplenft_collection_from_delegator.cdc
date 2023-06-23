@@ -9,7 +9,7 @@ pub fun main(parent: Address, child: Address, isPublic: Bool) {
 
     let t = Type<Capability<&ExampleNFT.Collection>>()
 
-    let cap = (isPublic ? acct.getPublicCapFromProxy(type: t) : acct.getPrivateCapFromProxy(type: t))
+    let cap = (isPublic ? acct.getPublicCapFromDelegator(type: t) : acct.getPrivateCapFromDelegator(type: t))
         ?? panic("capability not found")
     
     assert(cap.getType() == t, message: "mismatched capability types")

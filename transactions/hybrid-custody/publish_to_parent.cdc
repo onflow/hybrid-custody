@@ -1,11 +1,11 @@
 import "HybridCustody"
 import "CapabilityFactory"
 import "CapabilityFilter"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 transaction(parent: Address, factoryAddress: Address, filterAddress: Address) {
     prepare(acct: AuthAccount) {
-        let child = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
+        let child = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
             ?? panic("child account not found")
 
         let factory = getAccount(factoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)

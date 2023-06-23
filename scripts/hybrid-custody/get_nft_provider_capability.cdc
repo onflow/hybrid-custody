@@ -4,7 +4,7 @@ import "NonFungibleToken"
 import "MetadataViews"
 import "ExampleNFT"
 
-// Verify that a child address borrowed as a proxy will let the parent borrow an NFT provider capability
+// Verify that a child address borrowed as a child will let the parent borrow an NFT provider capability
 pub fun main(parent: Address, child: Address) {
     let acct = getAuthAccount(parent)
     let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)

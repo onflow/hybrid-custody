@@ -1,10 +1,10 @@
 import "HybridCustody"
 import "MetadataViews"
 
-transaction(name: String, description: String, thumbnail: String) {
+transaction(childAddress: Address, name: String, description: String, thumbnail: String) {
     prepare(acct: AuthAccount) {
-        let a = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
-            ?? panic("account not found")
+        let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+            ?? panic("manager not found")
         
         let d = MetadataViews.Display(
             name: name,
@@ -12,7 +12,6 @@ transaction(name: String, description: String, thumbnail: String) {
             thumbnail: MetadataViews.HTTPFile(url: thumbnail)
         )
 
-        a.setDisplay(d)
+        m.setChildDisplay(child: childAddress, display: d)
     }
 }
- 

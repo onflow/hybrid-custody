@@ -27,7 +27,7 @@
 	},
 	"contracts": {
 		"HybridCustody": "./contracts/HybridCustody.cdc",
-		"CapabilityProxy": "./contracts/CapabilityProxy.cdc",
+		"CapabilityDelegator": "./contracts/CapabilityDelegator.cdc",
 		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
 		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
 		"FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
@@ -111,7 +111,7 @@
 				"StringUtils",
 				"ArrayUtils",
 				"HybridCustody",
-				"CapabilityProxy",
+				"CapabilityDelegator",
 				"CapabilityFilter",
 				"CapabilityFactory",
 				"FTProviderFactory",
@@ -129,7 +129,7 @@
 		"testnet": {
 			"hc-testnet": [
 				"HybridCustody",
-				"CapabilityProxy",
+				"CapabilityDelegator",
 				"CapabilityFilter",
 				"CapabilityFactory",
 				"NFTProviderFactory",

@@ -10,7 +10,7 @@ transaction(amount: UFix64, to: Address, child: Address) {
 
     prepare(signer: AuthAccount) {
         // signer is the parent account
-        // get the manager resource and borrow proxyAccount
+        // get the manager resource and borrow childAccount
         let m = signer.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager does not exist")
         let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")

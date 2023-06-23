@@ -1,10 +1,10 @@
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 import "NonFungibleToken"
 import "ExampleNFT"
 
 pub fun main(address: Address): Bool {
-    let proxy = getAccount(address).getCapability<&{CapabilityProxy.GetterPublic}>(CapabilityProxy.PublicPath).borrow()
+    let proxy = getAccount(address).getCapability<&{CapabilityDelegator.GetterPublic}>(CapabilityDelegator.PublicPath).borrow()
         ?? panic("proxy not found")
     let publicCaps: [Capability] = proxy.getAllPublic()
     assert(publicCaps.length > 0, message: "no public capabilities found")

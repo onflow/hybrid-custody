@@ -3,7 +3,7 @@
 import "HybridCustody"
 
 import "CapabilityFactory"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 import "CapabilityFilter"
 
 import "MetadataViews"
@@ -16,17 +16,17 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
             acctCap = childAcct.linkAccount(HybridCustody.LinkedAccountPrivatePath)!
         }
 
-        if childAcct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath) == nil {
-            let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap)
-            childAcct.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
+        if childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath) == nil {
+            let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
+            childAcct.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
         }
 
         // check that paths are all configured properly
         childAcct.unlink(HybridCustody.ChildPrivatePath)
-        childAcct.link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.ChildPrivatePath, target: HybridCustody.ChildStoragePath)
 
         childAcct.unlink(HybridCustody.ChildPublicPath)
-        childAcct.link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
+        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.ChildPublicPath, target: HybridCustody.ChildStoragePath)
 
         // --------------------- Begin setup of child account ---------------------
 
@@ -49,7 +49,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         // --------------------- End setup of parent account ---------------------
 
         // Publish account to parent
-        let child = childAcct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)
+        let child = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
             ?? panic("child account not found")
 
         let factory = getAccount(childAccountFactoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
@@ -61,9 +61,9 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         child.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForProxy)
 
         // claim the account on the parent
-        let inboxName = HybridCustody.getProxyAccountIdentifier(parentAcct.address)
-        let cap = parentAcct.inbox.claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAcct.address)
-            ?? panic("proxy account cap not found")
+        let inboxName = HybridCustody.getChildAccountIdentifier(parentAcct.address)
+        let cap = parentAcct.inbox.claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAcct.address)
+            ?? panic("child account cap not found")
 
         let manager = parentAcct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")

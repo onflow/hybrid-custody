@@ -7,7 +7,7 @@ import "MetadataViews"
 import "HybridCustody"
 import "CapabilityFactory"
 import "CapabilityFilter"
-import "CapabilityProxy"
+import "CapabilityDelegator"
 
 transaction(
     pubKey: String,
@@ -21,7 +21,7 @@ transaction(
         //
         // Create the child account, funding via the signing app account
         let newAccount = AuthAccount(payer: app)
-        // Create a public key for the proxy account from string value in the provided arg
+        // Create a public key for the child account from string value in the provided arg
         // **NOTE:** You may want to specify a different signature algo for your use case
         let key = PublicKey(
             publicKey: pubKey.decodeHex(),
@@ -64,22 +64,22 @@ transaction(
         var acctCap = newAccount.linkAccount(HybridCustody.LinkedAccountPrivatePath)
             ?? panic("problem linking account Capability for new account")
 
-        // Create a ChildAccount & link Capabilities
-        let ChildAccount <- HybridCustody.createChildAccount(acct: acctCap)
-        newAccount.save(<-ChildAccount, to: HybridCustody.ChildStoragePath)
+        // Create a OwnedAccount & link Capabilities
+        let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
+        newAccount.save(<-OwnedAccount, to: HybridCustody.ChildStoragePath)
         newAccount
-            .link<&HybridCustody.ChildAccount{HybridCustody.BorrowableAccount, HybridCustody.ChildAccountPublic, HybridCustody.ChildAccountPrivate}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(
                 HybridCustody.ChildPrivatePath,
                 target: HybridCustody.ChildStoragePath
             )
         newAccount
-            .link<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(
                 HybridCustody.ChildPublicPath, 
                 target: HybridCustody.ChildStoragePath
             )
 
-        // Get a reference to the ChildAccount resource
-        let child = newAccount.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildStoragePath)!
+        // Get a reference to the OwnedAccount resource
+        let child = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)!
 
         // Get the CapabilityFactory.Manager Capability
         let factory = getAccount(factoryAddress)
@@ -115,14 +115,14 @@ transaction(
             target: HybridCustody.ManagerStoragePath
         )
         
-        // Claim the ProxyAccount Capability
-        let inboxName = HybridCustody.getProxyAccountIdentifier(parent.address)
+        // Claim the ChildAccount Capability
+        let inboxName = HybridCustody.getChildAccountIdentifier(parent.address)
         let cap = parent
             .inbox
-            .claim<&HybridCustody.ProxyAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(
+            .claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, MetadataViews.Resolver}>(
                 inboxName,
                 provider: newAccount.address
-            ) ?? panic("proxy account cap not found")
+            ) ?? panic("child account cap not found")
         
         // Get a reference to the Manager and add the account
         let managerRef = parent.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
