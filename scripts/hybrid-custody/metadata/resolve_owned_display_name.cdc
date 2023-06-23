@@ -3,9 +3,9 @@ import "MetadataViews"
 
 pub fun main(child: Address): String {
     let acct = getAuthAccount(child)
-    let c = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
-            ?? panic("child account not found")
+    let o = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+            ?? panic("owned account not found")
     
-    let d = c.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
+    let d = o.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
     return d.name
 }

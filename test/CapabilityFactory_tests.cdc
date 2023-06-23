@@ -271,7 +271,7 @@ pub fun range(_ start: Int, _ end: Int): [Int]{
 
 // BEGIN SECTION - transactions used in tests
 pub fun sharePublicExampleNFT(_ acct: Test.Account) {
-    let txCode = loadCode("proxy/add_public_nft_collection.cdc", "transactions")
+    let txCode = loadCode("delegator/add_public_nft_collection.cdc", "transactions")
     txExecutor(txCode, [acct], [], nil, nil)
 }
 
@@ -299,14 +299,14 @@ pub fun setupCapabilityFactoryManager(_ acct: Test.Account) {
 
 // BEGIN SECTION - scripts used in tests
 
-pub fun getExampleNFTCollectionFromProxy(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/get_nft_collection.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+pub fun getExampleNFTCollectionFromDelegator(_ owner: Test.Account) {
+    let borrowed = scriptExecutor("delegator/get_nft_collection.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
 pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
-    let borrowed = scriptExecutor("proxy/find_nft_collection_cap.cdc", [owner.address])! as! Bool
-    assert(borrowed, message: "failed to borrow proxy")
+    let borrowed = scriptExecutor("delegator/find_nft_collection_cap.cdc", [owner.address])! as! Bool
+    assert(borrowed, message: "failed to borrow delegator")
 }
 
 pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {

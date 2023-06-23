@@ -6,15 +6,15 @@ import "ExampleNFT"
 
 transaction(parent: Address, isPublic: Bool) {
     prepare(acct: AuthAccount) {
-        let c = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
+        let o = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
-        let child: &HybridCustody.ChildAccount = c.borrowChildAccount(parent: parent)
+        let child: &HybridCustody.ChildAccount = o.borrowChildAccount(parent: parent)
             ?? panic("child account not found")
 
         let path = /private/exampleNFTFullCollection
         acct.link<&ExampleNFT.Collection>(path, target: ExampleNFT.CollectionStoragePath)
         let cap = acct.getCapability<&ExampleNFT.Collection>(path)
 
-        c.addCapabilityToDelegator(parent: parent, cap: cap, isPublic: isPublic)
+        o.addCapabilityToDelegator(parent: parent, cap: cap, isPublic: isPublic)
     }
 }

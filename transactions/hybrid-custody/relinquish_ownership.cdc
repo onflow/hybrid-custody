@@ -4,8 +4,8 @@ import "HybridCustody"
 
 transaction {
     prepare(acct: AuthAccount) {
-        let c = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
-            ?? panic("child not found")
-        c.seal()
+        let owned = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+            ?? panic("owned not found")
+        owned.seal()
     }
 }

@@ -7,7 +7,7 @@ pub fun main(address: Address): Bool {
     let privateCaps: [Capability] = getAuthAccount(address).getCapability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.PrivatePath)
         .borrow()
         ?.getAllPrivate()
-        ?? panic("could not borrow proxy")
+        ?? panic("could not borrow delegator")
 
     let desiredType: Type = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()
 

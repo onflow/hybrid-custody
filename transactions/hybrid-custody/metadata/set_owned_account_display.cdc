@@ -3,7 +3,7 @@ import "MetadataViews"
 
 transaction(name: String, description: String, thumbnail: String) {
     prepare(acct: AuthAccount) {
-        let a = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.ChildStoragePath)
+        let o = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("account not found")
         
         let d = MetadataViews.Display(
@@ -12,7 +12,7 @@ transaction(name: String, description: String, thumbnail: String) {
             thumbnail: MetadataViews.HTTPFile(url: thumbnail)
         )
 
-        a.setDisplay(d)
+        o.setDisplay(d)
     }
 }
  

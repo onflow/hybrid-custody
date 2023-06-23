@@ -3,8 +3,8 @@ import "CapabilityDelegator"
 transaction {
     prepare(acct: AuthAccount) {
         if acct.borrow<&CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath) == nil {
-            let proxy <- CapabilityDelegator.createDelegator()
-            acct.save(<-proxy, to: CapabilityDelegator.StoragePath)
+            let delegator <- CapabilityDelegator.createDelegator()
+            acct.save(<-delegator, to: CapabilityDelegator.StoragePath)
         }
 
         acct.unlink(CapabilityDelegator.PublicPath)
