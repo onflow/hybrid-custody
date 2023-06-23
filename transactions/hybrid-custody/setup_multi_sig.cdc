@@ -49,8 +49,8 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         // --------------------- End setup of parent account ---------------------
 
         // Publish account to parent
-        let child = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
-            ?? panic("child account not found")
+        let owned = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+            ?? panic("owned account not found")
 
         let factory = getAccount(childAccountFactoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory address is not configured properly")
@@ -58,7 +58,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         let filterForChild = getAccount(childAccountFilterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
         assert(filterForChild.check(), message: "capability filter is not configured properly")
 
-        child.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForChild)
+        owned.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForChild)
 
         // claim the account on the parent
         let inboxName = HybridCustody.getChildAccountIdentifier(parentAcct.address)

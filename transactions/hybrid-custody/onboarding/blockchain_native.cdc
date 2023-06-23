@@ -79,7 +79,7 @@ transaction(
             )
 
         // Get a reference to the OwnedAccount resource
-        let child = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
+        let owned = newAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
 
         // Get the CapabilityFactory.Manager Capability
         let factory = getAccount(factoryAddress)
@@ -93,7 +93,7 @@ transaction(
         assert(filter.check(), message: "capability filter is not configured properly")
 
         // Configure access for the delegatee parent account
-        child.publishToParent(parentAddress: parent.address, factory: factory, filter: filter)
+        owned.publishToParent(parentAddress: parent.address, factory: factory, filter: filter)
 
         /* --- Add delegation to parent account --- */
         //

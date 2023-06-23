@@ -27,11 +27,11 @@ transaction(name: String, desc: String, thumbnailURL: String) {
         acct.unlink(HybridCustody.OwnedAccountPublicPath)
         acct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountPublicPath, target: HybridCustody.OwnedAccountStoragePath)
 
-        let child = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
+        let owned = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
 
         let thumbnail = MetadataViews.HTTPFile(url: thumbnailURL)
         let display = MetadataViews.Display(name: name, description: desc, thumbnail: thumbnail)
-        child.setDisplay(display)
+        owned.setDisplay(display)
     }
 }
  

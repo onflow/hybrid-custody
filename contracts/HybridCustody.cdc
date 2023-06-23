@@ -550,8 +550,8 @@ pub contract HybridCustody {
 
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!.borrowAccount()
-            if let m = acct.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
-                m.setRedeemed(addr)
+            if let o = acct.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
+                o.setRedeemed(addr)
             }
         }
 
