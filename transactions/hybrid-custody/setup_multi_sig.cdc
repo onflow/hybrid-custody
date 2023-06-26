@@ -17,8 +17,8 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         }
 
         if childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
-            let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
-            childAcct.save(<-OwnedAccount, to: HybridCustody.OwnedAccountStoragePath)
+            let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+            childAcct.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
         }
 
         // check that paths are all configured properly

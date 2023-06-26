@@ -41,7 +41,7 @@ pub contract HybridCustody {
     /* Events */
     //
     pub event CreatedManager(id: UInt64)
-    pub event CreatedChildAccount(id: UInt64, child: Address)
+    pub event CreatedOwnedAccount(id: UInt64, child: Address)
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     pub event ChildAccountPublished(
         ownedAcctID: UInt64,
@@ -1013,16 +1013,16 @@ pub contract HybridCustody {
         return "HybridCustodyOwnedAccount_".concat(HybridCustody.account.address.toString()).concat(addr.toString())
     }
 
-    pub fun createChildAccount(
+    pub fun createOwnedAccount(
         acct: Capability<&AuthAccount>
     ): @OwnedAccount {
         pre {
             acct.check(): "invalid auth account capability"
         }
 
-        let childAcct <- create OwnedAccount(acct)
-        emit CreatedChildAccount(id: childAcct.uuid, child: acct.borrow()!.address)
-        return <- childAcct
+        let ownedAcct <- create OwnedAccount(acct)
+        emit CreatedOwnedAccount(id: ownedAcct.uuid, child: acct.borrow()!.address)
+        return <- ownedAcct
     }
 
     pub fun createManager(filter: Capability<&{CapabilityFilter.Filter}>?): @Manager {
