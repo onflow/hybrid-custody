@@ -65,8 +65,8 @@ transaction(
             ?? panic("problem linking account Capability for new account")
 
         // Create a OwnedAccount & link Capabilities
-        let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
-        newAccount.save(<-OwnedAccount, to: HybridCustody.OwnedAccountStoragePath)
+        let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+        newAccount.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
         newAccount
             .link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(
                 HybridCustody.OwnedAccountPrivatePath,

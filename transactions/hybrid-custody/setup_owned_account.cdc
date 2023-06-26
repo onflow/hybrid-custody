@@ -16,8 +16,8 @@ transaction {
         }
 
         if acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
-            let OwnedAccount <- HybridCustody.createChildAccount(acct: acctCap)
-            acct.save(<-OwnedAccount, to: HybridCustody.OwnedAccountStoragePath)
+            let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+            acct.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
         }
 
         // check that paths are all configured properly
