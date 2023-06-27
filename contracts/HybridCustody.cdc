@@ -327,11 +327,11 @@ pub contract HybridCustody {
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>) {
             pre {
-                self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
+                self.ownedAccounts[cap.address] == nil: "There is already an owned account with this address"
             }
 
             let acct = cap.borrow()
-                ?? panic("cannot add invalid account")
+                ?? panic("owned account capability could not be borrowed")
 
             // for safety, rotate the auth account capability to prevent any outstanding capabilities from the previous owner
             // and revoke all outstanding keys.
