@@ -11,9 +11,9 @@ import "CapabilityFilter"
 ///
 /// 1. OwnedAccount - A resource which maintains an AuthAccount Capability, and handles publishing and revoking access
 ///    of that account via another resource called a ChildAccount
-/// 2. ChildAccount - A second resource which exists on the same accounta as the OwnedAccount. The ChildAccount
-///    resource is the capability which is shared to a parent account. Each child has its own set of rules designating
-///    what Capability types can be retrieved, and what underlying type the capability points to can be given.
+/// 2. ChildAccount - A second resource which exists on the same account as the OwnedAccount and contains the filters
+///    and retrieval patterns governing the scope of parent account access. A Capability on this resource is shared to
+///    the parent account, enabling Hybrid Custody access to the underlying account.
 /// 3. Manager - A resource setup by the parent which manages all child accounts shared with it. The Manager resource
 ///    also maintains a set of accounts that it "owns", meaning it has a capability to the full OwnedAccount resource
 ///    and would then also be able to manage the child account's links as it sees fit.
@@ -86,8 +86,7 @@ pub contract HybridCustody {
         /// Returns the addresses of all parent accounts
         pub fun getParentAddresses(): [Address]
 
-        /// Returns all parent addresses of this child account, and whether they have already redeemed the parent has
-        /// redeemed the account (true) or has not (false)
+        /// Returns associated parent addresses and their redeemed status - true if redeemed, false if pending
         pub fun getParentStatuses(): {Address: Bool}
 
         /// Returns true if the given address is a parent of this child and has redeemed it. Returns false if the given
