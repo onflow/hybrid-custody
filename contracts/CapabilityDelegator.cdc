@@ -1,20 +1,21 @@
-/// # CapabilityDelegator
-///
 /// CapabilityDelegator is a contract used to share Capabiltities to other accounts. It is used by the
 /// HybridCustody contract to allow more flexible sharing of Capabilities when an app wants to share things
 /// that aren't the NFT-standard interface types.
 /// 
-/// Inside of CapabilityDelegator is a resource called Delegator which maintains a mapping of public and private
-/// capabilities. They cannot and should not be mixed. A public delegator is able to be borrowed by anyone, whereas a
-/// private delegator can only be borrowed from the child account when you have access to the full
-/// ChildAccount resource.
-/// 
+/// Inside of CapabilityDelegator is a resource called `Delegator` which maintains a mapping of public and private
+/// Capabilities. They cannot and should not be mixed. A public `Delegator` is able to be borrowed by anyone, whereas a
+/// private `Delegator` can only be borrowed from the child account when you have access to the full `ChildAccount` 
+/// resource.
+///
 pub contract CapabilityDelegator {
+
+    /* --- Canonical Paths --- */
+    //
     pub let StoragePath: StoragePath
     pub let PrivatePath: PrivatePath
     pub let PublicPath: PublicPath
     
-    /* Events */
+    /* --- Events --- */
     //
     pub event DelegatorCreated(id: UInt64)
     pub event DelegatorUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
