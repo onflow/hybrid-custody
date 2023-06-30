@@ -244,7 +244,7 @@ pub contract HybridCustody {
     }
 
     /// Functions anyone can call on a manager to get information about an account such as What child accounts it has
-    ///
+    /// Functions anyone can call on a manager to get information about an account such as what child accounts it has
     pub resource interface ManagerPublic {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
         pub fun getChildAddresses(): [Address]
