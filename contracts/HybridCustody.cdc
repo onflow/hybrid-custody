@@ -6,8 +6,8 @@ import "CapabilityFactory"
 import "CapabilityDelegator"
 import "CapabilityFilter"
 
-/// HybridCustody defines a framework for sharing accounts via account linking. In the contract, you will find three
-/// main resources being used:
+/// HybridCustody defines a framework for sharing accounts via account linking.
+/// In the contract, there are three main resources:
 ///
 /// 1. OwnedAccount - A resource which maintains an AuthAccount Capability, and handles publishing and revoking access
 ///    of that account via another resource called a ChildAccount
