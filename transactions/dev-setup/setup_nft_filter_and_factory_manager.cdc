@@ -44,8 +44,11 @@ access(all) fun withoutPrefix(_ input: String): String{
 /// 
 /// For more info, see docs at https://developers.onflow.org/docs/hybrid-custody/
 ////
-transaction(contractAddress: Address, contractName: String) {
+transaction(nftContractAddress: Address, nftContractName: String) {
     prepare(acct: AuthAccount) {
+        
+        /* --- CapabilityFactory Manager configuration --- */
+        //
         if acct.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
             let f <- CapabilityFactory.createFactoryManager()
             acct.save(<-f, to: CapabilityFactory.StoragePath)
@@ -64,6 +67,13 @@ transaction(contractAddress: Address, contractName: String) {
         let factoryManager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("CapabilityFactory Manager not found")
 
+        // Add NFT-related Factories to the Manager
+        factoryManager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
+        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+
+        /* --- AllowlistFilter configuration --- */
+        //
         if acct.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath) == nil {
             acct.save(<-CapabilityFilter.create(Type<@CapabilityFilter.AllowlistFilter>()), to: CapabilityFilter.StoragePath)
         }
@@ -81,12 +91,9 @@ transaction(contractAddress: Address, contractName: String) {
         let filter = acct.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
             ?? panic("AllowlistFilter does not exist")
 
-        let c = CompositeType(deriveCollectionTypeIdentifier(contractAddress, contractName))
-            ?? panic("Problem constructing CompositeType from given contract address and name")
+        // Construct an NFT Collection Type from the provided args & add to the AllowlistFilter
+        let c = CompositeType(deriveCollectionTypeIdentifier(nftContractAddress, nftContractName))
+            ?? panic("Problem constructing CompositeType from given NFT contract address and name")
         filter.addType(c)
-
-        factoryManager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
     }
 }
