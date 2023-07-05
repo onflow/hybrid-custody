@@ -35,7 +35,16 @@ pub fun testSetupFactory() {
     setupFactoryManager(tmp)
     setupNFTCollection(tmp)
 
-    scriptExecutor("factory/get_provider_from_factory.cdc", [tmp.address])
+    scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
+}
+
+pub fun testSetupNFTFilterAndFactory() {
+    let tmp = blockchain.createAccount()
+    txExecutor("dev-setup/setup_nft_filter_and_factory_manager.cdc", [tmp], [accounts[exampleNFT]!.address, exampleNFT], nil, nil)
+    setupNFTCollection(tmp)
+
+    scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
+    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address])
 }
 
 pub fun testSetupFactoryWithFT() {
