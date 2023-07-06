@@ -222,7 +222,6 @@ pub contract HybridCustody {
                 managerCapabilityFilter == nil || managerCapabilityFilter!.check(): "Invalid Manager Capability Filter"
             }
         }
-        access(contract) fun setDisplay(_ d: MetadataViews.Display)
         access(contract) fun parentRemoveChildCallback(parent: Address)
     }
 
@@ -247,6 +246,7 @@ pub contract HybridCustody {
         pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
         pub fun getChildAddresses(): [Address]
         pub fun getOwnedAddresses(): [Address]
+        pub fun getChildAccountDisplay(address: Address): MetadataViews.Display?
         access(contract) fun removeParentCallback(child: Address)
     }
 
@@ -270,6 +270,18 @@ pub contract HybridCustody {
         // For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider
         // capabilities.
         pub var filter: Capability<&{CapabilityFilter.Filter}>?
+
+        // display is its own field on the ChildAccount resource because only the parent should be able to set this
+        // field.
+        pub let childAccountsDisplay: {Address: MetadataViews.Display}
+
+        pub fun setDisplay(address: Address, _ d: MetadataViews.Display) {
+            pre {
+                self.childAccounts[address] != nil: "There is no child account with this address"
+            }
+
+            self.childAccountsDisplay[address] = d
+        }
 
         pub fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
@@ -323,6 +335,7 @@ pub contract HybridCustody {
 
         access(contract) fun removeParentCallback(child: Address) {
             self.childAccounts.remove(key: child)
+            self.childAccountsDisplay.remove(key: child)
         }
 
         pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>) {
@@ -382,13 +395,6 @@ pub contract HybridCustody {
             // Don't emit an event if nothing was removed
         }
 
-        pub fun setChildDisplay(child: Address, display: MetadataViews.Display) {
-            let acct = self.borrowAccount(addr: child)
-                ?? panic("child account not found")
-
-            acct.setDisplay(display)
-        }
-
         pub fun giveOwnership(addr: Address, to: Address) {
             let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
@@ -412,12 +418,17 @@ pub contract HybridCustody {
             return nil
         }
 
+        pub fun getChildAccountDisplay(address: Address): MetadataViews.Display? {
+            return self.childAccountsDisplay[address]
+        }
+
         init(filter: Capability<&{CapabilityFilter.Filter}>?) {
             pre {
                 filter == nil || filter!.check(): "Invalid CapabilityFilter Filter capability provided"
             }
             self.childAccounts = {}
             self.ownedAccounts = {}
+            self.childAccountsDisplay = {}
             self.filter = filter
 
             self.data = {}
@@ -471,10 +482,6 @@ pub contract HybridCustody {
         // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        // display is its own field on the ChildAccount resource because only the parent should be able to set this
-        // field.
-        access(self) var display: MetadataViews.Display?
-
         pub let parent: Address
 
         pub fun getAddress(): Address {
@@ -497,10 +504,6 @@ pub contract HybridCustody {
 
         pub fun setCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
-        }
-
-        access(contract) fun setDisplay(_ d: MetadataViews.Display) {
-            self.display = d
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
@@ -571,7 +574,14 @@ pub contract HybridCustody {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.Display>():
-                    return self.display
+                    let childAddress = self.getAddress()
+                    let manager = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
+
+                    if !manager.check() {
+                        return nil
+                    }
+
+                    return manager!.borrow()!.getChildAccountDisplay(address: childAddress)
             }
             return nil
         }
@@ -614,7 +624,6 @@ pub contract HybridCustody {
 
             self.data = {}
             self.resources <- {}
-            self.display = nil
         }
 
         destroy () {
