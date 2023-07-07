@@ -12,6 +12,6 @@ transaction(childAddress: Address, name: String, description: String, thumbnail:
             thumbnail: MetadataViews.HTTPFile(url: thumbnail)
         )
 
-        m.setDisplay(address: childAddress, d)
+        m.setChildAccountDisplay(address: childAddress, d)
     }
 }
