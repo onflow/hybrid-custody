@@ -23,6 +23,7 @@ import "CapabilityFilter"
 /// - Deniz Edincik - https://twitter.com/bluesign
 /// - Giovanni Sanchez - https://twitter.com/gio_incognito
 /// - Ashley Daffin - https://twitter.com/web3ashlee
+/// - Felipe Ribeiro - https://twitter.com/Frlabs33
 ///
 /// Repo reference: https://github.com/onflow/hybrid-custody
 ///
