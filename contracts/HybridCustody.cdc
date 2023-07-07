@@ -271,13 +271,17 @@ pub contract HybridCustody {
         /// Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
         pub var filter: Capability<&{CapabilityFilter.Filter}>?
 
-        // display is its own field on the ChildAccount resource because only the parent should be able to set this
-        // field.
+        // display metadata for a child account exists on its parent
         pub let childAccountDisplays: {Address: MetadataViews.Display}
 
-        pub fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display) {
+        pub fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
             pre {
                 self.childAccounts[address] != nil: "There is no child account with this address"
+            }
+
+            if d == nil {
+                self.childAccountDisplays.remove(key: address)
+                return
             }
 
             self.childAccountDisplays[address] = d
