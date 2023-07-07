@@ -73,7 +73,7 @@ transaction(
                 target: HybridCustody.OwnedAccountStoragePath
             )
         newAccount
-            .link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic}>(
+            .link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(
                 HybridCustody.OwnedAccountPublicPath, 
                 target: HybridCustody.OwnedAccountStoragePath
             )
