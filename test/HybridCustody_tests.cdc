@@ -90,6 +90,49 @@ pub fun testRedeemAccount() {
     scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
 }
 
+pub fun testSetupOwnedAccountAndPublishRedeemed() {
+    let child = blockchain.createAccount()
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    let parent = blockchain.createAccount()
+
+    txExecutor("hybrid-custody/setup_owned_account_and_publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil, nil)
+
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
+
+    scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
+}
+
+pub fun testSetupOwnedAccountWithDisplayPublishRedeemed() {
+    let child = blockchain.createAccount()
+
+    let factory = getTestAccount(nftFactory)
+    let filter = getTestAccount(FilterKindAll)
+
+    let parent = blockchain.createAccount()
+
+    let name = "Test"
+    let desc = "Test description"
+    let thumbnail = "https://example.com/test.jpeg"
+
+
+    txExecutor(
+        "hybrid-custody/setup_owned_account_with_display_and_publish_to_parent.cdc",
+        [child],
+        [parent.address, factory.address, filter.address, name, desc, thumbnail],
+        nil,
+        nil
+    )
+
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
+
+    scriptExecutor("hybrid-custody/has_address_as_child.cdc", [parent.address, child.address])
+
+    assert(scriptExecutor("hybrid-custody/metadata/assert_owned_account_display.cdc", [child.address, name, desc, thumbnail])! as! Bool, message: "failed to match display")
+}
+
 pub fun testChildAccount_getAddress() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
