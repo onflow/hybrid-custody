@@ -7,6 +7,10 @@ import "CapabilityFactory"
 import "CapabilityFilter"
 import "CapabilityDelegator"
 
+/// This transaction configures an OwnedAccount in the signer if needed, and proceeds to create a ChildAccount 
+/// using CapabilityFactory.Manager and CapabilityFilter.Filter Capabilities from the given addresses. A
+/// Capability on the ChildAccount is then published to the specified parent account. 
+///
 transaction(parent: Address, factoryAddress: Address, filterAddress: Address) {
     
     prepare(acct: AuthAccount) {
