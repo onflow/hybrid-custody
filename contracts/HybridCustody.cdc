@@ -325,7 +325,7 @@ pub contract HybridCustody {
             self.childAccounts.remove(key: child)
         }
 
-        pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>) {
+        pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>, rotateAuthAcct: Bool, revokeKeys: Bool) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -333,10 +333,15 @@ pub contract HybridCustody {
             let acct = cap.borrow()
                 ?? panic("cannot add invalid account")
 
-            // for safety, rotate the auth account capability to prevent any outstanding capabilities from the previous owner
-            // and revoke all outstanding keys.
-            acct.rotateAuthAccount()
-            acct.revokeAllKeys()
+            if rotateAuthAcct {
+                // for safety, rotate the auth account capability to prevent any outstanding capabilities from the previous owner
+                // and revoke all outstanding keys.
+                acct.rotateAuthAccount()
+            }
+
+            if revokeKeys {
+                acct.revokeAllKeys()
+            }
 
             self.ownedAccounts[cap.address] = cap
 

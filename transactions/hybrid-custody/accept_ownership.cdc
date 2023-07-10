@@ -29,6 +29,6 @@ transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPa
         let manager = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")
 
-        manager.addOwnedAccount(cap: cap)
+        manager.addOwnedAccount(cap: cap, rotateAuthAcct: true, revokeKeys: true)
     }
 }
