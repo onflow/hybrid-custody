@@ -55,10 +55,8 @@ pub contract HybridCustody {
     ///     !active : removed from Manager
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     /// OwnedAccount added/removed or sealed
-    ///     active && owner == nil  : N/A
     ///     active && owner != nil  : added to Manager 
     ///     !active && owner == nil : removed from Manager
-    ///     !active && owner != nil : ownership transfer in progress - ready to be redeemed by emitted owner
     pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     /// ChildAccount ready to be redeemed by emitted pendingParent
     pub event ChildAccountPublished(
@@ -71,6 +69,8 @@ pub contract HybridCustody {
         child: Address,
         pendingParent: Address
     )
+    /// OwnedAccount granted ownership to a new address, publishing a Capability for the pendingOwner
+    pub event OwnershipGranted(ownedAcctID: UInt64, child: Address, previousOwner: Address?, pendingOwner: Address)
     /// Account has been sealed - keys revoked, new AuthAccount Capability generated
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
@@ -275,6 +275,8 @@ pub contract HybridCustody {
         // display metadata for a child account exists on its parent
         pub let childAccountDisplays: {Address: MetadataViews.Display}
 
+        /// Sets the Display on the ChildAccount. If nil, the display is removed.
+        ///
         pub fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
             pre {
                 self.childAccounts[address] != nil: "There is no child account with this address"
@@ -288,6 +290,9 @@ pub contract HybridCustody {
             self.childAccountDisplays[address] = d
         }
 
+        /// Adds a ChildAccount Capability to this Manager. If a default Filter is set in the manager, it will also be
+        /// added to the ChildAccount
+        ///
         pub fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
             pre {
                 self.childAccounts[cap.address] == nil: "There is already a child account with this address"
@@ -443,10 +448,14 @@ pub contract HybridCustody {
             return self.ownedAccounts.keys
         }
 
+        /// Retrieves the parent-defined display for the given child account
+        ///
         pub fun getChildAccountDisplay(address: Address): MetadataViews.Display? {
             return self.childAccountDisplays[address]
         }
 
+        /// Returns the types of supported views - none at this time
+        ///
         pub fun getViews(): [Type] {
             return []
         }
@@ -517,6 +526,8 @@ pub contract HybridCustody {
         /// A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
+        /// ChildAccount resources have a 1:1 association with parent accounts, the named parent Address here is the 
+        /// one with a Capability on this resource.
         pub let parent: Address
 
         /// Returns the Address of the underlying child account
@@ -726,6 +737,8 @@ pub contract HybridCustody {
         /// able to set this field.
         access(self) var display: MetadataViews.Display?
 
+        /// Callback that sets this OwnedAccount as redeemed by the parent
+        ///
         access(contract) fun setRedeemed(_ addr: Address) {
             pre {
                 self.parents[addr] != nil: "address is not waiting to be redeemed"
@@ -734,6 +747,8 @@ pub contract HybridCustody {
             self.parents[addr] = true
         }
 
+        /// Callback that sets the owner once redeemed
+        ///
         access(contract) fun setOwnerCallback(_ addr: Address) {
             pre {
                 self.pendingOwner == addr: "Address does not match pending owner!"
@@ -827,7 +842,6 @@ pub contract HybridCustody {
                 child: self.getAddress(),
                 pendingParent: parentAddress
             )
-            emit AccountUpdated(id: self.uuid, child: self.owner!.address, parent: parentAddress, active: false)
         }
 
         /// Checks the validity of the encapsulated account Capability
@@ -953,7 +967,7 @@ pub contract HybridCustody {
             self.pendingOwner = to
             self.currentlyOwned = true
 
-            emit OwnershipUpdated(id: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), owner: to, active: false)
+            emit OwnershipGranted(ownedAcctID: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), pendingOwner: to)
         }
 
         pub fun revokeAllKeys() {
