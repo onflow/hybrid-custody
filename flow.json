@@ -51,6 +51,7 @@
 		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
 		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
 		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
+		"FTAllFactory": "./contracts/factories/FTAllFactory.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
 			"aliases": {
@@ -114,6 +115,7 @@
 				"CapabilityFilter",
 				"CapabilityFactory",
 				"FTProviderFactory",
+				"FTAllFactory",
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
@@ -134,7 +136,8 @@
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
-				"FTProviderFactory"
+				"FTProviderFactory",
+				"FTAllFactory"
 			]
 		}
 	}
