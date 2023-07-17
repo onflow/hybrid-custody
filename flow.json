@@ -1,144 +1,142 @@
 {
-	"contracts": {
-		"AddressUtils": {
-			"source": "./modules/flow-utils/cadence/contracts/AddressUtils.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "a340dc0a4ec828ab",
-				"testnet": "31ad40c07a2a9788"
-			}
-		},
-		"ArrayUtils": {
-			"source": "./modules/flow-utils/cadence/contracts/ArrayUtils.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "a340dc0a4ec828ab",
-				"testnet": "31ad40c07a2a9788"
-			}
-		},
-		"CapabilityDelegator": "./contracts/CapabilityDelegator.cdc",
-		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
-		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
-		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
-		"ExampleNFT2": "./contracts/standard/ExampleNFT2.cdc",
-		"ExampleToken": "./contracts/standard/ExampleToken.cdc",
-		"FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
-		"FlowToken": {
-			"source": "",
-			"aliases": {
-				"emulator": "0ae53cb6e3f42a79",
-				"mainnet": "1654653399040a61",
-				"testnet": "7e60df042a9c0868"
-			}
-		},
-		"FungibleToken": {
-			"source": "./modules/flow-nft/contracts/utility/FungibleToken.cdc",
-			"aliases": {
-				"emulator": "ee82856bf20e2aa6",
-				"mainnet": "f233dcee88fe0abe",
-				"testnet": "9a0766d93b6608b7"
-			}
-		},
-		"HybridCustody": "./contracts/HybridCustody.cdc",
-		"MetadataViews": {
-			"source": "./modules/flow-nft/contracts/MetadataViews.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "1d7e57aa55817448",
-				"testnet": "631e88ae7f1d7c20"
-			}
-		},
-		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
-		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
-		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
-		"FTAllFactory": "./contracts/factories/FTAllFactory.cdc",
-		"NonFungibleToken": {
-			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "1d7e57aa55817448",
-				"testnet": "631e88ae7f1d7c20"
-			}
-		},
-		"StringUtils": {
-			"source": "./modules/flow-utils/cadence/contracts/StringUtils.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "a340dc0a4ec828ab",
-				"testnet": "31ad40c07a2a9788"
-			}
-		},
-		"ViewResolver": {
-			"source": "./modules/flow-nft/contracts/ViewResolver.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"mainnet": "1d7e57aa55817448",
-				"testnet": "631e88ae7f1d7c20"
-			}
-		}
-	},
-	"networks": {
-		"emulator": "127.0.0.1:3569",
-		"mainnet": "access.mainnet.nodes.onflow.org:9000",
-		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
-		"testnet": "access.devnet.nodes.onflow.org:9000"
-	},
-	"accounts": {
-		"emulator-account": {
-			"address": "f8d6e0586b0a20c7",
-			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
-		},
-		"emulator-ft": {
-			"address": "ee82856bf20e2aa6",
-			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
-		},
-		"hc-testnet": {
-			"address": "294e44e1ec6993c6",
-			"key": {
-				"type": "google-kms",
-				"hashAlgorithm": "SHA2_256",
-				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-			}
-		}
-	},
-	"deployments": {
-		"emulator": {
-			"emulator-account": [
-				"NonFungibleToken",
-				"MetadataViews",
-				"ViewResolver",
-				"AddressUtils",
-				"StringUtils",
-				"ArrayUtils",
-				"HybridCustody",
-				"CapabilityDelegator",
-				"CapabilityFilter",
-				"CapabilityFactory",
-				"FTProviderFactory",
-				"FTAllFactory",
-				"NFTProviderFactory",
-				"NFTProviderAndCollectionFactory",
-				"NFTCollectionPublicFactory",
-				"ExampleNFT",
-				"ExampleNFT2",
-				"ExampleToken"
-			],
-			"emulator-ft": [
-				"FungibleToken"
-			]
-		},
-		"testnet": {
-			"hc-testnet": [
-				"CapabilityDelegator",
-				"CapabilityFactory",
-				"CapabilityFilter",
-				"HybridCustody",
-				"NFTProviderFactory",
-				"NFTProviderAndCollectionFactory",
-				"NFTCollectionPublicFactory",
-				"FTProviderFactory",
-				"FTAllFactory"
-			]
-		}
-	}
+  "contracts": {
+    "AddressUtils": {
+      "source": "./modules/flow-utils/cadence/contracts/AddressUtils.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "a340dc0a4ec828ab",
+        "testnet": "31ad40c07a2a9788"
+      }
+    },
+    "ArrayUtils": {
+      "source": "./modules/flow-utils/cadence/contracts/ArrayUtils.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "a340dc0a4ec828ab",
+        "testnet": "31ad40c07a2a9788"
+      }
+    },
+    "CapabilityDelegator": "./contracts/CapabilityDelegator.cdc",
+    "CapabilityFactory": "./contracts/CapabilityFactory.cdc",
+    "CapabilityFilter": "./contracts/CapabilityFilter.cdc",
+    "ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
+    "ExampleNFT2": "./contracts/standard/ExampleNFT2.cdc",
+    "ExampleToken": "./contracts/standard/ExampleToken.cdc",
+    "FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
+    "FlowToken": {
+      "source": "",
+      "aliases": {
+        "emulator": "0ae53cb6e3f42a79",
+        "mainnet": "1654653399040a61",
+        "testnet": "7e60df042a9c0868"
+      }
+    },
+    "FungibleToken": {
+      "source": "./modules/flow-nft/contracts/utility/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "ee82856bf20e2aa6",
+        "mainnet": "f233dcee88fe0abe",
+        "testnet": "9a0766d93b6608b7"
+      }
+    },
+    "HybridCustody": "./contracts/HybridCustody.cdc",
+    "MetadataViews": {
+      "source": "./modules/flow-nft/contracts/MetadataViews.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "1d7e57aa55817448",
+        "testnet": "631e88ae7f1d7c20"
+      }
+    },
+    "NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
+    "NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
+    "NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
+    "FTAllFactory": "./contracts/factories/FTAllFactory.cdc",
+    "NonFungibleToken": {
+      "source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "1d7e57aa55817448",
+        "testnet": "631e88ae7f1d7c20"
+      }
+    },
+    "StringUtils": {
+      "source": "./modules/flow-utils/cadence/contracts/StringUtils.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "a340dc0a4ec828ab",
+        "testnet": "31ad40c07a2a9788"
+      }
+    },
+    "ViewResolver": {
+      "source": "./modules/flow-nft/contracts/ViewResolver.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "1d7e57aa55817448",
+        "testnet": "631e88ae7f1d7c20"
+      }
+    }
+  },
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "mainnet": "access.mainnet.nodes.onflow.org:9000",
+    "sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "emulator-account": {
+      "address": "f8d6e0586b0a20c7",
+      "key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+    },
+    "emulator-ft": {
+      "address": "ee82856bf20e2aa6",
+      "key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+    },
+    "hc-testnet": {
+      "address": "294e44e1ec6993c6",
+      "key": {
+        "type": "google-kms",
+        "hashAlgorithm": "SHA2_256",
+        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+      }
+    }
+  },
+  "deployments": {
+    "emulator": {
+      "emulator-account": [
+        "NonFungibleToken",
+        "MetadataViews",
+        "ViewResolver",
+        "AddressUtils",
+        "StringUtils",
+        "ArrayUtils",
+        "HybridCustody",
+        "CapabilityDelegator",
+        "CapabilityFilter",
+        "CapabilityFactory",
+        "FTProviderFactory",
+        "FTAllFactory",
+        "NFTProviderFactory",
+        "NFTProviderAndCollectionFactory",
+        "NFTCollectionPublicFactory",
+        "ExampleNFT",
+        "ExampleNFT2",
+        "ExampleToken"
+      ],
+      "emulator-ft": ["FungibleToken"]
+    },
+    "testnet": {
+      "hc-testnet": [
+        "CapabilityDelegator",
+        "CapabilityFactory",
+        "CapabilityFilter",
+        "HybridCustody",
+        "NFTProviderFactory",
+        "NFTProviderAndCollectionFactory",
+        "NFTCollectionPublicFactory",
+        "FTProviderFactory",
+        "FTAllFactory"
+      ]
+    }
+  }
 }
