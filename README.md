@@ -16,7 +16,26 @@ maintains control of their managed accounts, but they can:
 1. Share capabilities freely, with a few built-in controls over the types of capabilities that can be returned with some helper contracts (the `CapabilityFactory`, and `CapabilityFilter`)
 1. Share additional capabilities (public or private) with a parent account via a `CapabilityDelegator` resource
 
-| Network |  Address           |
-|---------|--------------------|
+| Network | Address                                                                              |
+| ------- | ------------------------------------------------------------------------------------ |
 | Testnet | [0x294e44e1ec6993c6](https://testnet.contractbrowser.com/account/0x294e44e1ec6993c6) |
 
+## Development
+
+Follow the steps outlined below to set up your development environment.
+
+1. **Initialize and Update Submodules**
+
+   This project uses Git submodules. To initialize and update them, run the following command in your terminal:
+
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+2. **Run Flow Emulator**
+
+   Kickstart your development by running the flow emulator. Use the following command in your terminal:
+
+   ```bash
+   flow emulator start
+   ```
