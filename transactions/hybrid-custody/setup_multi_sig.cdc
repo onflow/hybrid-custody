@@ -10,7 +10,7 @@ import "MetadataViews"
 
 transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, childAccountFilterAddress: Address) {
     prepare(childAcct: AuthAccount, parentAcct: AuthAccount) {
-        // --------------------- End setup of child account ---------------------
+        // --------------------- Begin setup of child account ---------------------
         var acctCap = childAcct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
         if !acctCap.check() {
             acctCap = childAcct.linkAccount(HybridCustody.LinkedAccountPrivatePath)!
@@ -27,8 +27,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
 
         childAcct.unlink(HybridCustody.OwnedAccountPublicPath)
         childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountPublicPath, target: HybridCustody.OwnedAccountStoragePath)
-
-        // --------------------- Begin setup of child account ---------------------
+        // --------------------- End setup of child account ---------------------
 
         // --------------------- Begin setup of parent account ---------------------
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
@@ -45,7 +44,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         parentAcct.unlink(HybridCustody.ManagerPrivatePath)
 
         parentAcct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.OwnedAccountPrivatePath, target: HybridCustody.ManagerStoragePath)
-        parentAcct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.OwnedAccountPublicPath, target: HybridCustody.ManagerStoragePath)
+        parentAcct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
         // --------------------- End setup of parent account ---------------------
 
         // Publish account to parent
