@@ -1,6 +1,4 @@
 import "ExampleNFT"
-import "AddressUtils"
-import "StringUtils"
 import "MetadataViews"
 import "NonFungibleToken"
 

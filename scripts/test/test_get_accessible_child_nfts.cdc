@@ -1,7 +1,6 @@
 import "HybridCustody"
 import "NonFungibleToken"
 import "MetadataViews"
-import "StringUtils"
 
 /* 
  * TEST SCRIPT
