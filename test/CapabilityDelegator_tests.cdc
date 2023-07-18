@@ -3,7 +3,6 @@ import "test_helpers.cdc"
 
 pub let adminAccount = blockchain.createAccount()
 pub let creator = blockchain.createAccount()
-pub let accounts: {String: Test.Account} = {}
 
 pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-logo.jpeg"
 
@@ -19,7 +18,7 @@ pub fun testSetupDelegator() {
 
 pub fun testSetupNFTCollection() {
     setupNFTCollection(creator)
-    mintNFTDefault(accounts["ExampleNFT"]!, receiver: creator)
+    mintNFTDefault(adminAccount, receiver: creator)
 }
 
 pub fun testShareExampleNFTCollectionPublic() {
@@ -57,31 +56,16 @@ pub fun testRemoveExampleNFTCollectionPrivate() {
 // END SECTION - Test Cases
 
 pub fun setup() {
-    accounts["NonFungibleToken"] = blockchain.createAccount()
-    accounts["MetadataViews"] = blockchain.createAccount()
-    accounts["ViewResolver"] = blockchain.createAccount()
-    accounts["CapabilityDelegator"] = adminAccount
-    accounts["ExampleNFT"] = blockchain.createAccount()
-    accounts["creator"] = blockchain.createAccount()
-
     blockchain.useConfiguration(Test.Configuration({
-        "NonFungibleToken": accounts["NonFungibleToken"]!.address,
-        "MetadataViews": accounts["MetadataViews"]!.address,
-        "ViewResolver": accounts["ViewResolver"]!.address,
-        "CapabilityDelegator": accounts["CapabilityDelegator"]!.address,
-        "ExampleNFT": accounts["ExampleNFT"]!.address
+        "ExampleNFT": adminAccount.address,
+        "CapabilityDelegator": adminAccount.address
     }))
 
-    // deploy standard libs first
-    deploy("NonFungibleToken", accounts["NonFungibleToken"]!, "../modules/flow-nft/contracts/NonFungibleToken.cdc")
-    deploy("MetadataViews", accounts["MetadataViews"]!, "../modules/flow-nft/contracts/MetadataViews.cdc")
-    deploy("ViewResolver", accounts["ViewResolver"]!, "../modules/flow-nft/contracts/ViewResolver.cdc")
-
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", adminAccount, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
-    deploy("CapabilityDelegator", accounts["CapabilityDelegator"]!, "../contracts/CapabilityDelegator.cdc")
+    deploy("CapabilityDelegator", adminAccount, "../contracts/CapabilityDelegator.cdc")
 }
 
 // END SECTION - Helper functions

@@ -1,9 +1,8 @@
 import Test
 import "test_helpers.cdc"
 
-pub var accounts: {String: Test.Account} = {}
-pub let fungibleTokenAddress: Address = 0xee82856bf20e2aa6
-pub let flowTokenAddress: Address = 0x0ae53cb6e3f42a79
+pub let adminAccount = blockchain.createAccount()
+pub let accounts: {String: Test.Account} = {}
 
 pub let app = "app"
 pub let child = "child"
@@ -21,7 +20,7 @@ pub let FilterKindDenyList = "denylist"
 pub let exampleNFTPublicIdentifier = "ExampleNFTCollection"
 pub let exampleNFT2PublicIdentifier = "ExampleNFT2Collection"
 
-// --------------- Test cases --------------- 
+// --------------- Test cases ---------------
 
 pub fun testImports() {
     let res = scriptExecutor("test_imports.cdc", [])! as! Bool
@@ -583,7 +582,7 @@ pub fun testSendChildFtsWithParentSigner() {
     setupFT(child2)
     setupFT(child)
     setupFTProvider(child)
-    
+
     txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, mintAmount], nil, nil)
     let balance: UFix64? = getBalance(child)
     assert(balance == mintAmount, message: "balance should be".concat(mintAmount.toString()))
@@ -632,7 +631,7 @@ pub fun testGetChildAccountNFTCapabilities(){
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
     let nftIdentifier2 = buildTypeIdentifier(getTestAccount(exampleNFT2), exampleNFT2, "Collection")
-    
+
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
     let isPublic = true
@@ -656,7 +655,7 @@ pub fun testGetNFTsAccessibleFromChildAccount(){
     let parent = blockchain.createAccount()
     let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
     let nftIdentifier2 = buildTypeIdentifier(getTestAccount(exampleNFT2), exampleNFT2, "Collection")
-    
+
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
     setupNFTCollection(child)
@@ -678,7 +677,7 @@ pub fun testGetNFTsAccessibleFromChildAccount(){
         parent.address,
         {child.address: expectedChildIDs}
     ])
-    
+
     // Mint new nfts from ExampleNFT2 and assert that get_accessible_child_nfts.cdc does not return these nfts.
     mintExampleNFT2Default(accounts[exampleNFT2]!, receiver: child)
     let expectedChildIDs2 = (scriptExecutor("example-nft-2/get_ids.cdc", [child.address]) as! [UInt64]?)!
@@ -723,7 +722,7 @@ pub fun testBlockchainNativeOnboarding() {
 
     let app = blockchain.createAccount()
     let parent = blockchain.createAccount()
-    
+
     let pubKeyStr = "1290b0382db250ffb4c2992039b1c9ed3b60e15afd4181ee0e0b9d5263e3a8aef4e91b1214f7baa44e30a31a1ce83489d37d5b0af64d848f4e2ce4e89818059e"
     let expectedPubKey = PublicKey(
             publicKey: pubKeyStr.decodeHex(),
@@ -735,7 +734,7 @@ pub fun testBlockchainNativeOnboarding() {
     let childAddresses = scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]) as! [Address]?
         ?? panic("problem adding blockchain native child account to signing parent")
     let child = Test.Account(address: childAddresses[0], publicKey: expectedPubKey)
-    
+
     assert(checkForAddresses(child: child, parent: parent), message: "child account not linked to parent")
 }
 
@@ -791,12 +790,12 @@ pub fun testRemoveParent() {
     let parent = blockchain.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
-    
+
     // remove the parent and validate the the parent manager resource doesn't have the child anymore
     txExecutor("hybrid-custody/remove_parent_from_child.cdc", [child], [parent.address], nil, nil)
 }
 
-// --------------- End Test Cases --------------- 
+// --------------- End Test Cases ---------------
 
 
 // --------------- Transaction wrapper functions ---------------
@@ -1007,111 +1006,53 @@ pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): Str
 }
 
 pub fun setup() {
-    // main contract account being tested
-    let linkedAccount = blockchain.createAccount()
-    let hybridCustodyAccount = blockchain.createAccount()
-    let capabilityDelegatorAccount = blockchain.createAccount()
-    let capabilityFilterAccount = blockchain.createAccount()
-    let capabilityFactoryAccount = blockchain.createAccount()
-
-    // factory accounts
-    let cpFactory = blockchain.createAccount()
-    let providerFactory = blockchain.createAccount()
-    let cpAndProviderFactory = blockchain.createAccount()
-    let ftProviderFactory = blockchain.createAccount()
-
-    // the account to store a factory manager
-    let nftCapFactory = blockchain.createAccount()
-
-    // flow-utils lib contracts
-    let arrayUtils = blockchain.createAccount()
-    let stringUtils = blockchain.createAccount()
-    let addressUtils = blockchain.createAccount()
-
-    // standard contracts
-    let nonFungibleToken = blockchain.createAccount()
-    let metadataViews = blockchain.createAccount()
-    let viewResolver = blockchain.createAccount()
-    
-    // other contracts used in tests
-    let exampleNFT = blockchain.createAccount()
-    let exampleNFT2 = blockchain.createAccount()
-    let exampleToken = blockchain.createAccount()
-
-    
     // actual test accounts
     let parent = blockchain.createAccount()
     let child1 = blockchain.createAccount()
     let child2 = blockchain.createAccount()
 
-    accounts = {
-        "NonFungibleToken": nonFungibleToken,
-        "MetadataViews": metadataViews,
-        "ViewResolver": viewResolver,
-        "HybridCustody": hybridCustodyAccount,
-        "CapabilityDelegator": capabilityDelegatorAccount,
-        "CapabilityFilter": capabilityFilterAccount,
-        "CapabilityFactory": capabilityFactoryAccount,
-        "NFTCollectionPublicFactory": cpFactory,
-        "NFTProviderAndCollectionFactory": providerFactory,
-        "NFTProviderFactory": cpAndProviderFactory,
-        "FTProviderFactory": ftProviderFactory,
-        "ArrayUtils": arrayUtils,
-        "StringUtils": stringUtils,
-        "AddressUtils": addressUtils,
-        "ExampleNFT": exampleNFT,
-        "ExampleNFT2": exampleNFT2,
-        "ExampleToken": exampleToken,
-        "parent": parent,
-        "child1": child1,
-        "child2": child2,
-        "nftCapFactory": nftCapFactory
-    }
+    accounts["HybridCustody"] = adminAccount
+    accounts["CapabilityDelegator"] = adminAccount
+    accounts["CapabilityFilter"] = adminAccount
+    accounts["CapabilityFactory"] = adminAccount
+    accounts["NFTCollectionPublicFactory"] = adminAccount
+    accounts["NFTProviderAndCollectionFactory"] = adminAccount
+    accounts["NFTProviderFactory"] = adminAccount
+    accounts["FTProviderFactory"] = adminAccount
+    accounts["ExampleNFT"] = adminAccount
+    accounts["ExampleNFT2"] = adminAccount
+    accounts["ExampleToken"] = adminAccount
+    accounts["parent"] = parent
+    accounts["child1"] = child1
+    accounts["child2"] = child2
+    accounts["nftCapFactory"] = adminAccount
 
     blockchain.useConfiguration(Test.Configuration({
-        "FungibleToken": fungibleTokenAddress,
-        "NonFungibleToken": accounts["NonFungibleToken"]!.address,
-        "FlowToken": flowTokenAddress,
-        "MetadataViews": accounts["MetadataViews"]!.address,
-        "ViewResolver": accounts["ViewResolver"]!.address,
-        "ArrayUtils": accounts["ArrayUtils"]!.address,
-        "StringUtils": accounts["StringUtils"]!.address,
-        "AddressUtils": accounts["AddressUtils"]!.address,
-        "HybridCustody": accounts["HybridCustody"]!.address,
-        "CapabilityDelegator": accounts["CapabilityDelegator"]!.address,
-        "CapabilityFilter": accounts["CapabilityFilter"]!.address,
-        "CapabilityFactory": accounts["CapabilityFactory"]!.address,
-        "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
-        "NFTProviderAndCollectionFactory": accounts["NFTProviderAndCollectionFactory"]!.address,
-        "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
-        "FTProviderFactory": accounts["FTProviderFactory"]!.address,
-        "ExampleNFT": accounts["ExampleNFT"]!.address,
-        "ExampleNFT2": accounts["ExampleNFT2"]!.address,
-        "ExampleToken": accounts["ExampleToken"]!.address
+        "HybridCustody": adminAccount.address,
+        "CapabilityDelegator": adminAccount.address,
+        "CapabilityFilter": adminAccount.address,
+        "CapabilityFactory": adminAccount.address,
+        "NFTCollectionPublicFactory": adminAccount.address,
+        "NFTProviderAndCollectionFactory": adminAccount.address,
+        "NFTProviderFactory": adminAccount.address,
+        "FTProviderFactory": adminAccount.address,
+        "ExampleNFT": adminAccount.address,
+        "ExampleNFT2": adminAccount.address,
+        "ExampleToken": adminAccount.address
     }))
 
-    // deploy standard libs first
-    deploy("NonFungibleToken", accounts["NonFungibleToken"]!, "../modules/flow-nft/contracts/NonFungibleToken.cdc")
-    deploy("MetadataViews", accounts["MetadataViews"]!, "../modules/flow-nft/contracts/MetadataViews.cdc")
-    deploy("ViewResolver", accounts["ViewResolver"]!, "../modules/flow-nft/contracts/ViewResolver.cdc")
-
-    // helper libs in the order they are imported
-    deploy("ArrayUtils", accounts["ArrayUtils"]!, "../modules/flow-utils/cadence/contracts/ArrayUtils.cdc")
-    deploy("StringUtils", accounts["StringUtils"]!, "../modules/flow-utils/cadence/contracts/StringUtils.cdc")
-    deploy("AddressUtils", accounts["AddressUtils"]!, "../modules/flow-utils/cadence/contracts/AddressUtils.cdc")
-
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
-    deploy("ExampleNFT2", accounts["ExampleNFT2"]!, "../contracts/standard/ExampleNFT2.cdc")
-    deploy("ExampleToken", accounts["ExampleToken"]!, "../contracts/standard/ExampleToken.cdc")
+    deploy("ExampleNFT", adminAccount, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT2", adminAccount, "../contracts/standard/ExampleNFT2.cdc")
+    deploy("ExampleToken", adminAccount, "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last
-    deploy("CapabilityDelegator", accounts["CapabilityDelegator"]!, "../contracts/CapabilityDelegator.cdc")
-    deploy("CapabilityFilter", accounts["CapabilityFilter"]!, "../contracts/CapabilityFilter.cdc")
-    deploy("CapabilityFactory", accounts["CapabilityFactory"]!, "../contracts/CapabilityFactory.cdc")
-    deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
-    deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
-    deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
-    deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
-    deploy("HybridCustody", accounts["HybridCustody"]!, "../contracts/HybridCustody.cdc")
+    deploy("CapabilityDelegator", adminAccount, "../contracts/CapabilityDelegator.cdc")
+    deploy("CapabilityFilter", adminAccount, "../contracts/CapabilityFilter.cdc")
+    deploy("CapabilityFactory", adminAccount, "../contracts/CapabilityFactory.cdc")
+    deploy("NFTCollectionPublicFactory", adminAccount, "../contracts/factories/NFTCollectionPublicFactory.cdc")
+    deploy("NFTProviderAndCollectionFactory", adminAccount, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
+    deploy("NFTProviderFactory", adminAccount, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
+    deploy("HybridCustody", adminAccount, "../contracts/HybridCustody.cdc")
 }

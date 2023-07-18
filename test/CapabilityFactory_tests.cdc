@@ -3,7 +3,6 @@ import "test_helpers.cdc"
 
 pub let adminAccount = blockchain.createAccount()
 pub let creator = blockchain.createAccount()
-pub let accounts: {String: Test.Account} = {}
 
 pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-logo.jpeg"
 
@@ -70,45 +69,24 @@ pub fun testRemoveNFTProviderFactory() {
 // END SECTION - Test Cases
 
 pub fun setup() {
-    accounts["NonFungibleToken"] = blockchain.createAccount()
-    accounts["MetadataViews"] = blockchain.createAccount()
-    accounts["ViewResolver"] = blockchain.createAccount()
-    accounts["ExampleNFT"] = blockchain.createAccount()
-    accounts["NFTCollectionPublicFactory"] = blockchain.createAccount()
-    accounts["NFTProviderAndCollectionFactory"] = blockchain.createAccount()
-    accounts["NFTProviderFactory"] = blockchain.createAccount()
-    accounts["FTProviderFactory"] = blockchain.createAccount()
-    accounts["CapabilityFactory"] = adminAccount
-
-    accounts["creator"] = blockchain.createAccount()
-    accounts["receiver"] = blockchain.createAccount()
-
     blockchain.useConfiguration(Test.Configuration({
-        "NonFungibleToken": accounts["NonFungibleToken"]!.address,
-        "MetadataViews": accounts["MetadataViews"]!.address,
-        "ViewResolver": accounts["ViewResolver"]!.address,
-        "CapabilityFactory": accounts["CapabilityFactory"]!.address,
-        "NFTCollectionPublicFactory": accounts["NFTCollectionPublicFactory"]!.address,
-        "NFTProviderAndCollectionFactory": accounts["NFTProviderAndCollectionFactory"]!.address,
-        "NFTProviderFactory": accounts["NFTProviderFactory"]!.address,
-        "FTProviderFactory": accounts["FTProviderFactory"]!.address,
-        "ExampleNFT": accounts["ExampleNFT"]!.address
+        "CapabilityFactory": adminAccount.address,
+        "ExampleNFT": adminAccount.address,
+        "NFTProviderFactory": adminAccount.address,
+        "NFTCollectionPublicFactory": adminAccount.address,
+        "NFTProviderAndCollectionFactory": adminAccount.address,
+        "FTProviderFactory": adminAccount.address
     }))
 
-    // deploy standard libs first
-    deploy("NonFungibleToken", accounts["NonFungibleToken"]!, "../modules/flow-nft/contracts/NonFungibleToken.cdc")
-    deploy("MetadataViews", accounts["MetadataViews"]!, "../modules/flow-nft/contracts/MetadataViews.cdc")
-    deploy("ViewResolver", accounts["ViewResolver"]!, "../modules/flow-nft/contracts/ViewResolver.cdc")
-
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", adminAccount, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
-    deploy("CapabilityFactory", accounts["CapabilityFactory"]!, "../contracts/CapabilityFactory.cdc")
-    deploy("NFTCollectionPublicFactory", accounts["NFTCollectionPublicFactory"]!, "../contracts/factories/NFTCollectionPublicFactory.cdc")
-    deploy("NFTProviderAndCollectionFactory", accounts["NFTProviderAndCollectionFactory"]!, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
-    deploy("NFTProviderFactory", accounts["NFTProviderFactory"]!, "../contracts/factories/NFTProviderFactory.cdc")
-    deploy("FTProviderFactory", accounts["FTProviderFactory"]!, "../contracts/factories/FTProviderFactory.cdc")
+    deploy("CapabilityFactory", adminAccount, "../contracts/CapabilityFactory.cdc")
+    deploy("NFTProviderFactory", adminAccount, "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("NFTCollectionPublicFactory", adminAccount, "../contracts/factories/NFTCollectionPublicFactory.cdc")
+    deploy("NFTProviderAndCollectionFactory", adminAccount, "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
+    deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
 }
 
 // BEGIN SECTION - transactions used in tests
