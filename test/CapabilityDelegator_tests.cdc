@@ -1,223 +1,102 @@
 import Test
+import "test_helpers.cdc"
 
-pub var blockchain = Test.newEmulatorBlockchain()
-pub var accounts: {String: Test.Account} = {}
-
-pub enum ErrorType: UInt8 {
-    pub case TX_PANIC
-    pub case TX_ASSERT
-    pub case TX_PRE
-    pub case CONTRACT_WITHDRAWBALANCE
-}
+pub let adminAccount = blockchain.createAccount()
+pub let creator = blockchain.createAccount()
 
 pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-logo.jpeg"
 
 // BEGIN SECTION - Test Cases
 
 pub fun testSetupDelegator() {
-    let signer = accounts["creator"]!
-    setupDelegator(signer)
+    setupDelegator(creator)
+
+    let typ = CompositeType("A.01cf0e2f2f715450.CapabilityDelegator.DelegatorCreated")!
+    let events = blockchain.eventsOfType(typ)
+    Test.assertEqual(1, events.length)
+}
+
+pub fun testSetupNFTCollection() {
+    setupNFTCollection(creator)
+    mintNFTDefault(adminAccount, receiver: creator)
 }
 
 pub fun testShareExampleNFTCollectionPublic() {
-    let signer = accounts["creator"]!
-    setupDelegator(signer)
-
-    setupNFTCollection(signer)
-
-    sharePublicExampleNFT(signer)
-    getExampleNFTCollectionFromDelegator(signer)
-    findExampleNFTCollectionType(signer)
-    getAllPublicContainsCollection(signer)
+    sharePublicExampleNFT(creator)
+    getExampleNFTCollectionFromDelegator(creator)
+    findExampleNFTCollectionType(creator)
+    getAllPublicContainsCollection(creator)
 }
 
 pub fun testShareExampleNFTCollectionPrivate() {
-    let signer = accounts["creator"]!
-    setupDelegator(signer)
+    sharePrivateExampleNFT(creator)
+    getExampleNFTProviderFromDelegator(creator)
+    findExampleNFTProviderType(creator)
+    getAllPrivateContainsProvider(creator)
+}
 
-    setupNFTCollection(signer)
+pub fun testRemoveExampleNFTCollectionPublic() {
+    removePublicExampleNFT(creator)
+    let scriptCode = loadCode("delegator/find_nft_collection_cap.cdc", "scripts")
+    let scriptResult = blockchain.executeScript(scriptCode, [creator.address])
 
-    sharePrivateExampleNFT(signer)
-    getExampleNFTProviderFromDelegator(signer)
-    findExampleNFTProviderType(signer)
-    getAllPrivateContainsProvider(signer)
+    Test.expect(scriptResult, Test.beFailed())
+    Test.assert(contains(scriptResult.error!.message, "panic: no type found"))
+}
+
+pub fun testRemoveExampleNFTCollectionPrivate() {
+    removePrivateExampleNFT(creator)
+    let scriptCode = loadCode("delegator/find_nft_provider_cap.cdc", "scripts")
+    let scriptResult = blockchain.executeScript(scriptCode, [creator.address])
+
+    Test.expect(scriptResult, Test.beFailed())
+    Test.assert(contains(scriptResult.error!.message, "panic: no type found"))
 }
 
 // END SECTION - Test Cases
 
 pub fun setup() {
-    // main contract account being tested
-    let restrictedChildAccount = blockchain.createAccount()
-    let capabilityDelegatorAccount = blockchain.createAccount()
-
-    // flow-utils lib contracts
-    let arrayUtils = blockchain.createAccount()
-    let stringUtils = blockchain.createAccount()
-    let addressUtils = blockchain.createAccount()
-
-    // standard contracts
-    let nonFungibleToken = blockchain.createAccount()
-    let metadataViews = blockchain.createAccount()
-    let viewResolver = blockchain.createAccount()
-    let fungibleToken = blockchain.createAccount()
-    
-    // other contracts used in tests
-    let exampleNFT = blockchain.createAccount()
-    
-    // actual test accounts
-    let creator = blockchain.createAccount()
-    let receiver = blockchain.createAccount()
-
-    accounts = {
-        "FungibleToken": fungibleToken,
-        "NonFungibleToken": nonFungibleToken,
-        "MetadataViews": metadataViews,
-        "ViewResolver": viewResolver,
-        "CapabilityDelegator": capabilityDelegatorAccount,
-        "ArrayUtils": arrayUtils,
-        "StringUtils": stringUtils,
-        "AddressUtils": addressUtils,
-        "ExampleNFT": exampleNFT,
-        "creator": creator,
-        "receiver": receiver
-    }
-
     blockchain.useConfiguration(Test.Configuration({
-        "FungibleToken": accounts["FungibleToken"]!.address,
-        "NonFungibleToken": accounts["NonFungibleToken"]!.address,
-        "MetadataViews": accounts["MetadataViews"]!.address,
-        "ViewResolver": accounts["ViewResolver"]!.address,
-        "ArrayUtils": accounts["ArrayUtils"]!.address,
-        "StringUtils": accounts["StringUtils"]!.address,
-        "AddressUtils": accounts["AddressUtils"]!.address,
-        "CapabilityDelegator": accounts["CapabilityDelegator"]!.address,
-        "ExampleNFT": accounts["ExampleNFT"]!.address
+        "ExampleNFT": adminAccount.address,
+        "CapabilityDelegator": adminAccount.address
     }))
 
-    // deploy standard libs first
-    deploy("FungibleToken", accounts["FungibleToken"]!, "../modules/flow-nft/contracts/utility/FungibleToken.cdc")
-    deploy("NonFungibleToken", accounts["NonFungibleToken"]!, "../modules/flow-nft/contracts/NonFungibleToken.cdc")
-    deploy("MetadataViews", accounts["MetadataViews"]!, "../modules/flow-nft/contracts/MetadataViews.cdc")
-    deploy("ViewResolver", accounts["ViewResolver"]!, "../modules/flow-nft/contracts/ViewResolver.cdc")
-
-    // helper libs in the order they are imported
-    deploy("ArrayUtils", accounts["ArrayUtils"]!, "../modules/flow-utils/cadence/contracts/ArrayUtils.cdc")
-    deploy("StringUtils", accounts["StringUtils"]!, "../modules/flow-utils/cadence/contracts/StringUtils.cdc")
-    deploy("AddressUtils", accounts["AddressUtils"]!, "../modules/flow-utils/cadence/contracts/AddressUtils.cdc")
-
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", accounts["ExampleNFT"]!, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", adminAccount, "../modules/flow-nft/contracts/ExampleNFT.cdc")
 
     // our main contract is last
-    deploy("CapabilityDelegator", accounts["CapabilityDelegator"]!, "../contracts/CapabilityDelegator.cdc")
+    deploy("CapabilityDelegator", adminAccount, "../contracts/CapabilityDelegator.cdc")
 }
 
-// BEGIN SECTION: Helper functions. All of the following were taken from
-// https://github.com/onflow/Offers/blob/fd380659f0836e5ce401aa99a2975166b2da5cb0/lib/cadence/test/Offers.cdc
-// - deploy
-// - scriptExecutor
-// - txExecutor
-// - getErrorMessagePointer
-
-pub fun deploy(_ contractName: String, _ account: Test.Account, _ path: String) {
- let contractCode = Test.readFile(path)
-    let err = blockchain.deployContract(
-        name: contractName,
-        code: contractCode,
-        account: account,
-        arguments: [],
-    )
-
-    if err != nil {
-        panic(err!.message)
-    }
-}
-
-pub fun scriptExecutor(_ scriptName: String, _ arguments: [AnyStruct]): AnyStruct? {
-    let scriptCode = loadCode(scriptName, "scripts")
-    let scriptResult = blockchain.executeScript(scriptCode, arguments)
-    var failureMessage = ""
-    if let failureError = scriptResult.error {
-        failureMessage = "Failed to execute the script because -:  ".concat(failureError.message)
-    }
-
-    assert(scriptResult.status == Test.ResultStatus.succeeded, message: failureMessage)
-    return scriptResult.returnValue
-}
-
-pub fun txExecutor(_ txCode: String, _ signers: [Test.Account], _ arguments: [AnyStruct], _ expectedError: String?, _ expectedErrorType: ErrorType?): Bool {
-    let tx = Test.Transaction(
-        code: txCode,
-        authorizers: [signers[0].address],
-        signers: signers,
-        arguments: arguments,
-    )
-
-    let txResult = blockchain.executeTransaction(tx)
-    if let err = txResult.error {
-        if let expectedErrorMessage = expectedError {
-            let ptr = getErrorMessagePointer(errorType: expectedErrorType!)
-            let errMessage = err.message.slice(from: ptr, upTo: ptr + expectedErrorMessage.length)
-            let hasEmittedCorrectMessage = errMessage == expectedErrorMessage ? true : false
-            let failureMessage = "Expecting - "
-                .concat(expectedErrorMessage)
-                .concat("\n")
-                .concat("But received - ")
-                .concat(err.message)
-            assert(hasEmittedCorrectMessage, message: failureMessage)
-            return true
-        }
-        panic(err.message)
-    } else {
-        if let expectedErrorMessage = expectedError {
-            panic("Expecting error - ".concat(expectedErrorMessage).concat(". While no error triggered"))
-        }
-    }
-
-    return txResult.status == Test.ResultStatus.succeeded
-}
-
-pub fun getErrorMessagePointer(errorType: ErrorType) : Int {
-    switch errorType {
-        case ErrorType.TX_PANIC: return 159
-        case ErrorType.TX_ASSERT: return 170
-        case ErrorType.TX_PRE: return 174
-        case ErrorType.CONTRACT_WITHDRAWBALANCE: return 679
-        default: panic("Invalid error type")
-    }
-
-    return 0
-}
-
-pub fun loadCode(_ fileName: String, _ baseDirectory: String): String {
-    return Test.readFile("../".concat(baseDirectory).concat("/").concat(fileName))
-}
 // END SECTION - Helper functions
 
 // BEGIN SECTION - transactions used in tests
 pub fun setupDelegator(_ acct: Test.Account) {
-    let txCode = loadCode("delegator/setup.cdc", "transactions")
-    txExecutor(txCode, [acct], [], nil, nil)
+    txExecutor("delegator/setup.cdc", [acct], [], nil, nil)
 }
 
 pub fun sharePublicExampleNFT(_ acct: Test.Account) {
-    let txCode = loadCode("delegator/add_public_nft_collection.cdc", "transactions")
-    txExecutor(txCode, [acct], [], nil, nil)
+    txExecutor("delegator/add_public_nft_collection.cdc", [acct], [], nil, nil)
 }
 
 pub fun sharePrivateExampleNFT(_ acct: Test.Account) {
-    let txCode = loadCode("delegator/add_private_nft_collection.cdc", "transactions")
-    txExecutor(txCode, [acct], [], nil, nil)
+    txExecutor("delegator/add_private_nft_collection.cdc", [acct], [], nil, nil)
+}
+
+pub fun removePublicExampleNFT(_ acct: Test.Account) {
+    txExecutor("delegator/remove_public_nft_collection.cdc", [acct], [], nil, nil)
+}
+
+pub fun removePrivateExampleNFT(_ acct: Test.Account) {
+    txExecutor("delegator/remove_private_nft_collection.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
-    let txCode = loadCode("example-nft/setup_full.cdc", "transactions")
-    txExecutor(txCode, [acct], [], nil, nil)
+    txExecutor("example-nft/setup_full.cdc", [acct], [], nil, nil)
 }
 
 pub fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
-    let txCode = loadCode("example-nft/mint_to_account.cdc", "transactions")
-    txExecutor(txCode, [minter], [receiver.address, name, description, thumbnail], nil, nil)
+    txExecutor("example-nft/mint_to_account.cdc", [minter], [receiver.address, name, description, thumbnail], nil, nil)
 }
 
 pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
@@ -225,7 +104,6 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 }
 
 // END SECTION - transactions use in tests
-
 
 // BEGIN SECTION - scripts used in tests
 
