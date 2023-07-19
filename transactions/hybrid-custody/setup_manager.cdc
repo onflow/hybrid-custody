@@ -13,11 +13,10 @@ transaction(filterAddress: Address?, filterPath: PublicPath?) {
             acct.save(<- m, to: HybridCustody.ManagerStoragePath)
         }
 
-        acct.unlink(HybridCustody.ManagerPublicPath)
-        acct.unlink(HybridCustody.ManagerPrivatePath)
+        acct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
 
-        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerPrivatePath, target: HybridCustody.ManagerStoragePath)
-        acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
+        let publicCap = acct.capabilities.storage.issue<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath)
+        acct.capabilities.publish(publicCap, at: HybridCustody.ManagerPublicPath)
     }
 }
  
