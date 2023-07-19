@@ -11,10 +11,7 @@ import "MetadataViews"
 transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, childAccountFilterAddress: Address) {
     prepare(childAcct: AuthAccount, parentAcct: AuthAccount) {
         // --------------------- Begin setup of child account ---------------------
-        var acctCap = childAcct.getCapability<&AuthAccount>(HybridCustody.LinkedAccountPrivatePath)
-        if !acctCap.check() {
-            acctCap = childAcct.linkAccount(HybridCustody.LinkedAccountPrivatePath)!
-        }
+        var acctCap = childAcct.capabilities.account.issue<&AuthAccount>()
 
         if childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
             let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
@@ -22,17 +19,15 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         }
 
         // check that paths are all configured properly
-        childAcct.unlink(HybridCustody.OwnedAccountPrivatePath)
-        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountPrivatePath, target: HybridCustody.OwnedAccountStoragePath)
-
-        childAcct.unlink(HybridCustody.OwnedAccountPublicPath)
-        childAcct.link<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountPublicPath, target: HybridCustody.OwnedAccountStoragePath)
+        childAcct.capabilities.unpublish(HybridCustody.OwnedAccountPublicPath)
+        let ownedPublicCap = childAcct.capabilities.storage.issue<&HybridCustody.OwnedAccount{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountStoragePath)
+        childAcct.capabilities.publish(ownedPublicCap, at: HybridCustody.OwnedAccountPublicPath)
         // --------------------- End setup of child account ---------------------
 
         // --------------------- Begin setup of parent account ---------------------
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
         if parentFilterAddress != nil {
-            filter = getAccount(parentFilterAddress!).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+            filter = getAccount(parentFilterAddress!).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
         }
 
         if parentAcct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
@@ -40,21 +35,21 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
             parentAcct.save(<- m, to: HybridCustody.ManagerStoragePath)
         }
 
-        parentAcct.unlink(HybridCustody.ManagerPublicPath)
-        parentAcct.unlink(HybridCustody.ManagerPrivatePath)
-
-        parentAcct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.OwnedAccountPrivatePath, target: HybridCustody.ManagerStoragePath)
-        parentAcct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
+        parentAcct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
+        let managerPublicCap = parentAcct.capabilities.storage.issue<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath)
+        parentAcct.capabilities.publish(managerPublicCap, at: HybridCustody.ManagerPublicPath)
         // --------------------- End setup of parent account ---------------------
 
         // Publish account to parent
         let owned = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 
-        let factory = getAccount(childAccountFactoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+        let factory = getAccount(childAccountFactoryAddress).capabilities.get<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+            ?? panic("capability not found")
         assert(factory.check(), message: "factory address is not configured properly")
 
-        let filterForChild = getAccount(childAccountFilterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        let filterForChild = getAccount(childAccountFilterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+            ?? panic("filter capability not found")
         assert(filterForChild.check(), message: "capability filter is not configured properly")
 
         owned.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForChild)

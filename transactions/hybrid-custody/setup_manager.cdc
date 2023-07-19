@@ -14,9 +14,7 @@ transaction(filterAddress: Address?, filterPath: PublicPath?) {
         }
 
         acct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
-
         let publicCap = acct.capabilities.storage.issue<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath)
         acct.capabilities.publish(publicCap, at: HybridCustody.ManagerPublicPath)
     }
 }
- 
