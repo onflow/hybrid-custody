@@ -15,7 +15,7 @@ transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPa
             let m <- HybridCustody.createManager(filter: filter)
             acct.save(<- m, to: HybridCustody.ManagerStoragePath)
 
-            acct.unlink(HybridCustody.ManagerPublicPath)
+            acct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
             acct.unlink(HybridCustody.ManagerPrivatePath)
 
             acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerPrivatePath, target: HybridCustody.ManagerStoragePath)

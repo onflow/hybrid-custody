@@ -23,6 +23,7 @@ pub contract CapabilityFactory {
     ///
     pub struct interface Factory {
         pub fun getCapability(acct: &AuthAccount, path: CapabilityPath): Capability
+        pub fun issueCapability(acct: &AuthAccount, from: StoragePath): Capability
     }
 
     /// Getter defines an interface for retrieval of a Factory if contained within the implementing resource

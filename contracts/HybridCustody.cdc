@@ -209,6 +209,14 @@ pub contract HybridCustody {
                     "Capability is not allowed by this account's Parent"
             }
         }
+
+        pub fun issueCapability(from: StoragePath, type: Type): Capability? {
+            post {
+                result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
+                    "Capability is not allowed by this account's Parent"
+            }
+        }
+
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
         pub fun getPublicCapFromDelegator(type: Type): Capability?
@@ -581,6 +589,19 @@ pub contract HybridCustody {
                 assert(self.filter.borrow()!.allowed(cap: cap), message: "requested capability is not allowed")
             }
 
+            return cap
+        }
+
+        pub fun issueCapability(from: StoragePath, type: Type): Capability? {
+            let child = self.childCap.borrow() ?? panic("failed to borrow child account")
+            let f = self.factory.borrow()!.getFactory(type)
+            if f == nil {
+                return nil
+            }
+
+            let acct = child.borrowAccount()
+            let cap = f!.issueCapability(acct: acct, from: from)
+            assert(self.filter.borrow()!.allowed(cap: cap), message: "requested capability is not allowed")
             return cap
         }
 
@@ -1001,6 +1022,8 @@ pub contract HybridCustody {
                 return true
             })
 
+            let controllers = acct.capabilities.account.getControllers()
+
             // Link a new AuthAccount Capability
             // NOTE: This path cannot be sufficiently randomly generated, an app calling this function could build a
             // capability to this path before it is made, thus maintaining ownership despite making it look like they
@@ -1015,6 +1038,11 @@ pub contract HybridCustody {
             // the existing path which will cause a deference issue with the originally borrowed auth account
             for  p in pathsToUnlink {
                 newAcct.unlink(p)
+            }
+
+            // also revoke all keys via capcons
+            for c in controllers {
+                c.delete()
             }
         }
 
