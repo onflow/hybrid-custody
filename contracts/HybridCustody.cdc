@@ -668,9 +668,9 @@ pub contract HybridCustody {
             switch view {
                 case Type<MetadataViews.Display>():
                     let childAddress = self.getAddress()
-                    let manager = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
+                    let manager = getAccount(self.parent).capabilities.get<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
 
-                    if !manager.check() {
+                    if manager == nil || !manager!.check() {
                         return nil
                     }
 
@@ -830,9 +830,7 @@ pub contract HybridCustody {
             let delegator = acct.capabilities.storage.issue<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(capDelegatorStorage)
             assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
-            let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>(
-                HybridCustody.OwnedAccountPrivatePath
-            )
+            let borrowableCap = self.borrowAccount().capabilities.storage.issue<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountStoragePath)
             let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
 
             acct.save(<-childAcct, to: childAccountStorage)        
@@ -927,9 +925,9 @@ pub contract HybridCustody {
             self.parents.remove(key: parent)
             emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: parent, active: false)
 
-            let parentManager = getAccount(parent).getCapability<&Manager{ManagerPublic}>(HybridCustody.ManagerPublicPath)
-            if parentManager.check() {
-                parentManager.borrow()?.removeParentCallback(child: self.owner!.address)
+            let parentManager = getAccount(parent).capabilities.get<&Manager{ManagerPublic}>(HybridCustody.ManagerPublicPath)
+            if parentManager != nil && parentManager!.check() {
+                parentManager!.borrow()!.removeParentCallback(child: self.owner!.address)
             }
 
             return true
@@ -972,12 +970,18 @@ pub contract HybridCustody {
             
             let acct = self.borrowAccount()
             // Unlink existing owner's Capability if owner exists
-            // TODO: what to do here?
+            // TODO: remove this once linking is removed from cadence
             if self.acctOwner != nil {
                 acct.unlink(
                     PrivatePath(identifier: HybridCustody.getOwnerIdentifier(self.acctOwner!))!
                 )
             }
+
+            acct.capabilities.storage.forEachController(forPath: HybridCustody.OwnedAccountStoragePath, fun (c: &StorageCapabilityController): Bool {
+                c.delete()
+                return true
+            })
+            
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
 
