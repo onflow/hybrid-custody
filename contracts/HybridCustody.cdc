@@ -822,19 +822,12 @@ pub contract HybridCustody {
             }
 
             let capDelegatorPublic = PublicPath(identifier: capDelegatorIdentifier)!
-            let capDelegatorPrivate = PrivatePath(identifier: capDelegatorIdentifier)!
 
-            acct.link<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic}>(
-                capDelegatorPublic,
-                target: capDelegatorStorage
-            )
-            acct.link<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(
-                capDelegatorPrivate,
-                target: capDelegatorStorage
-            )
-            let delegator = acct.getCapability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(
-                capDelegatorPrivate
-            )
+            let delegatorCap = acct.capabilities.storage.issue<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic}>(capDelegatorStorage)
+            acct.capabilities.publish(delegatorCap, at: capDelegatorPublic)
+            assert(delegatorCap.check(), message: "Delegator capability check failed")
+
+            let delegator = acct.capabilities.storage.issue<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(capDelegatorStorage)
             assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
             let borrowableCap = self.borrowAccount().getCapability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>(
@@ -842,15 +835,11 @@ pub contract HybridCustody {
             )
             let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
 
-            let childAccountPrivatePath = PrivatePath(identifier: identifier)!
-
-            acct.save(<-childAcct, to: childAccountStorage)
-            acct.link<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath, target: childAccountStorage)
-            
-            let delegatorCap = acct.getCapability<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath)
+            acct.save(<-childAcct, to: childAccountStorage)        
+            let childCap = acct.capabilities.storage.issue<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountStorage)
             assert(delegatorCap.check(), message: "Delegator capability check failed")
 
-            acct.inbox.publish(delegatorCap, name: identifier, recipient: parentAddress)
+            acct.inbox.publish(childCap, name: identifier, recipient: parentAddress)
             self.parents[parentAddress] = false
 
             emit ChildAccountPublished(
@@ -914,11 +903,23 @@ pub contract HybridCustody {
             let capDelegatorIdentifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
 
             let acct = self.borrowAccount()
-            acct.unlink(PrivatePath(identifier: identifier)!)
-            acct.unlink(PublicPath(identifier: identifier)!)
 
-            acct.unlink(PrivatePath(identifier: capDelegatorIdentifier)!)
-            acct.unlink(PublicPath(identifier: capDelegatorIdentifier)!)
+            // destroy delegator capabilities
+            let childStoragePath = StoragePath(identifier: capDelegatorIdentifier)!
+            acct.capabilities.storage.forEachController(forPath: childStoragePath, fun (c: &StorageCapabilityController): Bool {
+                c.delete()
+                return true
+            })
+            acct.capabilities.unpublish(PublicPath(identifier: identifier)!)
+
+
+            // destroy delegator capabilities
+            let delegatorStoragePath = StoragePath(identifier: capDelegatorIdentifier)!
+            acct.capabilities.storage.forEachController(forPath: delegatorStoragePath, fun (c: &StorageCapabilityController): Bool {
+                c.delete()
+                return true
+            })
+            acct.capabilities.unpublish(PublicPath(identifier: capDelegatorIdentifier)!)
 
             destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: identifier)!)
             destroy <- acct.load<@AnyResource>(from: StoragePath(identifier: capDelegatorIdentifier)!)
@@ -971,6 +972,7 @@ pub contract HybridCustody {
             
             let acct = self.borrowAccount()
             // Unlink existing owner's Capability if owner exists
+            // TODO: what to do here?
             if self.acctOwner != nil {
                 acct.unlink(
                     PrivatePath(identifier: HybridCustody.getOwnerIdentifier(self.acctOwner!))!
@@ -978,11 +980,8 @@ pub contract HybridCustody {
             }
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.link<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>(
-                    PrivatePath(identifier: identifier)!,
-                    target: HybridCustody.OwnedAccountStoragePath
-                ) ?? panic("failed to link child account capability")
 
+            let cap = acct.capabilities.storage.issue<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>(HybridCustody.OwnedAccountStoragePath)
             acct.inbox.publish(cap, name: identifier, recipient: to)
 
             self.pendingOwner = to
@@ -1029,13 +1028,15 @@ pub contract HybridCustody {
             // capability to this path before it is made, thus maintaining ownership despite making it look like they
             // gave it away. Until capability controllers, this method should not be fully trusted.
             let authAcctPath = "HybridCustodyRelinquished".concat(HybridCustody.account.address.toString()).concat(getCurrentBlock().height.toString())
-            let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
+            let acctCap = acct.capabilities.account.issue<&AuthAccount>()
+
 
             self.acct = acctCap
             let newAcct = self.acct.borrow()!
 
             // cleanup, remove all previously found paths. We had to do it in this order because we will be unlinking
             // the existing path which will cause a deference issue with the originally borrowed auth account
+            // TODO: remove once capability controllers are the only way to access Caps on an account
             for  p in pathsToUnlink {
                 newAcct.unlink(p)
             }
