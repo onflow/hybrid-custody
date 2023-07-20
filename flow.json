@@ -23,6 +23,7 @@
     "ExampleNFT2": "./contracts/standard/ExampleNFT2.cdc",
     "ExampleToken": "./contracts/standard/ExampleToken.cdc",
     "FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
+    "ExampleShardedHybridCustodyManager": "./contracts/ExampleShardedHybridCustodyManager.cdc",
     "FlowToken": {
       "source": "",
       "aliases": {
@@ -60,6 +61,7 @@
         "testnet": "631e88ae7f1d7c20"
       }
     },
+    "ShardedHybridCustodyManager": "./contracts/ShardedHybridCustodyManager.cdc",
     "StringUtils": {
       "source": "./modules/flow-utils/cadence/contracts/StringUtils.cdc",
       "aliases": {
@@ -111,6 +113,8 @@
         "StringUtils",
         "ArrayUtils",
         "HybridCustody",
+        "ExampleShardedHybridCustodyManager",
+        "ShardedHybridCustodyManager",
         "CapabilityDelegator",
         "CapabilityFilter",
         "CapabilityFactory",
