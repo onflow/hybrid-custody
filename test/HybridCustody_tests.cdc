@@ -433,7 +433,6 @@ pub fun testRemoveChildAccount() {
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
     checkForAddresses(child: child, parent: parent)
 
-
     assert(isParent(child: child, parent: parent) == true, message: "is not parent of child account")
     txExecutor("hybrid-custody/remove_child_account.cdc", [parent], [child.address], nil, nil)
     assert(isParent(child: child, parent: parent) == false, message: "child account was not removed from parent")
@@ -710,7 +709,6 @@ pub fun testGetChildAccountFTCapabilities(){
 
     let ftTypeIds = scriptExecutor("hybrid-custody/get_child_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
     assert(ftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
-
 }
 
 pub fun testBlockchainNativeOnboarding() {

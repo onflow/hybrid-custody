@@ -904,10 +904,10 @@ pub contract HybridCustody {
 
             // destroy delegator capabilities
             let childStoragePath = StoragePath(identifier: capDelegatorIdentifier)!
-            acct.capabilities.storage.forEachController(forPath: childStoragePath, fun (c: &StorageCapabilityController): Bool {
+            let childControllers = acct.capabilities.storage.getControllers(forPath: childStoragePath)
+            for c in childControllers {
                 c.delete()
-                return true
-            })
+            }
             acct.capabilities.unpublish(PublicPath(identifier: identifier)!)
 
 
@@ -977,10 +977,10 @@ pub contract HybridCustody {
                 )
             }
 
-            acct.capabilities.storage.forEachController(forPath: HybridCustody.OwnedAccountStoragePath, fun (c: &StorageCapabilityController): Bool {
+            let controllers = acct.capabilities.storage.getControllers(forPath: HybridCustody.OwnedAccountStoragePath)
+            for c in controllers {
                 c.delete()
-                return true
-            })
+            }
             
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)

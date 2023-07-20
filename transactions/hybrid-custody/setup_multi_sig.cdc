@@ -44,15 +44,20 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         let owned = childAcct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 
-        let factory = getAccount(childAccountFactoryAddress).capabilities.get<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
-            ?? panic("capability not found")
-        assert(factory.check(), message: "factory address is not configured properly")
+        var factory = getAccount(childAccountFactoryAddress).capabilities.get<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+        if factory == nil {
+            factory = getAccount(childAccountFactoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+        }
 
-        let filterForChild = getAccount(childAccountFilterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("filter capability not found")
-        assert(filterForChild.check(), message: "capability filter is not configured properly")
+        assert(factory!.check(), message: "factory address is not configured properly")
 
-        owned.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForChild)
+        var filterForChild = getAccount(childAccountFilterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        if filterForChild == nil {
+            filterForChild = getAccount(childAccountFilterAddress).getCapability<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        }
+        assert(filterForChild!.check(), message: "capability filter is not configured properly")
+
+        owned.publishToParent(parentAddress: parentAcct.address, factory: factory!, filter: filterForChild!)
 
         // claim the account on the parent
         let inboxName = HybridCustody.getChildAccountIdentifier(parentAcct.address)
