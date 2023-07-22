@@ -22,7 +22,7 @@ pub fun assertPassing(result: {Address: {UInt64: MetadataViews.Display}}, expect
   }
 }
 
-pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
+pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}) {
   let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
   var typeIdsWithProvider = {} as {Address: [String]} 

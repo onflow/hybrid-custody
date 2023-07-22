@@ -40,8 +40,10 @@ pub fun testSetupNFTFilterAndFactory() {
     txExecutor("dev-setup/setup_nft_filter_and_factory_manager.cdc", [tmp], [accounts[exampleNFT]!.address, exampleNFT], nil, nil)
     setupNFTCollection(tmp)
 
-    scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
-    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address])
+    let accessible = scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])! as! Bool
+    let allowed = scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address, tmp.address])! as! Bool
+    Test.assertEqual(true, accessible)
+    Test.assertEqual(true, allowed)
 }
 
 pub fun testSetupFactoryWithFT() {
@@ -586,6 +588,7 @@ pub fun testSendChildFtsWithParentSigner() {
     txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, mintAmount], nil, nil)
     let balance: UFix64? = getBalance(child)
     assert(balance == mintAmount, message: "balance should be".concat(mintAmount.toString()))
+    scriptExecutor("/test/test_get_accessible_vaults_and_balances.cdc", [parent.address, {child.address: mintAmount}])
 
     let recipientBalanceBefore: UFix64? = getBalance(child2)
     assert(recipientBalanceBefore == 0.0, message: "recipient balance should be 0")
@@ -687,6 +690,7 @@ pub fun testGetNFTsAccessibleFromChildAccount(){
         "test/test_get_nft_display_view_from_public.cdc",
         [parent.address, PublicPath(identifier: exampleNFT2PublicIdentifier)!, expectedAddressToIDs2]
     )
+    scriptExecutor("test/test_get_accessible_collections_and_ids.cdc", [parent.address, {child.address: expectedChildIDs}, {child.address: expectedChildIDs2}])!
 
     // revoke the ExampleNFT2 provider capability, preventing it from being returned.
     let paths: [CapabilityPath] = [

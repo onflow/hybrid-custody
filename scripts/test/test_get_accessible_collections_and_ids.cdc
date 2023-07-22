@@ -1,15 +1,48 @@
 import "NonFungibleToken"
 import "MetadataViews"
 
+import "ExampleNFT"
+import "ExampleNFT2"
+
 import "HybridCustody"
 
-pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
+/* 
+ * TEST SCRIPT
+ * This script is a replication of that found in hybrid-custody/get_accessible_child_account_nfts.cdc as it's the best as
+ * as can be done without accessing the script's return type in the Cadence testing framework
+ */
+
+/// Assertion method to ensure passing test
+///
+pub fun assertPassing(result: {Address: {Type: [UInt64]}}, exampleNFT: {Address: [UInt64]}, exampleNFT2: {Address: [UInt64]}) {
+    for childAddress in result.keys {
+        for type in result[childAddress]!.keys {
+            if type == Type<&ExampleNFT.Collection>() {
+                for id in result[childAddress]![Type<&ExampleNFT.Collection>()]! {
+                    if !exampleNFT[childAddress]!.contains(id) {
+                        panic("Mismatched IDs")
+                    }
+                }
+            }
+            if type == Type<&ExampleNFT2.Collection>() {
+                for id in result[childAddress]![Type<&ExampleNFT.Collection>()]! {
+                    if !exampleNFT2[childAddress]!.contains(id) {
+                            panic("Mismatched IDs")
+                        }
+                }
+            }
+        }
+    }
+}
+
+pub fun main(parent: Address, exampleNFT: {Address: [UInt64]}, exampleNFT2: {Address: [UInt64]}) {
     let manager = getAuthAccount(parent).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
     var typeIdsWithProvider: {Address: [Type]} = {}
 
     // Address -> Collection Type -> ownedNFTs
     var accessibleNFTs: {Address: {Type: [UInt64]}}  = {}
+
 
     let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
     let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
@@ -67,5 +100,6 @@ pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
         })
         accessibleNFTs[address] = nfts
     }
-    return accessibleNFTs
+    assertPassing(result: accessibleNFTs, exampleNFT: exampleNFT, exampleNFT2: exampleNFT)
+    // return accessibleNFTs
 }

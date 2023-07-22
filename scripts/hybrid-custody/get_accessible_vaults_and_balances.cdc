@@ -1,24 +1,24 @@
-import "NonFungibleToken"
+import "FungibleToken"
 import "MetadataViews"
 
 import "HybridCustody"
 
-pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
+pub fun main(parent: Address): {Address: {Type: UFix64}} {
     let manager = getAuthAccount(parent).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
     var typeIdsWithProvider: {Address: [Type]} = {}
 
-    // Address -> Collection Type -> ownedNFTs
-    var accessibleNFTs: {Address: {Type: [UInt64]}}  = {}
+    // Address -> Vault Type -> balance
+    var accessibleVaults: {Address: {Type: UFix64}}  = {}
 
-    let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
-    let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
+    let providerType = Type<Capability<&{FungibleToken.Provider}>>()
+    let vaultType: Type = Type<@FungibleToken.Vault>()
 
     // Iterate through child accounts
     for address in manager.getChildAddresses() {
         let acct = getAuthAccount(address)
         let foundTypes: [Type] = []
-        let nfts: {Type: [UInt64]} = {}
+        let vaultBalances: {Type: UFix64} = {}
         let childAcct = manager.borrowAccount(addr: address) ?? panic("child account not found")
         // get all private paths
         acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
@@ -26,8 +26,8 @@ pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
             if !type.isSubtype(of: providerType){
                 return true
             }
-            if let cap = childAcct.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
-                let providerCap = cap as! Capability<&{NonFungibleToken.Provider}> 
+            if let cap = childAcct.getCapability(path: path, type: Type<&{FungibleToken.Provider}>()) {
+                let providerCap = cap as! Capability<&{FungibleToken.Provider}> 
 
                 if !providerCap.check(){
                     // if this isn't a provider capability, exit the account iteration function for this path
@@ -39,7 +39,7 @@ pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
         })
         typeIdsWithProvider[address] = foundTypes
 
-        // iterate storage, check if typeIdsWithProvider contains the typeId, if so, add to nfts
+        // iterate storage, check if typeIdsWithProvider contains the typeId, if so, add to vaultBalances
         acct.forEachStored(fun (path: StoragePath, type: Type): Bool {
 
             if typeIdsWithProvider[address] == nil {
@@ -53,11 +53,11 @@ pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
                     if value[idx] != type {
                         continue
                     } else {
-                        if type.isInstance(collectionType) {
+                        if type.isInstance(vaultType) {
                             continue
                         }
-                        if let collection = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: path) { 
-                            nfts.insert(key: type, collection.getIDs())
+                        if let vault = acct.borrow<&FungibleToken.Vault>(from: path) { 
+                            vaultBalances.insert(key: type, vault.balance)
                         }
                         continue
                     }
@@ -65,7 +65,7 @@ pub fun main(parent: Address): {Address: {Type: [UInt64]}} {
             }
             return true
         })
-        accessibleNFTs[address] = nfts
+        accessibleVaults[address] = vaultBalances
     }
-    return accessibleNFTs
+    return accessibleVaults
 }
