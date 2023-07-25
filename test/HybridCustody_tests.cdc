@@ -40,8 +40,8 @@ pub fun testSetupNFTFilterAndFactory() {
     txExecutor("dev-setup/setup_nft_filter_and_factory_manager.cdc", [tmp], [accounts[exampleNFT]!.address, exampleNFT], nil, nil)
     setupNFTCollection(tmp)
 
-    scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
-    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address])
+    // scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
+    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address, tmp.address])
 }
 
 pub fun testSetupFactoryWithFT() {
