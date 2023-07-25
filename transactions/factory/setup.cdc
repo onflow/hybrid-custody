@@ -3,6 +3,8 @@ import "NFTCollectionPublicFactory"
 import "NFTProviderAndCollectionFactory"
 import "NFTProviderFactory"
 import "FTProviderFactory"
+import "FTBalanceFactory"
+import "FTReceiverFactory"
 
 import "NonFungibleToken"
 import "FungibleToken"
@@ -31,6 +33,8 @@ transaction {
         manager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
         manager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Provider}>(), FTProviderFactory.Factory())
+        manager.updateFactory(Type<&{FungibleToken.Balance}>(), FTBalanceFactory.Factory())
+        manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
     }
 }
  

@@ -1,5 +1,19 @@
 {
 	"contracts": {
+		"HybridCustody": "./contracts/HybridCustody.cdc",
+		"CapabilityDelegator": "./contracts/CapabilityDelegator.cdc",
+		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
+		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
+		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
+		"ExampleNFT2": "./contracts/standard/ExampleNFT2.cdc",
+		"ExampleToken": "./contracts/standard/ExampleToken.cdc",
+		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
+		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
+		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
+		"FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
+		"FTAllFactory": "./contracts/factories/FTAllFactory.cdc",
+		"FTBalanceFactory": "./contracts/factories/FTBalanceFactory.cdc",
+		"FTReceiverFactory": "./contracts/factories/FTReceiverFactory.cdc",
 		"AddressUtils": {
 			"source": "./modules/flow-utils/cadence/contracts/AddressUtils.cdc",
 			"aliases": {
@@ -16,13 +30,6 @@
 				"testnet": "31ad40c07a2a9788"
 			}
 		},
-		"CapabilityDelegator": "./contracts/CapabilityDelegator.cdc",
-		"CapabilityFactory": "./contracts/CapabilityFactory.cdc",
-		"CapabilityFilter": "./contracts/CapabilityFilter.cdc",
-		"ExampleNFT": "./modules/flow-nft/contracts/ExampleNFT.cdc",
-		"ExampleNFT2": "./contracts/standard/ExampleNFT2.cdc",
-		"ExampleToken": "./contracts/standard/ExampleToken.cdc",
-		"FTProviderFactory": "./contracts/factories/FTProviderFactory.cdc",
 		"FlowToken": {
 			"source": "",
 			"aliases": {
@@ -39,7 +46,6 @@
 				"testnet": "9a0766d93b6608b7"
 			}
 		},
-		"HybridCustody": "./contracts/HybridCustody.cdc",
 		"MetadataViews": {
 			"source": "./modules/flow-nft/contracts/MetadataViews.cdc",
 			"aliases": {
@@ -48,10 +54,6 @@
 				"testnet": "631e88ae7f1d7c20"
 			}
 		},
-		"NFTCollectionPublicFactory": "./contracts/factories/NFTCollectionPublicFactory.cdc",
-		"NFTProviderAndCollectionFactory": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
-		"NFTProviderFactory": "./contracts/factories/NFTProviderFactory.cdc",
-		"FTAllFactory": "./contracts/factories/FTAllFactory.cdc",
 		"NonFungibleToken": {
 			"source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
 			"aliases": {
@@ -116,6 +118,8 @@
 				"CapabilityFactory",
 				"FTProviderFactory",
 				"FTAllFactory",
+				"FTBalanceFactory",
+				"FTReceiverFactory",
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
@@ -137,7 +141,9 @@
 				"NFTProviderAndCollectionFactory",
 				"NFTCollectionPublicFactory",
 				"FTProviderFactory",
-				"FTAllFactory"
+				"FTAllFactory",
+				"FTBalanceFactory",
+				"FTReceiverFactory"
 			]
 		}
 	}
