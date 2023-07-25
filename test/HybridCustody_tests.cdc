@@ -41,7 +41,7 @@ pub fun testSetupNFTFilterAndFactory() {
     setupNFTCollection(tmp)
 
     scriptExecutor("factory/get_nft_provider_from_factory.cdc", [tmp.address])
-    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address])
+    scriptExecutor("factory/get_nft_provider_from_factory_allowed.cdc", [tmp.address, tmp.address])
 }
 
 pub fun testSetupFactoryWithFT() {
