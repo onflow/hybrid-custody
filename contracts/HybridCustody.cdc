@@ -761,7 +761,7 @@ pub contract HybridCustody {
             switch view {
                 case Type<MetadataViews.Display>():
                     let childAddress = self.getAddress()
-                    let manager: Capability<&HybridCustody.Manager{HybridCustody.ManagerPublic}> = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
+                    let manager = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
 
                     if !manager.check() {
                         return nil
