@@ -17,7 +17,7 @@ import "CapabilityFilter"
 /// 3. Manager - A resource setup by the parent which manages all child accounts shared with it. The Manager resource
 ///    also maintains a set of accounts that it "owns", meaning it has a capability to the full OwnedAccount resource
 ///    and would then also be able to manage the child account's links as it sees fit.
-/// 
+///
 /// Contributors (please add to this list if you contribute!):
 /// - Austin Kline - https://twitter.com/austin_flowty
 /// - Deniz Edincik - https://twitter.com/bluesign
@@ -55,7 +55,7 @@ pub contract HybridCustody {
     ///     !active : removed from Manager
     pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     /// OwnedAccount added/removed or sealed
-    ///     active && owner != nil  : added to Manager 
+    ///     active && owner != nil  : added to Manager
     ///     !active && owner == nil : removed from Manager
     pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     /// ChildAccount ready to be redeemed by emitted pendingParent
@@ -164,7 +164,7 @@ pub contract HybridCustody {
 
         /// Returns the address of this OwnedAccount
         pub fun getAddress(): Address
-        
+
         /// Checks if this OwnedAccount is a child of the specified address
         pub fun isChildOf(_ addr: Address): Bool
 
@@ -182,7 +182,7 @@ pub contract HybridCustody {
 
         /// A callback which is invoked when a parent redeems an owned account
         access(contract) fun setOwnerCallback(_ addr: Address)
-        
+
         /// Destroys all outstanding AuthAccount capabilities on this owned account, and creates a new one for the
         /// OwnedAccount to use
         pub fun rotateAuthAccount()
@@ -191,33 +191,63 @@ pub contract HybridCustody {
         pub fun revokeAllKeys()
     }
 
+    /// Public methods for factory capability getter, anyone can call on a ChildAccount
+    pub struct interface FactoryCapabilityGetterPublic {
+        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+    }
+
+    /// Private methods for factory capability getter, only the parent of a ChildAccount can call
+    pub struct interface FactoryCapabilityGetterPrivate {
+        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability?
+    }
+
+    /// Public methods for delegator capability getter, anyone can call on a ChildAccount
+    pub struct interface DelegatorCapabilityGetterPublic {
+        pub fun getPublicCapability(type: Type): Capability?
+    }
+
+    /// Private methods for delegator capability getter, only the parent of a ChildAccount can call
+    pub struct interface DelegatorCapabilityGetterPrivate {
+        pub fun getPublicCapability(type: Type): Capability?
+        pub fun getCapability(type: Type): Capability?
+    }
+
     /// Public methods exposed on a ChildAccount resource. OwnedAccountPublic will share some methods here, but isn't
     /// necessarily the same.
     ///
     pub resource interface AccountPublic {
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
-        pub fun getPublicCapFromDelegator(type: Type): Capability?
+        pub fun getFactoryCapabilityGetterPublic(): AnyStruct{FactoryCapabilityGetterPublic}
+        pub fun getDelegatorCapabilityGetterPublic(): AnyStruct{DelegatorCapabilityGetterPublic}
+
         pub fun getAddress(): Address
+
+        access(contract) fun getSelfRef(): &AnyResource{AccountPrivate}
     }
 
-    /// Methods accessible to the designated parent of a ChildAccount
-    ///
     pub resource interface AccountPrivate {
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
-            post {
-                result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
-                    "Capability is not allowed by this account's Parent"
-            }
-        }
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        pub fun getFactoryCapabilityGetter(): AnyStruct{FactoryCapabilityGetterPublic}
+        pub fun getDelegatorCapabilityGetter(): AnyStruct{DelegatorCapabilityGetterPrivate}
+
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
-        pub fun getPublicCapFromDelegator(type: Type): Capability?
-        pub fun getPrivateCapFromDelegator(type: Type): Capability? {
+
+        // Contract access - capability getter
+        access(contract) fun getCapability(path: CapabilityPath, type: Type): Capability? {
             post {
                 result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
                     "Capability is not allowed by this account's Parent"
             }
         }
+        access(contract) fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        access(contract) fun getPublicCapFromDelegator(type: Type): Capability?
+        access(contract) fun getPrivateCapFromDelegator(type: Type): Capability? {
+            post {
+                result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
+                    "Capability is not allowed by this account's Parent"
+            }
+        }
+
+        // Contract access - callbacks
         access(contract) fun redeemedCallback(_ addr: Address)
         access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
             pre {
@@ -302,7 +332,7 @@ pub contract HybridCustody {
                 ?? panic("child account capability could not be borrowed")
 
             self.childAccounts[cap.address] = cap
-            
+
             emit AccountUpdated(id: acct.uuid, child: cap.address, parent: self.owner!.address, active: true)
 
             acct.redeemedCallback(self.owner!.address)
@@ -318,11 +348,11 @@ pub contract HybridCustody {
 
             self.filter = cap
         }
-        
+
         /// Sets the Filter Capability for this Manager, propagating to the specified child account
         ///
         pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
-            let acct = self.borrowAccount(addr: childAddress) 
+            let acct = self.borrowAccount(addr: childAddress)
                 ?? panic("child account not found")
 
             acct.setManagerCapabilityFilter(cap)
@@ -336,7 +366,7 @@ pub contract HybridCustody {
                 ?? panic("child account not found")
 
             self.childAccountDisplays.remove(key: addr)
-            
+
             if !cap.check() {
                 // Emit event if invalid capability
                 emit AccountUpdated(id: nil, child: cap.address, parent: self.owner!.address, active: false)
@@ -347,7 +377,7 @@ pub contract HybridCustody {
             // Get the child account id before removing capability
             let id: UInt64 = acct.uuid
 
-            acct.parentRemoveChildCallback(parent: self.owner!.address) 
+            acct.parentRemoveChildCallback(parent: self.owner!.address)
 
             emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, active: false)
         }
@@ -484,15 +514,73 @@ pub contract HybridCustody {
         }
     }
 
+    pub struct interface AccountCapabilityOwner {
+        pub let manager: Address
+        pub let address: Address
+
+        access(contract) fun borrowOwnerChildAccount(): &AnyResource{AccountPrivate} {
+            let manager = getAccount(self.manager)
+                .getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
+                .borrow() ?? panic("Failed to borrow manager capability")
+
+            let acctPub = manager.borrowAccountPublic(addr: self.address) ?? panic("Failed to borrow account capability")
+            return acctPub.getSelfRef()
+        }
+    }
+
+    /// Capability getter of Factory mode
+    ///
+    pub struct FactoryCapabilityGetter: FactoryCapabilityGetterPublic, FactoryCapabilityGetterPrivate, AccountCapabilityOwner {
+        pub let manager: Address
+        pub let address: Address
+
+        init(_ manager: Address, _ address: Address) {
+            self.manager = manager
+            self.address = address
+        }
+
+        pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
+            let acctPriv = self.borrowOwnerChildAccount()
+            return acctPriv.getPublicCapability(path: path, type: type)
+        }
+
+        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
+            let acctPriv = self.borrowOwnerChildAccount()
+            return acctPriv.getCapability(path: path, type: type)
+        }
+    }
+
+    /// Capability getter of Delegator mode
+    ///
+    pub struct DelegatorCapabilityGetter: DelegatorCapabilityGetterPublic, DelegatorCapabilityGetterPrivate, AccountCapabilityOwner {
+        pub let manager: Address
+        pub let address: Address
+
+        init(_ manager: Address, _ address: Address) {
+            self.manager = manager
+            self.address = address
+        }
+
+        pub fun getPublicCapability(type: Type): Capability? {
+            let acctPriv = self.borrowOwnerChildAccount()
+            return acctPriv.getPublicCapFromDelegator(type: type)
+
+        }
+        pub fun getCapability(type: Type): Capability? {
+            let acctPriv = self.borrowOwnerChildAccount()
+            return acctPriv.getPrivateCapFromDelegator(type: type) ?? acctPriv.getPublicCapFromDelegator(type: type)
+        }
+    }
+
     /// The ChildAccount resource sits between a child account and a parent and is stored on the same account as the
     /// child account. Once created, a private capability to the child account is shared with the intended parent. The
     /// parent account will accept this child capability into its own manager resource and use it to interact with the
     /// child account.
-    /// 
+    ///
     /// Because the ChildAccount resource exists on the child account itself, whoever owns the child account will be
     /// able to manage all ChildAccount resources it shares, without worrying about whether the upstream parent can do
     /// anything to prevent it.
-    /// 
+    ///
     pub resource ChildAccount: AccountPrivate, AccountPublic, MetadataViews.Resolver {
         /// A Capability providing access to the underlying child account
         access(self) let childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>
@@ -509,7 +597,7 @@ pub contract HybridCustody {
         pub var filter: Capability<&{CapabilityFilter.Filter}>
 
         /// The CapabilityDelegator is a way to share one-off capabilities from the child account. These capabilities
-        /// can be public OR private and are separate from the factory which returns a capability at a given path as a 
+        /// can be public OR private and are separate from the factory which returns a capability at a given path as a
         /// certain type. When using the CapabilityDelegator, you do not have the ability to specify which path a
         /// capability came from. For instance, Dapper Wallet might choose to expose a Capability to their Full TopShot
         /// collection, but only to the path that the collection exists in.
@@ -526,7 +614,7 @@ pub contract HybridCustody {
         /// A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
         access(self) let resources: @{String: AnyResource}
 
-        /// ChildAccount resources have a 1:1 association with parent accounts, the named parent Address here is the 
+        /// ChildAccount resources have a 1:1 association with parent accounts, the named parent Address here is the
         /// one with a Capability on this resource.
         pub let parent: Address
 
@@ -555,17 +643,43 @@ pub contract HybridCustody {
         pub fun setCapabilityFactory(cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
             self.factory = cap
         }
- 
+
         /// Sets the Filter Capability as the one provided
         ///
         pub fun setCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
         }
 
+        /// Get the ChildAccount self reference
+        ///
+        access(contract) fun getSelfRef(): &AnyResource{AccountPrivate} {
+            return &self as &ChildAccount{AccountPrivate}
+        }
+
+        /// Get the public Factory Capability Getter
+        pub fun getFactoryCapabilityGetterPublic(): FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
+            return FactoryCapabilityGetter(self.parent, self.getAddress())
+        }
+
+        /// Get the Factory Capability Getter
+        pub fun getFactoryCapabilityGetter(): FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
+            return FactoryCapabilityGetter(self.parent, self.getAddress())
+        }
+
+        /// Get the public Delegator Capability Getter
+        pub fun getDelegatorCapabilityGetterPublic(): DelegatorCapabilityGetter{DelegatorCapabilityGetterPublic} {
+            return DelegatorCapabilityGetter(self.parent, self.getAddress())
+        }
+
+        /// Get the Delegator Capability Getter
+        pub fun getDelegatorCapabilityGetter(): DelegatorCapabilityGetter{DelegatorCapabilityGetterPrivate} {
+            return DelegatorCapabilityGetter(self.parent, self.getAddress())
+        }
+
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
         // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to ensure
         // that borrowing is permitted
-        pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
+        access(contract) fun getCapability(path: CapabilityPath, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
 
             let f = self.factory.borrow()!.getFactory(type)
@@ -576,7 +690,7 @@ pub contract HybridCustody {
             let acct = child.borrowAccount()
 
             let cap = f!.getCapability(acct: acct, path: path)
-            
+
             if path.getType() == Type<PrivatePath>() {
                 assert(self.filter.borrow()!.allowed(cap: cap), message: "requested capability is not allowed")
             }
@@ -586,7 +700,7 @@ pub contract HybridCustody {
 
         /// Retrieves a private Capability from the Delegator or nil none is found of the given type
         ///
-        pub fun getPrivateCapFromDelegator(type: Type): Capability? {
+        access(contract) fun getPrivateCapFromDelegator(type: Type): Capability? {
             if let p = self.delegator.borrow() {
                 return p.getPrivateCapability(type)
             }
@@ -596,7 +710,7 @@ pub contract HybridCustody {
 
         /// Retrieves a public Capability from the Delegator or nil none is found of the given type
         ///
-        pub fun getPublicCapFromDelegator(type: Type): Capability? {
+        access(contract) fun getPublicCapFromDelegator(type: Type): Capability? {
             if let p = self.delegator.borrow() {
                 return p.getPublicCapability(type)
             }
@@ -605,7 +719,7 @@ pub contract HybridCustody {
 
         /// Enables retrieval of public Capabilities of the given type from the specified path or nil if none is found
         ///
-        pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
+        access(contract) fun getPublicCapability(path: PublicPath, type: Type): Capability? {
             return self.getCapability(path: path, type: type)
         }
 
@@ -647,7 +761,7 @@ pub contract HybridCustody {
             switch view {
                 case Type<MetadataViews.Display>():
                     let childAddress = self.getAddress()
-                    let manager = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
+                    let manager: Capability<&HybridCustody.Manager{HybridCustody.ManagerPublic}> = getAccount(self.parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
 
                     if !manager.check() {
                         return nil
@@ -705,10 +819,10 @@ pub contract HybridCustody {
         }
     }
 
-    /// A resource which sits on the account it manages to make it easier for apps to configure the behavior they want 
+    /// A resource which sits on the account it manages to make it easier for apps to configure the behavior they want
     /// to permit. An OwnedAccount can be used to create ChildAccount resources and share them, publishing them to
     /// other addresses.
-    /// 
+    ///
     /// The OwnedAccount can also be used to pass ownership of an account off to another address, or to relinquish
     /// ownership entirely, marking the account as owned by no one. Note that even if there isn't an owner, the parent
     /// accounts would still exist, allowing a form of Hybrid Custody which has no true owner over an account, but
@@ -760,7 +874,7 @@ pub contract HybridCustody {
 
         /// A helper method to make it easier to manage what parents an account has configured. The steps to sharing this
         /// OwnedAccount with a new parent are:
-        /// 
+        ///
         /// 1. Create a new CapabilityDelegator for the ChildAccount resource being created. We make a new one here because
         ///    CapabilityDelegator types are meant to be shared explicitly. Making one shared base-line of capabilities might
         ///    introduce unforseen behavior where an app accidentally shared something to all accounts when it only meant
@@ -825,7 +939,7 @@ pub contract HybridCustody {
 
             acct.save(<-childAcct, to: childAccountStorage)
             acct.link<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath, target: childAccountStorage)
-            
+
             let delegatorCap = acct.getCapability<&ChildAccount{AccountPrivate, AccountPublic, MetadataViews.Resolver}>(childAccountPrivatePath)
             assert(delegatorCap.check(), message: "Delegator capability check failed")
 
@@ -881,7 +995,7 @@ pub contract HybridCustody {
             return self.parents
         }
 
-        /// Unlinks all paths configured when publishing an account, and destroy's the @ChildAccount resource 
+        /// Unlinks all paths configured when publishing an account, and destroy's the @ChildAccount resource
         /// configured for the provided parent address. Once done, the parent will not have any valid capabilities with
         /// which to access the child account.
         ///
@@ -947,7 +1061,7 @@ pub contract HybridCustody {
         ///
         pub fun giveOwnership(to: Address) {
             self.seal()
-            
+
             let acct = self.borrowAccount()
             // Unlink existing owner's Capability if owner exists
             if self.acctOwner != nil {
@@ -982,7 +1096,7 @@ pub contract HybridCustody {
             })
         }
 
-        /// Cancels all existing AuthAccount capabilities, and creates a new one. The newly created capability will 
+        /// Cancels all existing AuthAccount capabilities, and creates a new one. The newly created capability will
         /// then be used by the child account for accessing its AuthAccount going forward.
         ///
         /// This is used when altering ownership of an account, and can also be used as a safeguard for anyone who
@@ -1027,7 +1141,7 @@ pub contract HybridCustody {
         ///
         pub fun seal() {
             self.rotateAuthAccount()
-            self.revokeAllKeys() // There needs to be a path to giving ownership that doesn't revoke keys   
+            self.revokeAllKeys() // There needs to be a path to giving ownership that doesn't revoke keys
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
             self.currentlyOwned = false
         }
