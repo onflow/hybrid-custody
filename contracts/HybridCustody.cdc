@@ -193,14 +193,14 @@ pub contract HybridCustody {
 
     /// Public methods for factory capability getter, anyone can call on a ChildAccount
     ///
-    pub struct interface FactoryCapabilityGetterPublic {
+    pub resource interface FactoryCapabilityGetterPublic {
         /// Returns a public capability for the given path and type for `factory`, if one exists
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
     }
 
     /// Private methods for factory capability getter, only the parent of a ChildAccount can call
     ///
-    pub struct interface FactoryCapabilityGetterPrivate {
+    pub resource interface FactoryCapabilityGetterPrivate {
         /// Returns a public capability for the given path and type for `factory`, if one exists
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         /// Returns a private capability for the given path and type for `factory`, if one exists
@@ -210,13 +210,13 @@ pub contract HybridCustody {
 
     /// Public methods for delegator capability getter, anyone can call on a ChildAccount
     ///
-    pub struct interface DelegatorCapabilityGetterPublic {
+    pub resource interface DelegatorCapabilityGetterPublic {
         /// Returns a public capability for the given type for `delegator`, if one exists
         pub fun getPublicCapability(type: Type): Capability?
     }
 
     /// Private methods for delegator capability getter, only the parent of a ChildAccount can call
-    pub struct interface DelegatorCapabilityGetterPrivate {
+    pub resource interface DelegatorCapabilityGetterPrivate {
         /// Returns a public capability for the given type for `delegator`, if one exists
         pub fun getPublicCapability(type: Type): Capability?
         /// Returns a private/public capability for the given type for `delegator`, if one exists
@@ -225,7 +225,7 @@ pub contract HybridCustody {
 
     /// General struct interface for the CapabiltyGetter, which is used to retrieve the reference to the
     /// ChildAcountPrivate resource interface
-    pub struct interface AccountCapabiltyGetter {
+    pub resource interface AccountCapabiltyGetter {
         pub let manager: Address
         pub let address: Address
 
@@ -248,12 +248,12 @@ pub contract HybridCustody {
         /// Returns the public interface of FactoryCapabilityGetter
         /// The FactoryCapabilityGetter interface is used to retrieve public capabilities from the `factory`
         /// Note: This is a public method, so it can be called by anyone
-        pub fun getFactoryCapabilityGetterPublic(): AnyStruct{FactoryCapabilityGetterPublic}
+        pub fun getFactoryCapabilityGetterPublic(): &AnyResource{FactoryCapabilityGetterPublic}
 
         /// Returns the public interface of DelegatorCapabilityGetter
         /// The DelegatorCapabilityGetter interface is used to retrieve public capabilities from the `delegator`
         /// Note: This is a public method, so it can be called by anyone
-        pub fun getDelegatorCapabilityGetterPublic(): AnyStruct{DelegatorCapabilityGetterPublic}
+        pub fun getDelegatorCapabilityGetterPublic(): &AnyResource{DelegatorCapabilityGetterPublic}
 
         pub fun getAddress(): Address
 
@@ -265,11 +265,11 @@ pub contract HybridCustody {
     pub resource interface AccountPrivate {
         /// Returns the private interface of FactoryCapabilityGetter
         /// The FactoryCapabilityGetter interface is used to retrieve private capabilities from the `factory`
-        pub fun getFactoryCapabilityGetter(): AnyStruct{FactoryCapabilityGetterPublic}
+        pub fun getFactoryCapabilityGetter(): &AnyResource{FactoryCapabilityGetterPrivate}
 
         /// Returns the public interface of DelegatorCapabilityGetter
         /// The DelegatorCapabilityGetter interface is used to retrieve public capabilities from the `delegator`
-        pub fun getDelegatorCapabilityGetter(): AnyStruct{DelegatorCapabilityGetterPrivate}
+        pub fun getDelegatorCapabilityGetter(): &AnyResource{DelegatorCapabilityGetterPrivate}
 
         /// Returns the capability filter for this account which set by manager, if one exists
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
@@ -563,7 +563,7 @@ pub contract HybridCustody {
 
     /// Capability getter of Factory mode
     ///
-    pub struct FactoryCapabilityGetter: FactoryCapabilityGetterPublic, FactoryCapabilityGetterPrivate, AccountCapabiltyGetter {
+    pub resource FactoryCapabilityGetter: FactoryCapabilityGetterPublic, FactoryCapabilityGetterPrivate, AccountCapabiltyGetter {
         pub let manager: Address
         pub let address: Address
 
@@ -585,7 +585,7 @@ pub contract HybridCustody {
 
     /// Capability getter of Delegator mode
     ///
-    pub struct DelegatorCapabilityGetter: DelegatorCapabilityGetterPublic, DelegatorCapabilityGetterPrivate, AccountCapabiltyGetter {
+    pub resource DelegatorCapabilityGetter: DelegatorCapabilityGetterPublic, DelegatorCapabilityGetterPrivate, AccountCapabiltyGetter {
         pub let manager: Address
         pub let address: Address
 
@@ -691,26 +691,50 @@ pub contract HybridCustody {
 
         /// Get the public Factory Capability Getter
         ///
-        pub fun getFactoryCapabilityGetterPublic(): FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
-            return FactoryCapabilityGetter(self.parent, self.getAddress())
+        pub fun getFactoryCapabilityGetterPublic(): &FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
+            return self.fetchOrCreateFactoryCapabilityGetter()
         }
 
         /// Get the Factory Capability Getter
         ///
-        pub fun getFactoryCapabilityGetter(): FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
-            return FactoryCapabilityGetter(self.parent, self.getAddress())
+        pub fun getFactoryCapabilityGetter(): &FactoryCapabilityGetter{FactoryCapabilityGetterPrivate} {
+            return self.fetchOrCreateFactoryCapabilityGetter()
         }
 
         /// Get the public Delegator Capability Getter
         ///
-        pub fun getDelegatorCapabilityGetterPublic(): DelegatorCapabilityGetter{DelegatorCapabilityGetterPublic} {
-            return DelegatorCapabilityGetter(self.parent, self.getAddress())
+        pub fun getDelegatorCapabilityGetterPublic(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPublic} {
+            return self.fetchOrCreateDelegatorCapabilityGetter()
         }
 
         /// Get the Delegator Capability Getter
         ///
-        pub fun getDelegatorCapabilityGetter(): DelegatorCapabilityGetter{DelegatorCapabilityGetterPrivate} {
-            return DelegatorCapabilityGetter(self.parent, self.getAddress())
+        pub fun getDelegatorCapabilityGetter(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPrivate} {
+            return self.fetchOrCreateDelegatorCapabilityGetter()
+        }
+
+        /// Fetch or create the Factory Capability Getter resource internally
+        ///
+        access(self) fun fetchOrCreateFactoryCapabilityGetter(): &FactoryCapabilityGetter {
+            let factoryCapGetterIdentifier = "_internalFactoryCapGetterIdentifier"
+            if !self.resources.containsKey(factoryCapGetterIdentifier) {
+                self.resources[factoryCapGetterIdentifier] <-! create FactoryCapabilityGetter(self.parent, self.getAddress())
+            }
+            let res = (&self.resources[factoryCapGetterIdentifier] as auth &AnyResource?)
+                ?? panic("Could not get FactoryCapabilityGetter")
+            return res as! &FactoryCapabilityGetter
+        }
+
+        /// Fetch or create the Delegator Capability Getter resource internally
+        ///
+        access(self) fun fetchOrCreateDelegatorCapabilityGetter(): &DelegatorCapabilityGetter {
+            let delegatorCapGetterIdentifier = "_internalDelegatorCapGetterIdentifier"
+            if !self.resources.containsKey(delegatorCapGetterIdentifier) {
+                self.resources[delegatorCapGetterIdentifier] <-! create DelegatorCapabilityGetter(self.parent, self.getAddress())
+            }
+            let res = (&self.resources[delegatorCapGetterIdentifier] as auth &AnyResource?)
+                ?? panic("Could not get DelegatorCapabilityGetter")
+            return res as! &DelegatorCapabilityGetter
         }
 
         // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
