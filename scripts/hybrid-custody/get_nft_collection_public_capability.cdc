@@ -14,7 +14,8 @@ pub fun main(parent: Address, child: Address) {
 
     let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-    let nakedCap = childAcct.getCapability(path: d.providerPath, type: Type<&{NonFungibleToken.CollectionPublic}>())
+    let factoryGetter = childAcct.borrowFactoryCapabilityGetter()
+    let nakedCap = factoryGetter.getCapability(path: d.providerPath, type: Type<&{NonFungibleToken.CollectionPublic}>())
         ?? panic("capability not found")
 
     let cap = nakedCap as! Capability<&{NonFungibleToken.CollectionPublic}>

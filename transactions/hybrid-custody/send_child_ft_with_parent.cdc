@@ -14,12 +14,13 @@ transaction(amount: UFix64, to: Address, child: Address) {
         let m = signer.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager does not exist")
         let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
-        
+
         //get Ft cap from child account
-        let cap = childAcct.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>()) ?? panic("no cap found")
+        let factoryGetter = childAcct.borrowFactoryCapabilityGetter()
+        let cap = factoryGetter.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>()) ?? panic("no cap found")
         let providerCap = cap as! Capability<&{FungibleToken.Provider}>
         assert(providerCap.check(), message: "invalid provider capability")
-        
+
         // Get a reference to the child's stored vault
         let vaultRef = providerCap.borrow()!
 
@@ -41,4 +42,3 @@ transaction(amount: UFix64, to: Address, child: Address) {
         receiverRef.deposit(from: <-self.paymentVault)
     }
 }
- 

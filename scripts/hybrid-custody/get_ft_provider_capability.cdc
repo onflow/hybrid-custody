@@ -10,7 +10,8 @@ pub fun main(parent: Address, child: Address) {
         ?? panic("manager does not exist")
 
     let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
-    let nakedCap = childAcct.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>())
+    let factoryGetter = childAcct.borrowFactoryCapabilityGetter()
+    let nakedCap = factoryGetter.getCapability(path: /private/exampleTokenProvider, type: Type<&{FungibleToken.Provider}>())
 				?? panic("Could not borrow reference to the owner's Vault!")
     let providerCap = nakedCap as! Capability<&{FungibleToken.Provider}>
     assert(providerCap.check(), message: "invalid provider capability")

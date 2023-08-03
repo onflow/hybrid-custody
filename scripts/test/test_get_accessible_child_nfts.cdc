@@ -2,7 +2,7 @@ import "HybridCustody"
 import "NonFungibleToken"
 import "MetadataViews"
 
-/* 
+/*
  * TEST SCRIPT
  * This script is a replication of that found in hybrid-custody/get_accessible_child_account_nfts.cdc as it's the best as
  * as can be done without accessing the script's return type in the Cadence testing framework
@@ -25,8 +25,8 @@ pub fun assertPassing(result: {Address: {UInt64: MetadataViews.Display}}, expect
 pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
   let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
 
-  var typeIdsWithProvider = {} as {Address: [String]} 
-  var nftViews = {} as {Address: {UInt64: MetadataViews.Display}} 
+  var typeIdsWithProvider = {} as {Address: [String]}
+  var nftViews = {} as {Address: {UInt64: MetadataViews.Display}}
 
   let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
   let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
@@ -36,6 +36,7 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
     let foundTypes: [String] = []
     let views: {UInt64: MetadataViews.Display} = {}
     let childAcct = manager.borrowAccount(addr: address) ?? panic("child account not found")
+    let factoryGetter = childAcct.borrowFactoryCapabilityGetter()
     // get all private paths
     acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
       // Check which private paths have NFT Provider AND can be borrowed
@@ -43,8 +44,8 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
         return true
       }
 
-      if let cap: Capability = childAcct.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
-        let providerCap = cap as! Capability<&{NonFungibleToken.Provider}> 
+      if let cap: Capability = factoryGetter.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
+        let providerCap = cap as! Capability<&{NonFungibleToken.Provider}>
 
         if !providerCap.check(){
           return true
@@ -73,7 +74,7 @@ pub fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
             if type.isInstance(collectionType) {
               continue
             }
-            if let collection = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: path) { 
+            if let collection = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: path) {
               // Iterate over IDs & resolve the view
               for id in collection.getIDs() {
                 let nft = collection.borrowNFT(id: id)

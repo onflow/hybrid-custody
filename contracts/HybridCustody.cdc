@@ -248,12 +248,12 @@ pub contract HybridCustody {
         /// Returns the public interface of FactoryCapabilityGetter
         /// The FactoryCapabilityGetter interface is used to retrieve public capabilities from the `factory`
         /// Note: This is a public method, so it can be called by anyone
-        pub fun getFactoryCapabilityGetterPublic(): &AnyResource{FactoryCapabilityGetterPublic}
+        pub fun borrowFactoryCapabilityGetterPublic(): &AnyResource{FactoryCapabilityGetterPublic}
 
         /// Returns the public interface of DelegatorCapabilityGetter
         /// The DelegatorCapabilityGetter interface is used to retrieve public capabilities from the `delegator`
         /// Note: This is a public method, so it can be called by anyone
-        pub fun getDelegatorCapabilityGetterPublic(): &AnyResource{DelegatorCapabilityGetterPublic}
+        pub fun borrowDelegatorCapabilityGetterPublic(): &AnyResource{DelegatorCapabilityGetterPublic}
 
         pub fun getAddress(): Address
 
@@ -265,11 +265,11 @@ pub contract HybridCustody {
     pub resource interface AccountPrivate {
         /// Returns the private interface of FactoryCapabilityGetter
         /// The FactoryCapabilityGetter interface is used to retrieve private capabilities from the `factory`
-        pub fun getFactoryCapabilityGetter(): &AnyResource{FactoryCapabilityGetterPrivate}
+        pub fun borrowFactoryCapabilityGetter(): &AnyResource{FactoryCapabilityGetterPrivate}
 
         /// Returns the public interface of DelegatorCapabilityGetter
         /// The DelegatorCapabilityGetter interface is used to retrieve public capabilities from the `delegator`
-        pub fun getDelegatorCapabilityGetter(): &AnyResource{DelegatorCapabilityGetterPrivate}
+        pub fun borrowDelegatorCapabilityGetter(): &AnyResource{DelegatorCapabilityGetterPrivate}
 
         /// Returns the capability filter for this account which set by manager, if one exists
         pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
@@ -700,25 +700,25 @@ pub contract HybridCustody {
 
         /// Get the public Factory Capability Getter
         ///
-        pub fun getFactoryCapabilityGetterPublic(): &FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
+        pub fun borrowFactoryCapabilityGetterPublic(): &FactoryCapabilityGetter{FactoryCapabilityGetterPublic} {
             return self.fetchOrCreateFactoryCapabilityGetter()
         }
 
         /// Get the Factory Capability Getter
         ///
-        pub fun getFactoryCapabilityGetter(): &FactoryCapabilityGetter{FactoryCapabilityGetterPrivate} {
+        pub fun borrowFactoryCapabilityGetter(): &FactoryCapabilityGetter{FactoryCapabilityGetterPrivate} {
             return self.fetchOrCreateFactoryCapabilityGetter()
         }
 
         /// Get the public Delegator Capability Getter
         ///
-        pub fun getDelegatorCapabilityGetterPublic(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPublic} {
+        pub fun borrowDelegatorCapabilityGetterPublic(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPublic} {
             return self.fetchOrCreateDelegatorCapabilityGetter()
         }
 
         /// Get the Delegator Capability Getter
         ///
-        pub fun getDelegatorCapabilityGetter(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPrivate} {
+        pub fun borrowDelegatorCapabilityGetter(): &DelegatorCapabilityGetter{DelegatorCapabilityGetterPrivate} {
             return self.fetchOrCreateDelegatorCapabilityGetter()
         }
 
