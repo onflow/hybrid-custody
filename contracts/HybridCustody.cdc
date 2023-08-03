@@ -226,8 +226,8 @@ pub contract HybridCustody {
     /// General struct interface for the CapabiltyGetter, which is used to retrieve the reference to the
     /// ChildAcountPrivate resource interface
     pub resource interface AccountCapabiltyGetter {
-        pub let manager: Address
-        pub let address: Address
+        access(contract) let manager: Address
+        access(contract) let address: Address
 
         /// The default implementation of this function, will return the ChildAccountPrivate resource interface
         /// Note: This is a private method, so it can only be called by the methods in this file
@@ -564,19 +564,24 @@ pub contract HybridCustody {
     /// Capability getter of Factory mode
     ///
     pub resource FactoryCapabilityGetter: FactoryCapabilityGetterPublic, FactoryCapabilityGetterPrivate, AccountCapabiltyGetter {
-        pub let manager: Address
-        pub let address: Address
+        access(contract) let manager: Address
+        access(contract) let address: Address
 
         init(_ manager: Address, _ address: Address) {
             self.manager = manager
             self.address = address
         }
 
+        /// Returns a public capability for the given path and type for `factory`, if one exists
+        ///
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
             let acctPriv = self.borrowOwnerChildAccount()
             return acctPriv.getPublicCapability(path: path, type: type)
         }
 
+        /// Returns a private capability for the given path and type for `factory`, if one exists
+        /// Note(by Bohao): But I think it won't work in the new CapCons mode.
+        ///
         pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
             let acctPriv = self.borrowOwnerChildAccount()
             return acctPriv.getCapability(path: path, type: type)
@@ -586,19 +591,23 @@ pub contract HybridCustody {
     /// Capability getter of Delegator mode
     ///
     pub resource DelegatorCapabilityGetter: DelegatorCapabilityGetterPublic, DelegatorCapabilityGetterPrivate, AccountCapabiltyGetter {
-        pub let manager: Address
-        pub let address: Address
+        access(contract) let manager: Address
+        access(contract) let address: Address
 
         init(_ manager: Address, _ address: Address) {
             self.manager = manager
             self.address = address
         }
 
+        /// Returns a public capability for the given type for `delegator`, if one exists
+        ///
         pub fun getPublicCapability(type: Type): Capability? {
             let acctPriv = self.borrowOwnerChildAccount()
             return acctPriv.getPublicCapFromDelegator(type: type)
-
         }
+
+        /// Returns a private/public capability for the given type for `delegator`, if one exists
+        ///
         pub fun getCapability(type: Type): Capability? {
             let acctPriv = self.borrowOwnerChildAccount()
             return acctPriv.getPrivateCapFromDelegator(type: type) ?? acctPriv.getPublicCapFromDelegator(type: type)
