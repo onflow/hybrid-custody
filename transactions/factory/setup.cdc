@@ -16,7 +16,7 @@ transaction {
             acct.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PrivatePath).check() {
+        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
             acct.unlink(CapabilityFactory.PublicPath)
             acct.link<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath, target: CapabilityFactory.StoragePath)
         }
@@ -37,4 +37,3 @@ transaction {
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
     }
 }
- 
