@@ -41,12 +41,12 @@ access(all) fun withoutPrefix(_ input: String): String{
 /// Creates a CapabilityFactory Manager and CapabilityFilter.AllowlistFilter in the signing account (if needed), adding
 /// NFTCollectionPublicFactory, NFTProviderAndCollectionFactory, & NFTProviderFactory to the CapabilityFactory Manager
 /// and the Collection Type to the CapabilityFilter.AllowlistFilter
-/// 
+///
 /// For more info, see docs at https://developers.onflow.org/docs/hybrid-custody/
 ////
 transaction(nftContractAddress: Address, nftContractName: String) {
     prepare(acct: AuthAccount) {
-        
+
         /* --- CapabilityFactory Manager configuration --- */
         //
         if acct.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
@@ -54,7 +54,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
             acct.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PrivatePath).check() {
+        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
             acct.unlink(CapabilityFactory.PublicPath)
             acct.link<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath, target: CapabilityFactory.StoragePath)
         }
