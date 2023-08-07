@@ -429,6 +429,14 @@ pub contract HybridCustody {
             // Don't emit an event if nothing was removed
         }
 
+        /// Removes the owned Capabilty on the specified account, relinquishing access to the account and publishes a
+        /// Capability for the specified account. See `OwnedAccount.giveOwnership()` for more details on this method.
+        /// 
+        /// **NOTE:** The existence of this method does not imply that it is the only way to receive access to a
+        /// OwnedAccount Capability or that only the labeled `to` account has said access. Rather, this is a convenient
+        /// mechanism intended to easily transfer 'root' access on this account to another account and an attempt to
+        /// minimize access vectors.
+        ///
         pub fun giveOwnership(addr: Address, to: Address) {
             let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
@@ -562,9 +570,13 @@ pub contract HybridCustody {
             self.filter = cap
         }
 
-        // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
-        // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to ensure
-        // that borrowing is permitted
+        /// The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
+        /// the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to
+        /// ensure that borrowing is permitted.
+        /// Also know that this method retrieves Capabilities via the CapabilityFactory path. To retrieve arbitrary 
+        /// Capabilities, see `getPrivateCapFromDelegator()` and `getPublicCapFromDelegator()` which use the
+        /// `Delegator` retrieval path.
+        ///
         pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
 
@@ -584,26 +596,29 @@ pub contract HybridCustody {
             return cap
         }
 
-        /// Retrieves a private Capability from the Delegator or nil none is found of the given type
+        /// Retrieves a private Capability from the Delegator or nil none is found of the given type. Useful for
+        /// arbitrary Capability retrieval
         ///
         pub fun getPrivateCapFromDelegator(type: Type): Capability? {
-            if let p = self.delegator.borrow() {
-                return p.getPrivateCapability(type)
+            if let d = self.delegator.borrow() {
+                return d.getPrivateCapability(type)
             }
 
             return nil
         }
 
-        /// Retrieves a public Capability from the Delegator or nil none is found of the given type
+        /// Retrieves a public Capability from the Delegator or nil none is found of the given type. Useful for
+        /// arbitrary Capability retrieval
         ///
         pub fun getPublicCapFromDelegator(type: Type): Capability? {
-            if let p = self.delegator.borrow() {
-                return p.getPublicCapability(type)
+            if let d = self.delegator.borrow() {
+                return d.getPublicCapability(type)
             }
             return nil
         }
 
-        /// Enables retrieval of public Capabilities of the given type from the specified path or nil if none is found
+        /// Enables retrieval of public Capabilities of the given type from the specified path or nil if none is found.
+        /// Callers should be aware this method uses the `CapabilityFactory` retrieval path.
         ///
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability? {
             return self.getCapability(path: path, type: type)
@@ -624,7 +639,7 @@ pub contract HybridCustody {
             }
         }
 
-        /// Returns a reference to the stored delegator
+        /// Returns a reference to the stored delegator, generally used for arbitrary Capability retrieval
         ///
         pub fun borrowCapabilityDelegator(): &CapabilityDelegator.Delegator? {
             let path = HybridCustody.getCapabilityDelegatorIdentifier(self.parent)
@@ -660,6 +675,7 @@ pub contract HybridCustody {
 
         /// Callback to enable parent-initiated removal all the child account and its associated resources &
         /// Capabilities
+        ///
         access(contract) fun parentRemoveChildCallback(parent: Address) {
             if !self.childCap.check() {
                 return
@@ -970,6 +986,8 @@ pub contract HybridCustody {
             emit OwnershipGranted(ownedAcctID: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), pendingOwner: to)
         }
 
+        /// Revokes all keys on the underlying account
+        ///
         pub fun revokeAllKeys() {
             let acct = self.borrowAccount()
 
