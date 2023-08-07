@@ -11,7 +11,14 @@ import "CapabilityDelegator"
 /// using CapabilityFactory.Manager and CapabilityFilter.Filter Capabilities from the given addresses. A
 /// Capability on the ChildAccount is then published to the specified parent account. 
 ///
-transaction(parent: Address, factoryAddress: Address, filterAddress: Address) {
+transaction(
+        parent: Address,
+        factoryAddress: Address,
+        filterAddress: Address,
+        name: String?,
+        desc: String?,
+        thumbnailURL: String?
+    ) {
     
     prepare(acct: AuthAccount) {
         // Configure OwnedAccount if it doesn't exist
@@ -33,6 +40,13 @@ transaction(parent: Address, factoryAddress: Address, filterAddress: Address) {
 
         let owned = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
+        
+        // Set the display metadata for the OwnedAccount
+        if name != nil && desc != nil && thumbnailURL != nil {
+            let thumbnail = MetadataViews.HTTPFile(url: thumbnailURL!)
+            let display = MetadataViews.Display(name: name!, description: desc!, thumbnail: thumbnail!)
+            owned.setDisplay(display)
+        }
 
         // Get CapabilityFactory & CapabilityFilter Capabilities
         let factory = getAccount(factoryAddress).getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
