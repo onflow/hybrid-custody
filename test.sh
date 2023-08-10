@@ -2,4 +2,4 @@
 
 set -e
 
-flow test --cover ./test/*_tests.cdc
+flow test --cover --coverprofile="coverage.lcov" ./test/*_tests.cdc
