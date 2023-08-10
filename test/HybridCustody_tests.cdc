@@ -331,6 +331,57 @@ pub fun testGetCapability_ManagerFilterAllowed() {
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
 }
 
+pub fun testAllowlistFilterRemoveAllTypes() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindAllowList)
+    setupFilter(filter, FilterKindAllowList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    removeAllFilterTypes(filter, FilterKindAllowList)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+}
+
+pub fun testDenyListFilterRemoveAllTypes() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindDenyList)
+    setupFilter(filter, FilterKindDenyList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+
+
+    removeAllFilterTypes(filter, FilterKindDenyList)
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+}
+
 pub fun testGetCapability_ManagerFilterNotAllowed() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -912,6 +963,22 @@ pub fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: Stri
     }
 
     txExecutor(filePath, [acct], [identifier], nil, nil)
+}
+
+pub fun removeAllFilterTypes(_ acct: Test.Account, _ kind: String) {
+    var filePath = ""
+    switch kind {
+        case FilterKindAllowList:
+            filePath = "filter/allow/remove_all_types.cdc"
+            break
+        case FilterKindDenyList:
+            filePath = "filter/deny/remove_all_types.cdc"
+            break
+        default:
+            assert(false, message: "unknown filter kind given")
+    }
+
+    txExecutor(filePath, [acct], [], nil, nil)
 }
 
 pub fun addNFTCollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
