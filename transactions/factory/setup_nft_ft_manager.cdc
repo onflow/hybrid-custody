@@ -1,3 +1,6 @@
+import "NonFungibleToken"
+import "FungibleToken"
+
 import "CapabilityFactory"
 import "NFTCollectionPublicFactory"
 import "NFTProviderAndCollectionFactory"
@@ -6,9 +9,6 @@ import "FTProviderFactory"
 import "FTBalanceFactory"
 import "FTReceiverFactory"
 import "FTAllFactory"
-
-import "NonFungibleToken"
-import "FungibleToken"
 
 transaction {
     prepare(acct: AuthAccount) {
