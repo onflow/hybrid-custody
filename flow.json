@@ -76,7 +76,9 @@
 		"FTReceiverBalanceFactory": {
 			"source": "./contracts/factories/FTReceiverBalanceFactory.cdc",
 			"aliases": {
-				"emulator": "f8d6e0586b0a20c7"
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "294e44e1ec6993c6",
+				"mainnet": "d8a7e05a7ac670c0"
 			}
 		},
 		"FTReceiverFactory": {
