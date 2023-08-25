@@ -12,7 +12,7 @@ pub fun main(addr: Address, parent: Address): Bool {
     let filter = acctPublic.getCapabilityFactory()
     assert(filter.check(), message: "capability filter is not valid")
 
-    let factory = acctPublic.getCapabilityFactory()
+    let factory = acctPublic.getCapabilityFilter()
     assert(factory.check(), message: "capability factory is not valid")
 
     return true
