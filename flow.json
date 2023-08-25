@@ -73,6 +73,12 @@
 				"mainnet": "d8a7e05a7ac670c0"
 			}
 		},
+		"FTReceiverBalanceFactory": {
+			"source": "./contracts/factories/FTReceiverBalanceFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7"
+			}
+		},
 		"FTReceiverFactory": {
 			"source": "./contracts/factories/FTReceiverFactory.cdc",
 			"aliases": {
@@ -233,6 +239,7 @@
 				"FTProviderFactory",
 				"FTAllFactory",
 				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
 				"FTReceiverFactory",
 				"NFTProviderFactory",
 				"NFTProviderAndCollectionFactory",
@@ -257,6 +264,7 @@
 				"FTProviderFactory",
 				"FTAllFactory",
 				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
 				"FTReceiverFactory"
 			]
 		},
@@ -272,6 +280,7 @@
 				"FTProviderFactory",
 				"FTAllFactory",
 				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
 				"FTReceiverFactory"
 			]
 		}
