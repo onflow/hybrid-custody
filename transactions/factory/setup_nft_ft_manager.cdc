@@ -7,6 +7,7 @@ import "NFTProviderAndCollectionFactory"
 import "NFTProviderFactory"
 import "FTProviderFactory"
 import "FTBalanceFactory"
+import "FTReceiverBalanceFactory"
 import "FTReceiverFactory"
 import "FTAllFactory"
 
@@ -36,6 +37,7 @@ transaction {
         manager.updateFactory(Type<&{FungibleToken.Provider}>(), FTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Balance}>(), FTBalanceFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
+        manager.updateFactory(Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(), FTReceiverBalanceFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
     }
 }

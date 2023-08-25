@@ -21,7 +21,7 @@ pub fun testGetSupportedTypesFromManager() {
         "factory/get_supported_types_from_manager.cdc",
         [creator.address]
     )! as! [Type]
-    Test.assertEqual(6, supportedTypes.length)
+    Test.assertEqual(8, supportedTypes.length)
 }
 
 pub fun testAddFactoryFails() {
@@ -36,7 +36,7 @@ pub fun testAddFactorySucceeds() {
         "factory/get_supported_types_from_manager.cdc",
         [creator.address]
     )! as! [Type]
-    Test.assertEqual(7, supportedTypes.length)
+    Test.assertEqual(9, supportedTypes.length)
 
     let scriptResult = scriptExecutor(
         "test/get_nft_receiver_factory.cdc",
@@ -77,7 +77,9 @@ pub fun setup() {
         "NFTProviderAndCollectionFactory": adminAccount.address,
         "FTProviderFactory": adminAccount.address,
         "FTBalanceFactory": adminAccount.address,
-        "FTReceiverFactory": adminAccount.address
+        "FTReceiverFactory": adminAccount.address,
+        "FTReceiverBalanceFactory": adminAccount.address,
+        "FTAllFactory": adminAccount.address
     }))
 
     // helper nft contract so we can actually talk to nfts with tests
@@ -91,6 +93,8 @@ pub fun setup() {
     deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", adminAccount, "../contracts/factories/FTBalanceFactory.cdc")
     deploy("FTReceiverFactory", adminAccount, "../contracts/factories/FTReceiverFactory.cdc")
+    deploy("FTReceiverBalanceFactory", adminAccount, "../contracts/factories/FTReceiverBalanceFactory.cdc")
+    deploy("FTAllFactory", adminAccount, "../contracts/factories/FTAllFactory.cdc")
 }
 
 // BEGIN SECTION - transactions used in tests
@@ -112,7 +116,7 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 }
 
 pub fun setupCapabilityFactoryManager(_ acct: Test.Account) {
-    txExecutor("factory/setup.cdc", [acct], [], nil, nil)
+    txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil, nil)
 }
 
 // END SECTION - transactions use in tests
