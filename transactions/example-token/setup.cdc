@@ -13,7 +13,7 @@ transaction {
 
         // Create a public capability to the Vault that only exposes
         // the deposit function through the Receiver interface
-        acct.link<&ExampleToken.Vault{FungibleToken.Receiver}>(
+        acct.link<&ExampleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(
             ExampleToken.ReceiverPublicPath,
             target: ExampleToken.VaultStoragePath
         )
