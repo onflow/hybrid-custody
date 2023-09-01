@@ -3,3 +3,4 @@ coverage.lcov
 .idea
 *.pkey
 *.private
+*.pem
