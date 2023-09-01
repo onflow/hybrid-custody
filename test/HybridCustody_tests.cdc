@@ -842,7 +842,7 @@ pub fun setupOwnedAccount(_ acct: Test.Account, _ filterKind: String) {
 }
 
 pub fun setupFactoryManager(_ acct: Test.Account) {
-    txExecutor("factory/setup.cdc", [acct], [], nil, nil)
+    txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
@@ -1022,7 +1022,9 @@ pub fun setup() {
     accounts["NFTProviderFactory"] = adminAccount
     accounts["FTProviderFactory"] = adminAccount
     accounts["FTBalanceFactory"] = adminAccount
+    accounts["FTReceiverBalanceFactory"] = adminAccount
     accounts["FTReceiverFactory"] = adminAccount
+    accounts["FTAllFactory"] = adminAccount
     accounts["ExampleNFT"] = adminAccount
     accounts["ExampleNFT2"] = adminAccount
     accounts["ExampleToken"] = adminAccount
@@ -1041,7 +1043,9 @@ pub fun setup() {
         "NFTProviderFactory": adminAccount.address,
         "FTProviderFactory": adminAccount.address,
         "FTBalanceFactory": adminAccount.address,
+        "FTReceiverBalanceFactory": adminAccount.address,
         "FTReceiverFactory": adminAccount.address,
+        "FTAllFactory": adminAccount.address,
         "ExampleNFT": adminAccount.address,
         "ExampleNFT2": adminAccount.address,
         "ExampleToken": adminAccount.address
@@ -1061,6 +1065,8 @@ pub fun setup() {
     deploy("NFTProviderFactory", adminAccount, "../contracts/factories/NFTProviderFactory.cdc")
     deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", adminAccount, "../contracts/factories/FTBalanceFactory.cdc")
+    deploy("FTReceiverBalanceFactory", adminAccount, "../contracts/factories/FTReceiverBalanceFactory.cdc")
     deploy("FTReceiverFactory", adminAccount, "../contracts/factories/FTReceiverFactory.cdc")
+    deploy("FTAllFactory", adminAccount, "../contracts/factories/FTAllFactory.cdc")
     deploy("HybridCustody", adminAccount, "../contracts/HybridCustody.cdc")
 }

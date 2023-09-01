@@ -8,10 +8,15 @@ pub let flowtyThumbnail = "https://storage.googleapis.com/flowty-images/flowty-l
 
 // BEGIN SECTION - Test Cases
 
-pub fun testGetProviderCapability() {
+pub fun testGetNFTProviderCapability() {
     setupNFTCollection(creator)
 
     scriptExecutor("factory/get_nft_provider_from_factory.cdc", [creator.address])
+}
+
+pub fun testGetFTReceiverBalanceCapability() {
+    txExecutor("example-token/setup.cdc", [creator], [], nil, nil)
+    scriptExecutor("factory/get_ft_receiver_from_factory.cdc", [creator.address])
 }
 
 pub fun testGetSupportedTypesFromManager() {
@@ -21,7 +26,7 @@ pub fun testGetSupportedTypesFromManager() {
         "factory/get_supported_types_from_manager.cdc",
         [creator.address]
     )! as! [Type]
-    Test.assertEqual(6, supportedTypes.length)
+    Test.assertEqual(8, supportedTypes.length)
 }
 
 pub fun testAddFactoryFails() {
@@ -36,7 +41,7 @@ pub fun testAddFactorySucceeds() {
         "factory/get_supported_types_from_manager.cdc",
         [creator.address]
     )! as! [Type]
-    Test.assertEqual(7, supportedTypes.length)
+    Test.assertEqual(9, supportedTypes.length)
 
     let scriptResult = scriptExecutor(
         "test/get_nft_receiver_factory.cdc",
@@ -66,22 +71,92 @@ pub fun testRemoveNFTProviderFactory() {
     )
 }
 
+pub fun testSetupNFTManager() {
+    let tmp = blockchain.createAccount()
+    txExecutor("factory/setup_nft_manager.cdc", [tmp], [], nil, nil)
+
+    let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
+    Test.assertEqual(3, supportedTypes.length)
+
+    let collectionPublicFactorySuccess = scriptExecutor("test/get_nft_collection_public_factory.cdc", [tmp.address])! as! Bool
+    let providerFactorySuccess = scriptExecutor("test/get_nft_provider_factory.cdc", [tmp.address])! as! Bool
+    let providerCollectionFactorySuccess = scriptExecutor("test/get_nft_provider_collection_factory.cdc", [tmp.address])! as! Bool
+
+    Test.assertEqual(true, collectionPublicFactorySuccess)
+    Test.assertEqual(true, providerFactorySuccess)
+    Test.assertEqual(true, providerCollectionFactorySuccess)
+}
+
+pub fun testSetupFTManager() {
+    let tmp = blockchain.createAccount()
+    txExecutor("factory/setup_ft_manager.cdc", [tmp], [], nil, nil)
+
+    let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
+    Test.assertEqual(5, supportedTypes.length)
+
+    let balanceFactorySuccess = scriptExecutor("test/get_ft_balance_factory.cdc", [tmp.address])! as! Bool
+    let receiverFactorySuccess = scriptExecutor("test/get_ft_receiver_factory.cdc", [tmp.address])! as! Bool
+    let receiverBalanceFactorySuccess = scriptExecutor("test/get_ft_receiver_balance_factory.cdc", [tmp.address])! as! Bool
+    let providerFactorySuccess = scriptExecutor("test/get_ft_provider_factory.cdc", [tmp.address])! as! Bool
+    let allFactorySuccess = scriptExecutor("test/get_ft_all_factory.cdc", [tmp.address])! as! Bool
+
+
+    Test.assertEqual(true, balanceFactorySuccess)
+    Test.assertEqual(true, receiverFactorySuccess)
+    Test.assertEqual(true, receiverBalanceFactorySuccess)
+    Test.assertEqual(true, providerFactorySuccess)
+    Test.assertEqual(true, allFactorySuccess)
+}
+
+pub fun testSetupNFTFTManager() {
+    let tmp = blockchain.createAccount()
+    txExecutor("factory/setup_nft_ft_manager.cdc", [tmp], [], nil, nil)
+
+    let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
+    Test.assertEqual(8, supportedTypes.length)
+
+    let collectionPublicFactorySuccess = scriptExecutor("test/get_nft_collection_public_factory.cdc", [tmp.address])! as! Bool
+    let nftProviderFactorySuccess = scriptExecutor("test/get_nft_provider_factory.cdc", [tmp.address])! as! Bool
+    let providerCollectionFactorySuccess = scriptExecutor("test/get_nft_provider_collection_factory.cdc", [tmp.address])! as! Bool
+
+    Test.assertEqual(true, collectionPublicFactorySuccess)
+    Test.assertEqual(true, nftProviderFactorySuccess)
+    Test.assertEqual(true, providerCollectionFactorySuccess)
+
+    let balanceFactorySuccess = scriptExecutor("test/get_ft_balance_factory.cdc", [tmp.address])! as! Bool
+    let receiverFactorySuccess = scriptExecutor("test/get_ft_receiver_factory.cdc", [tmp.address])! as! Bool
+    let receiverBalanceFactorySuccess = scriptExecutor("test/get_ft_receiver_balance_factory.cdc", [tmp.address])! as! Bool
+    let ftProviderFactorySuccess = scriptExecutor("test/get_ft_provider_factory.cdc", [tmp.address])! as! Bool
+    let allFactorySuccess = scriptExecutor("test/get_ft_all_factory.cdc", [tmp.address])! as! Bool
+
+
+    Test.assertEqual(true, balanceFactorySuccess)
+    Test.assertEqual(true, receiverFactorySuccess)
+    Test.assertEqual(true, receiverBalanceFactorySuccess)
+    Test.assertEqual(true, ftProviderFactorySuccess)
+    Test.assertEqual(true, allFactorySuccess)
+}
+
 // END SECTION - Test Cases
 
 pub fun setup() {
     blockchain.useConfiguration(Test.Configuration({
         "CapabilityFactory": adminAccount.address,
         "ExampleNFT": adminAccount.address,
+        "ExampleToken": adminAccount.address,
         "NFTProviderFactory": adminAccount.address,
         "NFTCollectionPublicFactory": adminAccount.address,
         "NFTProviderAndCollectionFactory": adminAccount.address,
         "FTProviderFactory": adminAccount.address,
         "FTBalanceFactory": adminAccount.address,
-        "FTReceiverFactory": adminAccount.address
+        "FTReceiverFactory": adminAccount.address,
+        "FTReceiverBalanceFactory": adminAccount.address,
+        "FTAllFactory": adminAccount.address
     }))
 
-    // helper nft contract so we can actually talk to nfts with tests
+    // helper nft & ft contract so we can actually talk to nfts & fts with tests
     deploy("ExampleNFT", adminAccount, "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleToken", adminAccount, "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last
     deploy("CapabilityFactory", adminAccount, "../contracts/CapabilityFactory.cdc")
@@ -91,6 +166,8 @@ pub fun setup() {
     deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", adminAccount, "../contracts/factories/FTBalanceFactory.cdc")
     deploy("FTReceiverFactory", adminAccount, "../contracts/factories/FTReceiverFactory.cdc")
+    deploy("FTReceiverBalanceFactory", adminAccount, "../contracts/factories/FTReceiverBalanceFactory.cdc")
+    deploy("FTAllFactory", adminAccount, "../contracts/factories/FTAllFactory.cdc")
 }
 
 // BEGIN SECTION - transactions used in tests
@@ -112,7 +189,7 @@ pub fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 }
 
 pub fun setupCapabilityFactoryManager(_ acct: Test.Account) {
-    txExecutor("factory/setup.cdc", [acct], [], nil, nil)
+    txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil, nil)
 }
 
 // END SECTION - transactions use in tests
