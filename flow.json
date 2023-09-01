@@ -178,6 +178,14 @@
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
 			}
 		},
+		"allow-all-testnet": {
+			"address": "0xe2664be06bb0fe62",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
@@ -210,6 +218,14 @@
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
 			}
 		},
+		"ft-manager-testnet": {
+			"address": "0x08bed9e8508ed20e",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
 		"nft-ft-manager-mainnet": {
 			"address": "071d382668250606",
 			"key": {
@@ -218,12 +234,28 @@
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
 			}
 		},
+		"nft-ft-manager-testnet": {
+			"address": "0x1b7fa5972fcb8af5",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
 		"nft-manager-mainnet": {
 			"address": "ee9ff4f07a2d6dad",
 			"key": {
 				"type": "google-kms",
 				"hashAlgorithm": "SHA2_256",
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"nft-manager-testnet": {
+			"address": "0x1055970ee34ef4dc",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
 			}
 		}
 	},
