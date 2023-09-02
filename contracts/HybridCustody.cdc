@@ -1023,7 +1023,7 @@ pub contract HybridCustody {
             // NOTE: This path cannot be sufficiently randomly generated, an app calling this function could build a
             // capability to this path before it is made, thus maintaining ownership despite making it look like they
             // gave it away. Until capability controllers, this method should not be fully trusted.
-            let authAcctPath = "HybridCustodyRelinquished"
+            let authAcctPath = "HybridCustodyRelinquished_"
                 .concat(HybridCustody.account.address.toString())
                 .concat(getCurrentBlock().height.toString())
                 .concat((pathsToUnlink.length + 1).toString()) // ensure that the path is different from the previous one
