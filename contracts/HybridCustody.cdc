@@ -198,8 +198,8 @@ pub contract HybridCustody {
         pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
         pub fun getPublicCapFromDelegator(type: Type): Capability?
         pub fun getAddress(): Address
-        pub fun getCapabilityFactory(): Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
-        pub fun getCapabilityFilter(): Capability<&{CapabilityFilter.Filter}>
+        pub fun getCapabilityFactoryManager(): &{CapabilityFactory.Getter}?
+        pub fun getCapabilityFilter(): &{CapabilityFilter.Filter}?
     }
 
     /// Methods accessible to the designated parent of a ChildAccount
@@ -720,14 +720,14 @@ pub contract HybridCustody {
 
         /// Returns a capability to this child account's CapabilityFilter
         ///
-        pub fun getCapabilityFilter(): Capability<&{CapabilityFilter.Filter}> {
-            return self.filter
+        pub fun getCapabilityFilter(): &{CapabilityFilter.Filter}? {
+            return self.filter.check() ? self.filter.borrow() : nil
         }
 
         /// Returns a capability to this child account's CapabilityFactory
         ///
-        pub fun getCapabilityFactory(): Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}> {
-            return self.factory
+        pub fun getCapabilityFactoryManager(): &{CapabilityFactory.Getter}? {
+            return self.factory.check() ? self.factory.borrow() : nil
         }
 
         destroy () {

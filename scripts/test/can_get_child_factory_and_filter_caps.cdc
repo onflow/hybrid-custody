@@ -9,11 +9,11 @@ pub fun main(addr: Address, parent: Address): Bool {
     let acctPublic = getAuthAccount(addr).getCapability<&HybridCustody.ChildAccount{HybridCustody.AccountPublic}>(path)
         .borrow() ?? panic("account public not found")
     
-    let filter = acctPublic.getCapabilityFactory()
-    assert(filter.check(), message: "capability filter is not valid")
+    let factory = acctPublic.getCapabilityFactoryManager()
+    assert(factory != nil, message: "capability factory is not valid")
 
-    let factory = acctPublic.getCapabilityFilter()
-    assert(factory.check(), message: "capability factory is not valid")
+    let filter = acctPublic.getCapabilityFilter()
+    assert(filter != nil, message: "capability filter is not valid")
 
     return true
 }
