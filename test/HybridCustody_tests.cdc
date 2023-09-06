@@ -797,6 +797,14 @@ pub fun testRemoveParent() {
     txExecutor("hybrid-custody/remove_parent_from_child.cdc", [child], [parent.address], nil, nil)
 }
 
+pub fun testGetChildAccountCapabilityFilterAndFactory() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    scriptExecutor("test/can_get_child_factory_and_filter_caps.cdc", [child.address, parent.address])
+}
+
 // --------------- End Test Cases ---------------
 
 
