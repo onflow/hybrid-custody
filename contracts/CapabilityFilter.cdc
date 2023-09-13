@@ -54,6 +54,14 @@ pub contract CapabilityFilter {
             }
         }
 
+        /// Removes all types from the mapping of denied types
+        ///
+        pub fun removeAllTypes() {
+            for type in self.deniedTypes.keys {
+                self.removeType(type)
+            }
+        }
+
         /// Determines if a requested capability is allowed by this `Filter`
         ///
         /// @param cap: The capability to check
@@ -110,6 +118,14 @@ pub contract CapabilityFilter {
         pub fun removeType(_ type: Type) {
             if let removed = self.allowedTypes.remove(key: type) {
                 emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            }
+        }
+
+        /// Removes all types from the mapping of denied types
+        ///
+        pub fun removeAllTypes() {
+            for type in self.allowedTypes.keys {
+                self.removeType(type)
             }
         }
         
