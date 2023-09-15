@@ -23,7 +23,7 @@ pub struct FTVaultPaths {
 
 /* --- Helper Methods --- */
 //
-/// Returns a type identifier for an NFT Collection
+/// Returns a type identifier for an FungibleToken Vault
 ///
 access(all) fun deriveVaultTypeIdentifier(_ contractAddress: Address, _ contractName: String): String {
     return "A.".concat(withoutPrefix(contractAddress.toString())).concat(".").concat(contractName).concat(".Vault")
@@ -46,6 +46,8 @@ access(all) fun withoutPrefix(_ input: String): String{
     return address
 }
 
+/* --- Main Script --- */
+//
 /// Returns the paths for a given vault in the specified account address 
 ///
 pub fun main(address: Address, ftAddress: Address, ftName: String): FTVaultPaths? {
