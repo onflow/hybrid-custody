@@ -331,6 +331,57 @@ pub fun testGetCapability_ManagerFilterAllowed() {
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
 }
 
+pub fun testAllowlistFilterRemoveAllTypes() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindAllowList)
+    setupFilter(filter, FilterKindAllowList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    removeAllFilterTypes(filter, FilterKindAllowList)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+}
+
+pub fun testDenyListFilterRemoveAllTypes() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+
+    let filter = getTestAccount(FilterKindDenyList)
+    setupFilter(filter, FilterKindDenyList)
+
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "Collection")
+    addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
+    setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
+
+    let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+
+
+    removeAllFilterTypes(filter, FilterKindDenyList)
+    scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
+}
+
 pub fun testGetCapability_ManagerFilterNotAllowed() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -797,6 +848,14 @@ pub fun testRemoveParent() {
     txExecutor("hybrid-custody/remove_parent_from_child.cdc", [child], [parent.address], nil, nil)
 }
 
+pub fun testGetChildAccountCapabilityFilterAndFactory() {
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    scriptExecutor("test/can_get_child_factory_and_filter_caps.cdc", [child.address, parent.address])
+}
+
 // --------------- End Test Cases ---------------
 
 
@@ -842,7 +901,7 @@ pub fun setupOwnedAccount(_ acct: Test.Account, _ filterKind: String) {
 }
 
 pub fun setupFactoryManager(_ acct: Test.Account) {
-    txExecutor("factory/setup.cdc", [acct], [], nil, nil)
+    txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil, nil)
 }
 
 pub fun setupNFTCollection(_ acct: Test.Account) {
@@ -912,6 +971,22 @@ pub fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: Stri
     }
 
     txExecutor(filePath, [acct], [identifier], nil, nil)
+}
+
+pub fun removeAllFilterTypes(_ acct: Test.Account, _ kind: String) {
+    var filePath = ""
+    switch kind {
+        case FilterKindAllowList:
+            filePath = "filter/allow/remove_all_types.cdc"
+            break
+        case FilterKindDenyList:
+            filePath = "filter/deny/remove_all_types.cdc"
+            break
+        default:
+            assert(false, message: "unknown filter kind given")
+    }
+
+    txExecutor(filePath, [acct], [], nil, nil)
 }
 
 pub fun addNFTCollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
@@ -1022,7 +1097,9 @@ pub fun setup() {
     accounts["NFTProviderFactory"] = adminAccount
     accounts["FTProviderFactory"] = adminAccount
     accounts["FTBalanceFactory"] = adminAccount
+    accounts["FTReceiverBalanceFactory"] = adminAccount
     accounts["FTReceiverFactory"] = adminAccount
+    accounts["FTAllFactory"] = adminAccount
     accounts["ExampleNFT"] = adminAccount
     accounts["ExampleNFT2"] = adminAccount
     accounts["ExampleToken"] = adminAccount
@@ -1041,7 +1118,9 @@ pub fun setup() {
         "NFTProviderFactory": adminAccount.address,
         "FTProviderFactory": adminAccount.address,
         "FTBalanceFactory": adminAccount.address,
+        "FTReceiverBalanceFactory": adminAccount.address,
         "FTReceiverFactory": adminAccount.address,
+        "FTAllFactory": adminAccount.address,
         "ExampleNFT": adminAccount.address,
         "ExampleNFT2": adminAccount.address,
         "ExampleToken": adminAccount.address
@@ -1061,6 +1140,8 @@ pub fun setup() {
     deploy("NFTProviderFactory", adminAccount, "../contracts/factories/NFTProviderFactory.cdc")
     deploy("FTProviderFactory", adminAccount, "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", adminAccount, "../contracts/factories/FTBalanceFactory.cdc")
+    deploy("FTReceiverBalanceFactory", adminAccount, "../contracts/factories/FTReceiverBalanceFactory.cdc")
     deploy("FTReceiverFactory", adminAccount, "../contracts/factories/FTReceiverFactory.cdc")
+    deploy("FTAllFactory", adminAccount, "../contracts/factories/FTAllFactory.cdc")
     deploy("HybridCustody", adminAccount, "../contracts/HybridCustody.cdc")
 }

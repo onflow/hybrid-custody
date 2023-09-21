@@ -1,13 +1,11 @@
+import "FungibleToken"
+
 import "CapabilityFactory"
-import "NFTCollectionPublicFactory"
-import "NFTProviderAndCollectionFactory"
-import "NFTProviderFactory"
 import "FTProviderFactory"
 import "FTBalanceFactory"
+import "FTReceiverBalanceFactory"
 import "FTReceiverFactory"
-
-import "NonFungibleToken"
-import "FungibleToken"
+import "FTAllFactory"
 
 transaction {
     prepare(acct: AuthAccount) {
@@ -29,11 +27,10 @@ transaction {
         let manager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("manager not found")
 
-        manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Provider}>(), FTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Balance}>(), FTBalanceFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
+        manager.updateFactory(Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(), FTReceiverBalanceFactory.Factory())
+        manager.updateFactory(Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
     }
 }
