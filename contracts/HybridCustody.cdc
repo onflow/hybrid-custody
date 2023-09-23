@@ -1040,7 +1040,7 @@ pub contract HybridCustody {
             let authAcctPath = "HybridCustodyRelinquished_"
                 .concat(HybridCustody.account.address.toString())
                 .concat(getCurrentBlock().height.toString())
-                .concat((pathsToUnlink.length + 1).toString()) // ensure that the path is different from the previous one
+                .concat(unsafeRandom().toString()) // ensure that the path is different from the previous one
             let acctCap = acct.linkAccount(PrivatePath(identifier: authAcctPath)!)!
 
             self.acct = acctCap
