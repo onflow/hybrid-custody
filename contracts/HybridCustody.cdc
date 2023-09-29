@@ -574,7 +574,7 @@ pub contract HybridCustody {
 
         /// The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
         /// the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to
-        /// ensure that borrowing is permitted.
+        /// ensure that borrowing is permitted. If not allowed, nil is returned.
         /// Also know that this method retrieves Capabilities via the CapabilityFactory path. To retrieve arbitrary 
         /// Capabilities, see `getPrivateCapFromDelegator()` and `getPublicCapFromDelegator()` which use the
         /// `Delegator` retrieval path.
@@ -588,11 +588,15 @@ pub contract HybridCustody {
             }
 
             let acct = child.borrowAccount()
-
             let cap = f!.getCapability(acct: acct, path: path)
-            
-            if path.getType() == Type<PrivatePath>() {
-                assert(self.filter.borrow()!.allowed(cap: cap), message: "requested capability is not allowed")
+
+            // Check that private capabilities are allowed by either internal or manager filter (if assigned)
+            // If not allowed, return nil
+            if path.getType() == Type<PrivatePath>() && (
+                self.filter.borrow()!.allowed(cap: cap) == false || 
+                (self.getManagerCapabilityFilter()?.allowed(cap: cap) ?? true) == false
+            ) {
+                return nil
             }
 
             return cap

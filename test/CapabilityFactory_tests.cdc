@@ -206,12 +206,4 @@ pub fun findExampleNFTCollectionType(_ owner: Test.Account) {
     assert(borrowed, message: "failed to borrow delegator")
 }
 
-pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {
-    let scriptCode = loadCode(scriptName, "scripts")
-    let scriptResult = blockchain.executeScript(scriptCode, arguments)
-
-    assert(scriptResult.error != nil, message: "script error was expected but there is no error message")
-    return scriptResult.error!.message
-}
-
 // END SECTION - scripts used in tests
