@@ -179,6 +179,33 @@ pub fun testChildAccount_getCapability() {
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
 }
 
+pub fun testChildAccount_getCapabilityReturnsNil() {
+    let dev = blockchain.createAccount()
+    let child = blockchain.createAccount()
+    let parent = blockchain.createAccount()
+    
+    // Setup NFT Filter & Factory
+    txExecutor("dev-setup/setup_nft_filter_and_factory_manager.cdc", [dev], [accounts[exampleNFT]!.address, exampleNFT], nil, nil)
+    // Setup OwnedAccount in child account
+    txExecutor("hybrid-custody/setup_owned_account.cdc", [child], [nil, nil, nil], nil, nil)
+    // Publish ChildAccount for parent, factory & filter found in previously configured dev accoun
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, dev.address, dev.address], nil, nil)
+    // Redeem ChildAccount as parent
+    txExecutor("hybrid-custody/redeem_account.cdc", [parent], [child.address, nil, nil], nil, nil)
+
+    // Configure NFT Collection in child account
+    setupNFTCollection(child)
+    // ExampleNFT Provider is allowed by Allowlist Filter, so should return valid Capability
+    let returnsValidCap = scriptExecutor("test/get_nft_provider_capability_optional.cdc", [parent.address, child.address, false])! as! Bool
+    Test.assertEqual(true, returnsValidCap)
+    // Remove types from filter
+    removeAllFilterTypes(dev, FilterKindAllowList)
+
+    // ExampleNFT Provider has been removed from Allowlist Filter - getCapability() should return nil
+    let returnsNil = scriptExecutor("test/get_nft_provider_capability_optional.cdc", [parent.address, child.address, true])! as! Bool
+    Test.assertEqual(true, returnsNil)
+}
+
 pub fun testChildAccount_getPublicCapability() {
     let child = blockchain.createAccount()
     let parent = blockchain.createAccount()
@@ -325,7 +352,7 @@ pub fun testGetCapability_ManagerFilterAllowed() {
     setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
 
     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    assert(contains(error, "capability not found"), message: "failed to find expected error message")
 
     addTypeToFilter(filter, FilterKindAllowList, nftIdentifier)
     scriptExecutor("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
@@ -354,7 +381,7 @@ pub fun testAllowlistFilterRemoveAllTypes() {
     removeAllFilterTypes(filter, FilterKindAllowList)
 
     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    assert(contains(error, "capability not found"), message: "failed to find expected error message")
 }
 
 pub fun testDenyListFilterRemoveAllTypes() {
@@ -375,7 +402,7 @@ pub fun testDenyListFilterRemoveAllTypes() {
     setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
 
     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    assert(contains(error, "capability not found"), message: "failed to find expected error message")
 
 
     removeAllFilterTypes(filter, FilterKindDenyList)
@@ -400,7 +427,7 @@ pub fun testGetCapability_ManagerFilterNotAllowed() {
     setManagerFilterOnChild(child: child, parent: parent, filterAddress: filter.address)
 
     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    assert(contains(error, "capability not found"), message: "failed to find expected error message")
 }
 
 pub fun testGetPrivateCapabilityFromDelegator() {
@@ -813,7 +840,7 @@ pub fun testSetDefaultManagerFilter() {
     addTypeToFilter(filter, FilterKindDenyList, nftIdentifier)
 
     let error = expectScriptFailure("hybrid-custody/get_nft_provider_capability.cdc", [parent.address, child2.address])
-    assert(contains(error, "Capability is not allowed by this account's Parent"), message: "failed to find expected error message")
+    assert(contains(error, "capability not found"), message: "failed to find expected error message")
 }
 
 pub fun testPublishToParent_alreadyExists() {
@@ -1072,14 +1099,6 @@ pub fun getTestAccount(_ name: String): Test.Account {
     }
 
     return accounts[name]!
-}
-
-pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {
-    let scriptCode = loadCode(scriptName, "scripts")
-    let scriptResult = blockchain.executeScript(scriptCode, arguments)
-
-    assert(scriptResult.error != nil, message: "script error was expected but there is no error message")
-    return scriptResult.error!.message
 }
 
 pub fun setup() {

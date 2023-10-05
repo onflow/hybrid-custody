@@ -36,6 +36,14 @@ pub fun scriptExecutor(_ scriptName: String, _ arguments: [AnyStruct]): AnyStruc
     return scriptResult.returnValue
 }
 
+pub fun expectScriptFailure(_ scriptName: String, _ arguments: [AnyStruct]): String {
+    let scriptCode = loadCode(scriptName, "scripts")
+    let scriptResult = blockchain.executeScript(scriptCode, arguments)
+
+    assert(scriptResult.error != nil, message: "script error was expected but there is no error message")
+    return scriptResult.error!.message
+}
+
 pub fun txExecutor(_ txName: String, _ signers: [Test.Account], _ arguments: [AnyStruct], _ expectedError: String?, _ expectedErrorType: ErrorType?): Bool {
     let txCode = loadCode(txName, "transactions")
 
