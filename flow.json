@@ -4,7 +4,6 @@
       "source": "./modules/flow-utils/cadence/contracts/AddressUtils.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
         "testnet": "31ad40c07a2a9788",
         "mainnet": "a340dc0a4ec828ab"
       }
@@ -13,7 +12,6 @@
       "source": "./modules/flow-utils/cadence/contracts/ArrayUtils.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
         "testnet": "31ad40c07a2a9788",
         "mainnet": "a340dc0a4ec828ab"
       }
@@ -112,7 +110,6 @@
       "source": "",
       "aliases": {
         "emulator": "0ae53cb6e3f42a79",
-        "testing": "0000000000000003",
         "testnet": "7e60df042a9c0868",
         "mainnet": "1654653399040a61"
       }
@@ -121,7 +118,6 @@
       "source": "./modules/flow-nft/contracts/utility/FungibleToken.cdc",
       "aliases": {
         "emulator": "ee82856bf20e2aa6",
-        "testing": "0000000000000002",
         "testnet": "9a0766d93b6608b7",
         "mainnet": "f233dcee88fe0abe"
       }
@@ -139,7 +135,6 @@
       "source": "./modules/flow-nft/contracts/MetadataViews.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000001",
         "testnet": "631e88ae7f1d7c20",
         "mainnet": "1d7e57aa55817448"
       }
@@ -174,7 +169,6 @@
       "source": "./modules/flow-nft/contracts/NonFungibleToken.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000001",
         "testnet": "631e88ae7f1d7c20",
         "mainnet": "1d7e57aa55817448"
       }
@@ -183,7 +177,6 @@
       "source": "./modules/flow-utils/cadence/contracts/StringUtils.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
         "testnet": "31ad40c07a2a9788",
         "mainnet": "a340dc0a4ec828ab"
       }
@@ -192,7 +185,6 @@
       "source": "./modules/flow-nft/contracts/ViewResolver.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000001",
         "testnet": "631e88ae7f1d7c20",
         "mainnet": "1d7e57aa55817448"
       }
