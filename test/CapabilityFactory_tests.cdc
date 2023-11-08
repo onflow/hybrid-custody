@@ -48,7 +48,7 @@ fun testGetSupportedTypesFromManager() {
 access(all)
 fun testAddFactoryFails() {
     expectScriptFailure(
-        "test/add_type_to_factory.cdc",
+        "test/add_type_for_nft_provider_factory.cdc",
         [creator.address, Type<&{NonFungibleToken.Provider}>()],
         "Factory of given type already exists"
     )
@@ -56,7 +56,7 @@ fun testAddFactoryFails() {
 
 access(all)
 fun testAddFactorySucceeds() {
-    txExecutor("test/add_type_to_factory.cdc", [creator], [Type<&{NonFungibleToken.Receiver}>()], nil)
+    txExecutor("test/add_type_for_nft_provider_factory.cdc", [creator], [Type<&{NonFungibleToken.Receiver}>()], nil)
 
     let supportedTypes = scriptExecutor(
         "factory/get_supported_types_from_manager.cdc",
