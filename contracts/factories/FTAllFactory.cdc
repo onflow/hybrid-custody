@@ -1,10 +1,18 @@
 import "CapabilityFactory"
 import "FungibleToken"
 
-pub contract FTAllFactory {
-    pub struct Factory: CapabilityFactory.Factory {
-        pub fun getCapability(acct: &AuthAccount, path: CapabilityPath): Capability {
-            return acct.getCapability<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(path)
+access(all) contract FTAllFactory {
+    access(all) struct Factory: CapabilityFactory.Factory {
+        access(Capabilities) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability? {
+            if let con = acct.capabilities.storage.getController(byCapabilityID: controllerID) {
+                if !con.capability.check<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Balance, FungibleToken.Receiver}>() {
+                    return nil
+                }
+                
+                return con.capability as! Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Balance, FungibleToken.Receiver}>
+            }
+
+            return nil
         }
     }
 }
