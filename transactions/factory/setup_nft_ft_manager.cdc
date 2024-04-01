@@ -12,32 +12,33 @@ import "FTReceiverFactory"
 import "FTAllFactory"
 
 transaction {
-    prepare(acct: AuthAccount) {
-        if acct.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
+        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
             let f <- CapabilityFactory.createFactoryManager()
-            acct.save(<-f, to: CapabilityFactory.StoragePath)
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
-            acct.unlink(CapabilityFactory.PublicPath)
-            acct.link<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath, target: CapabilityFactory.StoragePath)
+        if acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() != true {
+            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+
+            let cap = acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath)
+            acct.capabilities.publish(cap, at: CapabilityFactory.PublicPath)
         }
 
         assert(
-            acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check(),
+            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)!.check(),
             message: "CapabilityFactory is not setup properly"
         )
 
-        let manager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
-            ?? panic("manager not found")
+        let manager = acct.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath) ?? panic("manager not found")
 
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
-        manager.updateFactory(Type<&{FungibleToken.Provider}>(), FTProviderFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(), FTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Balance}>(), FTBalanceFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(), FTReceiverBalanceFactory.Factory())
-        manager.updateFactory(Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
+        manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
     }
 }

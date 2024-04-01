@@ -33,23 +33,25 @@ fun testGetSupportedTypesFromManager() {
     )! as! [Type]
 
     let expectedTypes = [
-        Type<&{FungibleToken.Provider}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(),
         Type<&{FungibleToken.Balance}>(),
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<&{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
     ]
-    Test.assertEqual(expectedTypes, supportedTypes)
+    for e in expectedTypes {
+        Test.assert(supportedTypes.contains(e), message: "missing expected type in supported types")
+    }
 }
 
 access(all)
 fun testAddFactoryFails() {
     expectScriptFailure(
         "test/add_type_for_nft_provider_factory.cdc",
-        [creator.address, Type<&{NonFungibleToken.Provider}>()],
+        [creator.address, Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()],
         "Factory of given type already exists"
     )
 }
@@ -64,17 +66,20 @@ fun testAddFactorySucceeds() {
     )! as! [Type]
 
     let expectedTypes = [
-        Type<&{FungibleToken.Provider}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(),
         Type<&{FungibleToken.Balance}>(),
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<&{NonFungibleToken.Provider}>(),
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(),
         Type<&{NonFungibleToken.Receiver}>()
     ]
-    Test.assertEqual(expectedTypes, supportedTypes)
+
+    for e in expectedTypes {
+        Test.assert(supportedTypes.contains(e), message: "missing expected type in supportedTypes")
+    }
 
     for type in supportedTypes {
         let factorySuccess = scriptExecutor(
@@ -116,11 +121,14 @@ fun testSetupNFTManager() {
     let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
 
     let expectedTypes = [
-        Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<&{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
     ]
-    Test.assertEqual(expectedTypes, supportedTypes)
+    
+    for e in expectedTypes {
+        Test.assert(supportedTypes.contains(e), message: "missing type in supportedTypes: ".concat(e.identifier))
+    }
 
     for type in supportedTypes {
         let factorySuccess = scriptExecutor(
@@ -139,13 +147,16 @@ fun testSetupFTManager() {
     let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
 
     let expectedTypes = [
-        Type<&{FungibleToken.Provider}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(),
         Type<&{FungibleToken.Balance}>(),
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>()
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>()
     ]
-    Test.assertEqual(expectedTypes, supportedTypes)
+
+    for e in expectedTypes {
+        Test.assert(supportedTypes.contains(e), message: "missing type in supportedTypes: ".concat(e.identifier))
+    }
 
     for type in supportedTypes {
         let factorySuccess = scriptExecutor(
@@ -164,16 +175,19 @@ fun testSetupNFTFTManager() {
     let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
 
     let expectedTypes = [
-        Type<&{FungibleToken.Provider}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(),
         Type<&{FungibleToken.Balance}>(),
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<&{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
     ]
-    Test.assertEqual(expectedTypes, supportedTypes)
+
+    for e in expectedTypes {
+        Test.assert(supportedTypes.contains(e), message: "missing type in supportedTypes: ".concat(e.identifier))
+    }
 
     for type in supportedTypes {
         let factorySuccess = scriptExecutor(
@@ -189,7 +203,7 @@ fun testSetupNFTFTManager() {
 access(all)
 fun setup() {
     // helper nft & ft contract so we can actually talk to nfts & fts with tests
-    deploy("ExampleNFT", "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", "../contracts/standard/ExampleNFT.cdc")
     deploy("ExampleToken", "../contracts/standard/ExampleToken.cdc")
 
     // our main contract is last

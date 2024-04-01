@@ -6,27 +6,29 @@ import "NFTProviderAndCollectionFactory"
 import "NFTProviderFactory"
 
 transaction {
-    prepare(acct: AuthAccount) {
-        if acct.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
+        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
             let f <- CapabilityFactory.createFactoryManager()
-            acct.save(<-f, to: CapabilityFactory.StoragePath)
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
-            acct.unlink(CapabilityFactory.PublicPath)
-            acct.link<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath, target: CapabilityFactory.StoragePath)
-        }
+
+        acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath),
+            at: CapabilityFactory.PublicPath
+        )
 
         assert(
-            acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check(),
+            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)!.check(),
             message: "CapabilityFactory is not setup properly"
         )
 
-        let manager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+        let manager = acct.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("manager not found")
 
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        manager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
     }
 }

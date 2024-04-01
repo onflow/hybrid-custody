@@ -3,9 +3,8 @@ import "NFTProviderFactory"
 
 import "NonFungibleToken"
 
-pub fun main(address: Address) {
-    
-    let managerRef = getAuthAccount(address).borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+access(all) fun main(address: Address) {
+    let managerRef = getAuthAccount<auth(Storage) &Account>(address).storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
         ?? panic("CapabilityFactory Manager not found")
     
     let nftProviderFactory = NFTProviderFactory.Factory()

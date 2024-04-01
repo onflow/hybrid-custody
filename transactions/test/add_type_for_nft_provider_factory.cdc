@@ -4,8 +4,8 @@ import "NFTProviderFactory"
 import "NonFungibleToken"
 
 transaction(type: Type) {
-    prepare(account: AuthAccount) {
-        let managerRef = account.borrow<&CapabilityFactory.Manager>(
+    prepare(account: auth(Storage) &Account) {
+        let managerRef = account.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(
             from: CapabilityFactory.StoragePath
         ) ?? panic("CapabilityFactory Manager not found")
     

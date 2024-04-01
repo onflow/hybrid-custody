@@ -3,8 +3,8 @@ import "NFTProviderFactory"
 
 import "NonFungibleToken"
 
-pub fun main(address: Address, type: Type): Bool {
-    let managerRef = getAuthAccount(address).borrow<&CapabilityFactory.Manager>(
+access(all) fun main(address: Address, type: Type): Bool {
+    let managerRef = getAuthAccount<auth(Storage) &Account>(address).storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(
         from: CapabilityFactory.StoragePath
     ) ?? panic("CapabilityFactory Manager not found")
     
