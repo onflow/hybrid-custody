@@ -37,12 +37,12 @@ fun testShareExampleNFTCollectionPublic() {
     let events = Test.eventsOfType(typ)
     Test.assertEqual(1, events.length)
 
-    let event = events[0]! as! CapabilityDelegator.DelegatorUpdated
-    Test.assert(event.isPublic)
-    Test.assert(event.active)
+    let e = events[0] as! CapabilityDelegator.DelegatorUpdated
+    Test.assert(e.isPublic)
+    Test.assert(e.active)
 
-    let capabilityType = Type<Capability<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>>()
-    Test.assertEqual(capabilityType, event.capabilityType)
+    let capabilityType = Type<Capability<&{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>>()
+    Test.assertEqual(capabilityType, e.capabilityType)
 }
 
 access(all)
@@ -56,12 +56,12 @@ fun testShareExampleNFTCollectionPrivate() {
     let events = Test.eventsOfType(typ)
     Test.assertEqual(2, events.length)
 
-    let event = events[1]! as! CapabilityDelegator.DelegatorUpdated
-    Test.assert(event.isPublic == false)
-    Test.assert(event.active)
+    let e = events[1] as! CapabilityDelegator.DelegatorUpdated
+    Test.assert(e.isPublic == false)
+    Test.assert(e.active)
 
-    let capabilityType = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()
-    Test.assertEqual(capabilityType, event.capabilityType)
+    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
+    Test.assertEqual(capabilityType, e.capabilityType)
 }
 
 access(all)
@@ -72,12 +72,12 @@ fun testRemoveExampleNFTCollectionPublic() {
     let events = Test.eventsOfType(typ)
     Test.assertEqual(3, events.length)
 
-    let event = events[2]! as! CapabilityDelegator.DelegatorUpdated
-    Test.assert(event.isPublic)
-    Test.assert(event.active == false)
+    let e = events[2] as! CapabilityDelegator.DelegatorUpdated
+    Test.assert(e.isPublic)
+    Test.assert(e.active == false)
 
-    let capabilityType = Type<Capability<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>>()
-    Test.assertEqual(capabilityType, event.capabilityType)
+    let capabilityType = Type<Capability<&{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>>()
+    Test.assertEqual(capabilityType, e.capabilityType)
 
     let scriptCode = loadCode("delegator/find_nft_collection_cap.cdc", "scripts")
     let scriptResult = Test.executeScript(scriptCode, [creator.address])
@@ -97,12 +97,12 @@ fun testRemoveExampleNFTCollectionPrivate() {
     let events = Test.eventsOfType(typ)
     Test.assertEqual(4, events.length)
 
-    let event = events[3]! as! CapabilityDelegator.DelegatorUpdated
-    Test.assert(event.isPublic == false)
-    Test.assert(event.active == false)
+    let e = events[3] as! CapabilityDelegator.DelegatorUpdated
+    Test.assert(e.isPublic == false)
+    Test.assert(e.active == false)
 
-    let capabilityType = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()
-    Test.assertEqual(capabilityType, event.capabilityType)
+    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
+    Test.assertEqual(capabilityType, e.capabilityType)
 
     let scriptCode = loadCode("delegator/find_nft_provider_cap.cdc", "scripts")
     let scriptResult = Test.executeScript(scriptCode, [creator.address])
@@ -119,7 +119,7 @@ fun testRemoveExampleNFTCollectionPrivate() {
 access(all)
 fun setup() {
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", "../contracts/standard/ExampleNFT.cdc")
 
     // our main contract is last
     deploy("CapabilityDelegator", "../contracts/CapabilityDelegator.cdc")
@@ -129,42 +129,42 @@ fun setup() {
 
 // BEGIN SECTION - transactions used in tests
 access(all)
-fun setupDelegator(_ acct: Test.Account) {
+fun setupDelegator(_ acct: Test.TestAccount) {
     txExecutor("delegator/setup.cdc", [acct], [], nil)
 }
 
 access(all)
-fun sharePublicExampleNFT(_ acct: Test.Account) {
+fun sharePublicExampleNFT(_ acct: Test.TestAccount) {
     txExecutor("delegator/add_public_nft_collection.cdc", [acct], [], nil)
 }
 
 access(all)
-fun sharePrivateExampleNFT(_ acct: Test.Account) {
+fun sharePrivateExampleNFT(_ acct: Test.TestAccount) {
     txExecutor("delegator/add_private_nft_collection.cdc", [acct], [], nil)
 }
 
 access(all)
-fun removePublicExampleNFT(_ acct: Test.Account) {
+fun removePublicExampleNFT(_ acct: Test.TestAccount) {
     txExecutor("delegator/remove_public_nft_collection.cdc", [acct], [], nil)
 }
 
 access(all)
-fun removePrivateExampleNFT(_ acct: Test.Account) {
+fun removePrivateExampleNFT(_ acct: Test.TestAccount) {
     txExecutor("delegator/remove_private_nft_collection.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupNFTCollection(_ acct: Test.Account) {
+fun setupNFTCollection(_ acct: Test.TestAccount) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil)
 }
 
 access(all)
-fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+fun mintNFT(_ minter: Test.TestAccount, receiver: Test.TestAccount, name: String, description: String, thumbnail: String) {
     txExecutor("example-nft/mint_to_account.cdc", [minter], [receiver.address, name, description, thumbnail], nil)
 }
 
 access(all)
-fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
+fun mintNFTDefault(_ minter: Test.TestAccount, receiver: Test.TestAccount) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: flowtyThumbnail)
 }
 
@@ -173,37 +173,37 @@ fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
 // BEGIN SECTION - scripts used in tests
 
 access(all)
-fun getExampleNFTCollectionFromDelegator(_ owner: Test.Account) {
+fun getExampleNFTCollectionFromDelegator(_ owner: Test.TestAccount) {
     let borrowed = scriptExecutor("delegator/get_nft_collection.cdc", [owner.address])! as! Bool
     Test.assert(borrowed, message: "failed to borrow delegator")
 }
 
 access(all)
-fun getExampleNFTProviderFromDelegator(_ owner: Test.Account) {
+fun getExampleNFTProviderFromDelegator(_ owner: Test.TestAccount) {
     let borrowed = scriptExecutor("delegator/get_nft_provider.cdc", [owner.address])! as! Bool
     Test.assert(borrowed, message: "failed to borrow delegator")
 }
 
 access(all)
-fun getAllPublicContainsCollection(_ owner: Test.Account) {
+fun getAllPublicContainsCollection(_ owner: Test.TestAccount) {
     let success = scriptExecutor("delegator/get_all_public_caps.cdc", [owner.address])! as! Bool
     Test.assert(success, message: "failed to borrow delegator")
 }
 
 access(all)
-fun getAllPrivateContainsProvider(_ owner: Test.Account) {
+fun getAllPrivateContainsProvider(_ owner: Test.TestAccount) {
     let success = scriptExecutor("delegator/get_all_private_caps.cdc", [owner.address])! as! Bool
     Test.assert(success, message: "failed to borrow delegator")
 }
 
 access(all)
-fun findExampleNFTCollectionType(_ owner: Test.Account) {
+fun findExampleNFTCollectionType(_ owner: Test.TestAccount) {
     let borrowed = scriptExecutor("delegator/find_nft_collection_cap.cdc", [owner.address])! as! Bool
     Test.assert(borrowed, message: "failed to borrow delegator")
 }
 
 access(all)
-fun findExampleNFTProviderType(_ owner: Test.Account) {
+fun findExampleNFTProviderType(_ owner: Test.TestAccount) {
     let borrowed = scriptExecutor("delegator/find_nft_provider_cap.cdc", [owner.address])! as! Bool
     Test.assert(borrowed, message: "failed to borrow delegator")
 }

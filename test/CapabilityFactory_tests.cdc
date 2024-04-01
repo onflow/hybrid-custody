@@ -207,12 +207,12 @@ fun setup() {
 // BEGIN SECTION - transactions used in tests
 
 access(all)
-fun setupNFTCollection(_ acct: Test.Account) {
+fun setupNFTCollection(_ acct: Test.TestAccount) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupCapabilityFactoryManager(_ acct: Test.Account) {
+fun setupCapabilityFactoryManager(_ acct: Test.TestAccount) {
     txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil)
 }
 

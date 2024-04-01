@@ -2,7 +2,7 @@ import Test
 import "test_helpers.cdc"
 
 access(all) let adminAccount = Test.getAccount(0x0000000000000007)
-access(all) let accounts: {String: Test.Account} = {}
+access(all) let accounts: {String: Test.TestAccount} = {}
 
 access(all) let app = "app"
 access(all) let child = "child"
@@ -870,7 +870,7 @@ fun testBlockchainNativeOnboarding() {
 
     let childAddresses = scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]) as! [Address]?
         ?? panic("problem adding blockchain native child account to signing parent")
-    let child = Test.Account(address: childAddresses[0], publicKey: expectedPubKey)
+    let child = Test.TestAccount(address: childAddresses[0], publicKey: expectedPubKey)
 
     Test.assert(checkForAddresses(child: child, parent: parent), message: "child account not linked to parent")
 }
@@ -952,7 +952,7 @@ fun testGetChildAccountCapabilityFilterAndFactory() {
 // --------------- Transaction wrapper functions ---------------
 
 access(all)
-fun setupChildAndParent_FilterKindAll(child: Test.Account, parent: Test.Account) {
+fun setupChildAndParent_FilterKindAll(child: Test.TestAccount, parent: Test.TestAccount) {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
 
@@ -966,22 +966,22 @@ fun setupChildAndParent_FilterKindAll(child: Test.Account, parent: Test.Account)
 }
 
 access(all)
-fun setupAccountManager(_ acct: Test.Account) {
+fun setupAccountManager(_ acct: Test.TestAccount) {
     txExecutor("hybrid-custody/setup_manager.cdc", [acct], [nil, nil], nil)
 }
 
 access(all)
-fun setAccountManagerWithFilter(_ acct: Test.Account, _ filterAccount: Test.Account) {
+fun setAccountManagerWithFilter(_ acct: Test.TestAccount, _ filterAccount: Test.TestAccount) {
     txExecutor("hybrid-custody/setup_manager.cdc", [acct], [nil, nil], nil)
 }
 
 access(all)
-fun setManagerFilterOnChild(child: Test.Account, parent: Test.Account, filterAddress: Address) {
+fun setManagerFilterOnChild(child: Test.TestAccount, parent: Test.TestAccount, filterAddress: Address) {
     txExecutor("hybrid-custody/set_manager_filter_cap.cdc", [parent], [filterAddress, child.address], nil)
 }
 
 access(all)
-fun setupOwnedAccount(_ acct: Test.Account, _ filterKind: String) {
+fun setupOwnedAccount(_ acct: Test.TestAccount, _ filterKind: String) {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(filterKind)
 
@@ -996,54 +996,54 @@ fun setupOwnedAccount(_ acct: Test.Account, _ filterKind: String) {
 }
 
 access(all)
-fun setupFactoryManager(_ acct: Test.Account) {
+fun setupFactoryManager(_ acct: Test.TestAccount) {
     txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupNFTCollection(_ acct: Test.Account) {
+fun setupNFTCollection(_ acct: Test.TestAccount) {
     txExecutor("example-nft/setup_full.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupNFT2Collection(_ acct: Test.Account) {
+fun setupNFT2Collection(_ acct: Test.TestAccount) {
     txExecutor("example-nft-2/setup_full.cdc", [acct], [], nil)
 }
 
 access(all)
-fun mintNFT(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+fun mintNFT(_ minter: Test.TestAccount, receiver: Test.TestAccount, name: String, description: String, thumbnail: String) {
     let filepath: String = "example-nft/mint_to_account.cdc"
     txExecutor(filepath, [minter], [receiver.address, name, description, thumbnail], nil)
 }
 
 access(all)
-fun mintNFTDefault(_ minter: Test.Account, receiver: Test.Account) {
+fun mintNFTDefault(_ minter: Test.TestAccount, receiver: Test.TestAccount) {
     return mintNFT(minter, receiver: receiver, name: "example nft", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
 }
 
 access(all)
-fun mintExampleNFT2(_ minter: Test.Account, receiver: Test.Account, name: String, description: String, thumbnail: String) {
+fun mintExampleNFT2(_ minter: Test.TestAccount, receiver: Test.TestAccount, name: String, description: String, thumbnail: String) {
     let filepath: String = "example-nft-2/mint_to_account.cdc"
     txExecutor(filepath, [minter], [receiver.address, name, description, thumbnail], nil)
 }
 
 access(all)
-fun mintExampleNFT2Default(_ minter: Test.Account, receiver: Test.Account) {
+fun mintExampleNFT2Default(_ minter: Test.TestAccount, receiver: Test.TestAccount) {
     return mintExampleNFT2(minter, receiver: receiver, name: "example nft 2", description: "lorem ipsum", thumbnail: "http://example.com/image.png")
 }
 
 access(all)
-fun setupFT(_ acct: Test.Account) {
+fun setupFT(_ acct: Test.TestAccount) {
     txExecutor("example-token/setup.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupFTProvider(_ acct: Test.Account) {
+fun setupFTProvider(_ acct: Test.TestAccount) {
     txExecutor("example-token/setup_provider.cdc", [acct], [], nil)
 }
 
 access(all)
-fun setupFilter(_ acct: Test.Account, _ kind: String) {
+fun setupFilter(_ acct: Test.TestAccount, _ kind: String) {
     var filePath = ""
     switch kind {
         case FilterKindAll:
@@ -1063,7 +1063,7 @@ fun setupFilter(_ acct: Test.Account, _ kind: String) {
 }
 
 access(all)
-fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: String) {
+fun addTypeToFilter(_ acct: Test.TestAccount, _ kind: String, _ identifier: String) {
     var filePath = ""
     switch kind {
         case FilterKindAllowList:
@@ -1080,7 +1080,7 @@ fun addTypeToFilter(_ acct: Test.Account, _ kind: String, _ identifier: String) 
 }
 
 access(all)
-fun removeAllFilterTypes(_ acct: Test.Account, _ kind: String) {
+fun removeAllFilterTypes(_ acct: Test.TestAccount, _ kind: String) {
     var filePath = ""
     switch kind {
         case FilterKindAllowList:
@@ -1097,12 +1097,12 @@ fun removeAllFilterTypes(_ acct: Test.Account, _ kind: String) {
 }
 
 access(all)
-fun addNFTCollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
+fun addNFTCollectionToDelegator(child: Test.TestAccount, parent: Test.TestAccount, isPublic: Bool) {
     txExecutor("hybrid-custody/add_example_nft_collection_to_delegator.cdc", [child], [parent.address, isPublic], nil)
 }
 
 access(all)
-fun addNFT2CollectionToDelegator(child: Test.Account, parent: Test.Account, isPublic: Bool) {
+fun addNFT2CollectionToDelegator(child: Test.TestAccount, parent: Test.TestAccount, isPublic: Bool) {
     txExecutor("hybrid-custody/add_example_nft2_collection_to_delegator.cdc", [child], [parent.address, isPublic], nil)
 }
 // ---------------- End Transaction wrapper functions
@@ -1110,32 +1110,32 @@ fun addNFT2CollectionToDelegator(child: Test.Account, parent: Test.Account, isPu
 // ---------------- Begin script wrapper functions
 
 access(all)
-fun getParentStatusesForChild(_ child: Test.Account): {Address: Bool} {
+fun getParentStatusesForChild(_ child: Test.TestAccount): {Address: Bool} {
     return scriptExecutor("hybrid-custody/get_parents_from_child.cdc", [child.address])! as! {Address: Bool}
 }
 
 access(all)
-fun isParent(child: Test.Account, parent: Test.Account): Bool {
+fun isParent(child: Test.TestAccount, parent: Test.TestAccount): Bool {
     return scriptExecutor("hybrid-custody/is_parent.cdc", [child.address, parent.address])! as! Bool
 }
 
 access(all)
-fun checkIsRedeemed(child: Test.Account, parent: Test.Account): Bool {
+fun checkIsRedeemed(child: Test.TestAccount, parent: Test.TestAccount): Bool {
     return scriptExecutor("hybrid-custody/is_redeemed.cdc", [child.address, parent.address])! as! Bool
 }
 
 access(all)
-fun getNumValidKeys(_ child: Test.Account): Int {
+fun getNumValidKeys(_ child: Test.TestAccount): Int {
     return scriptExecutor("hybrid-custody/get_num_valid_keys.cdc", [child.address])! as! Int
 }
 
 access(all)
-fun checkAuthAccountDefaultCap(account: Test.Account): Bool {
+fun checkAuthAccountDefaultCap(account: Test.TestAccount): Bool {
     return scriptExecutor("hybrid-custody/check_default_auth_acct_linked_path.cdc", [account.address])! as! Bool
 }
 
 access(all)
-fun getOwner(child: Test.Account): Address? {
+fun getOwner(child: Test.TestAccount): Address? {
     let res = scriptExecutor("hybrid-custody/get_owner_of_child.cdc", [child.address])
     if res == nil {
         return nil
@@ -1145,14 +1145,14 @@ fun getOwner(child: Test.Account): Address? {
 }
 
 access(all)
-fun getPendingOwner(child: Test.Account): Address? {
+fun getPendingOwner(child: Test.TestAccount): Address? {
     let res = scriptExecutor("hybrid-custody/get_pending_owner_of_child.cdc", [child.address])
 
     return res as! Address?
 }
 
 access(all)
-fun checkForAddresses(child: Test.Account, parent: Test.Account): Bool {
+fun checkForAddresses(child: Test.TestAccount, parent: Test.TestAccount): Bool {
     let childAddressResult: [Address]? = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address])) as! [Address]?
     Test.assert(childAddressResult?.contains(child.address) == true, message: "child address not found")
 
@@ -1162,7 +1162,7 @@ fun checkForAddresses(child: Test.Account, parent: Test.Account): Bool {
 }
 
 access(all)
-fun getBalance(_ acct: Test.Account): UFix64 {
+fun getBalance(_ acct: Test.TestAccount): UFix64 {
     let balance: UFix64? = (scriptExecutor("example-token/get_balance.cdc", [acct.address])! as! UFix64)
     return balance!
 }
@@ -1172,7 +1172,7 @@ fun getBalance(_ acct: Test.Account): UFix64 {
 // ---------------- BEGIN General-purpose helper functions
 
 access(all)
-fun buildTypeIdentifier(_ acct: Test.Account, _ contractName: String, _ suffix: String): String {
+fun buildTypeIdentifier(_ acct: Test.TestAccount, _ contractName: String, _ suffix: String): String {
     let addrString = acct.address.toString()
     return "A.".concat(addrString.slice(from: 2, upTo: addrString.length)).concat(".").concat(contractName).concat(".").concat(suffix)
 }
@@ -1187,7 +1187,7 @@ fun getCapabilityFilterPath(): String {
 // ---------------- END General-purpose helper functions
 
 access(all)
-fun getTestAccount(_ name: String): Test.Account {
+fun getTestAccount(_ name: String): Test.TestAccount {
     if accounts[name] == nil {
         accounts[name] = Test.createAccount()
     }

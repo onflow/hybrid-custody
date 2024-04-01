@@ -28,7 +28,7 @@
       }
     },
     "ExampleNFT": {
-      "source": "./modules/flow-nft/contracts/ExampleNFT.cdc",
+      "source": "./contracts/standard/ExampleNFT.cdc",
       "aliases": {
         "testing": "0000000000000007"
       }
