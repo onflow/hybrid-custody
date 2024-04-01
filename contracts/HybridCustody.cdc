@@ -283,7 +283,7 @@ access(all) contract HybridCustody {
 
         /// Sets the Display on the ChildAccount. If nil, the display is removed.
         ///
-        access(Restricted) fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
+        access(Manage) fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
             pre {
                 self.childAccounts[address] != nil: "There is no child account with this address"
             }
@@ -655,9 +655,9 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to the stored delegator, generally used for arbitrary Capability retrieval
         ///
-        access(Restricted) fun borrowCapabilityDelegator(): &CapabilityDelegator.Delegator? {
+        access(Owner) fun borrowCapabilityDelegator(): auth(Capabilities) &CapabilityDelegator.Delegator? {
             let path = HybridCustody.getCapabilityDelegatorIdentifier(self.parent)
-            return self.childCap.borrow()!.borrowAccount().storage.borrow<&CapabilityDelegator.Delegator>(
+            return self.childCap.borrow()!.borrowAccount().storage.borrow<auth(Capabilities) &CapabilityDelegator.Delegator>(
                 from: StoragePath(identifier: path)!
             )
         }
@@ -1072,9 +1072,9 @@ access(all) contract HybridCustody {
 
         /// Retrieves a reference to the ChildAccount associated with the given parent account if one exists.
         ///
-        access(Owner) fun borrowChildAccount(parent: Address): auth(Restricted) &ChildAccount? {
+        access(Owner) fun borrowChildAccount(parent: Address): auth(Capabilities) &ChildAccount? {
             let identifier = HybridCustody.getChildAccountIdentifier(parent)
-            return self.borrowAccount().storage.borrow<auth(Restricted) &ChildAccount>(from: StoragePath(identifier: identifier)!)
+            return self.borrowAccount().storage.borrow<auth(Capabilities) &ChildAccount>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Sets the CapabilityFactory Manager for the specified parent in the associated ChildAccount.
@@ -1135,7 +1135,7 @@ access(all) contract HybridCustody {
 
         /// Sets this OwnedAccount's display to the one provided
         ///
-        access(Restricted) fun setDisplay(_ d: MetadataViews.Display) {
+        access(Owner) fun setDisplay(_ d: MetadataViews.Display) {
             self.display = d
         }
 
