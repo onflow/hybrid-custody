@@ -14,5 +14,9 @@ access(all) contract FTReceiverFactory {
 
             return nil
         }
+
+        access(all) view fun getPublicCapability(acct: auth(Capabilities) &Account, path: PublicPath): Capability? {
+            return acct.capabilities.get<&{FungibleToken.Receiver}>(path)
+        }
     }
 }

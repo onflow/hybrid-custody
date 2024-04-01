@@ -14,5 +14,9 @@ access(all) contract NFTProviderAndCollectionFactory {
 
             return nil
         }
+
+        access(all) view fun getPublicCapability(acct: auth(Capabilities) &Account, path: PublicPath): Capability? {
+            return nil
+        }
     }
 }

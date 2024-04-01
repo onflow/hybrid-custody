@@ -201,7 +201,7 @@ access(all) contract HybridCustody {
     ///
     access(all) resource interface AccountPublic {
         // TODO: This has been disabled because you cannot get a capability without providing a type T anymore in Cadence 1.0
-        // access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability?
+        access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability?
         access(all) view fun getPublicCapFromDelegator(type: Type): Capability?
         access(all) view fun getAddress(): Address
         access(all) view fun getCapabilityFactoryManager(): &{CapabilityFactory.Getter}?
@@ -629,14 +629,20 @@ access(all) contract HybridCustody {
             return nil
         }
 
-        /// TODO: This has been disabled because you cannot get a capability without providing a type T anymore in Cadence 1.0
-        //
         /// Enables retrieval of public Capabilities of the given type from the specified path or nil if none is found.
         /// Callers should be aware this method uses the `CapabilityFactory` retrieval path.
         ///
-        // access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability? {
-        //     return self.getCapability(path: path, type: type)
-        // }
+        access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability? {
+            let child = self.childCap.borrow() ?? panic("failed to borrow child account")
+
+            let f = self.factory.borrow()!.getFactory(type)
+            if f == nil {
+                return nil
+            }
+
+            let acct = child.borrowAccount()
+            return f!.getPublicCapability(acct: acct, path: path)
+        }
 
         /// Returns a reference to the stored managerCapabilityFilter if one exists
         ///
