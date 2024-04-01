@@ -30,8 +30,9 @@ import "CapabilityFilter"
 ///
 access(all) contract HybridCustody {
 
-    access(all) entitlement Restricted
     access(all) entitlement Owner
+    access(all) entitlement Publish
+    access(all) entitlement Manage
 
     /* --- Canonical Paths --- */
     //
@@ -108,13 +109,13 @@ access(all) contract HybridCustody {
     access(all) resource interface OwnedAccountPrivate {
         /// Deletes the ChildAccount resource being used to share access to this OwnedAccount with the supplied parent
         /// address, and unlinks the paths it was using to reach the underlying account.
-        access(Restricted) fun removeParent(parent: Address): Bool
+        access(Owner | Remove) fun removeParent(parent: Address): Bool
 
         /// Sets up a new ChildAccount resource for the given parentAddress to redeem. This child account uses the
         /// supplied factory and filter to manage what can be obtained from the child account, and a new
         /// CapabilityDelegator resource is created for the sharing of one-off capabilities. Each of these pieces of
         /// access control are managed through the child account.
-        access(Restricted) fun publishToParent(
+        access(Publish | Owner) fun publishToParent(
             parentAddress: Address,
             factory: Capability<&{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
@@ -141,7 +142,7 @@ access(all) contract HybridCustody {
         // setCapabilityFactoryForParent
         // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the
         // account to start managing their own factory of capabilities to be able to retrieve
-        access(Restricted) fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&{CapabilityFactory.Getter}>) {
+        access(Owner) fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&{CapabilityFactory.Getter}>) {
             pre {
                 cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
             }
@@ -149,7 +150,7 @@ access(all) contract HybridCustody {
 
         /// Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the
         /// account to start managing their own filter for retrieving Capabilities on Private Paths
-        access(Restricted) fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+        access(Owner) fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
             pre {
                 cap.check(): "Invalid CapabilityFilter Capability provided"
             }
@@ -157,14 +158,14 @@ access(all) contract HybridCustody {
 
         /// Adds a capability to a parent's managed @ChildAccount resource. The Capability can be made public,
         /// permitting anyone to borrow it.
-        access(Restricted) fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
+        access(Owner) fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
             pre {
                 cap.check<&AnyResource>(): "Invalid Capability provided"
             }
         }
 
         /// Removes a Capability from the CapabilityDelegator used by the specified parent address
-        access(Restricted) fun removeCapabilityFromDelegator(parent: Address, cap: Capability)
+        access(Owner) fun removeCapabilityFromDelegator(parent: Address, cap: Capability)
 
         /// Returns the address of this OwnedAccount
         access(all) view fun getAddress(): Address
@@ -235,13 +236,13 @@ access(all) contract HybridCustody {
     /// Entry point for a parent to obtain, maintain and access Capabilities or perform other actions on child accounts
     ///
     access(all) resource interface ManagerPrivate {
-        access(Restricted) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
-        access(Restricted) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
-        access(Restricted) fun removeChild(addr: Address)
-        access(Owner) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
-        access(Restricted) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
-        access(Restricted) fun removeOwned(addr: Address)
-        access(Restricted) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+        access(Manage) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
+        access(Manage) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
+        access(Manage) fun removeChild(addr: Address)
+        access(Manage) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
+        access(Manage) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
+        access(Manage) fun removeOwned(addr: Address)
+        access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
                 cap == nil || cap!.check(): "Invalid Manager Capability Filter"
             }
@@ -298,7 +299,7 @@ access(all) contract HybridCustody {
         /// Adds a ChildAccount Capability to this Manager. If a default Filter is set in the manager, it will also be
         /// added to the ChildAccount
         ///
-        access(Restricted) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>) {
+        access(Manage) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>) {
             pre {
                 self.childAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -316,7 +317,7 @@ access(all) contract HybridCustody {
 
         /// Sets the default Filter Capability for this Manager. Does not propagate to child accounts.
         ///
-        access(Restricted) fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
+        access(Manage) fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
             pre {
                 cap == nil || cap!.check(): "supplied capability must be nil or check must pass"
             }
@@ -326,7 +327,7 @@ access(all) contract HybridCustody {
         
         /// Sets the Filter Capability for this Manager, propagating to the specified child account
         ///
-        access(Restricted) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+        access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             let acct = self.borrowAccount(addr: childAddress) 
                 ?? panic("child account not found")
 
@@ -336,7 +337,7 @@ access(all) contract HybridCustody {
         /// Removes specified child account from the Manager's child accounts. Callbacks to the child account remove
         /// any associated resources and Capabilities
         ///
-        access(Restricted) fun removeChild(addr: Address) {
+        access(Manage) fun removeChild(addr: Address) {
             let cap = self.childAccounts.remove(key: addr)
                 ?? panic("child account not found")
 
@@ -368,7 +369,7 @@ access(all) contract HybridCustody {
         /// Adds an owned account to the Manager's list of owned accounts, setting the Manager account as the owner of
         /// the given account
         ///
-        access(Owner) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>) {
+        access(Manage) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>) {
             pre {
                 self.ownedAccounts[cap.address] == nil: "There is already an owned account with this address"
             }
@@ -389,7 +390,7 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to a child account
         ///
-        access(Restricted) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}? {
+        access(Manage) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}? {
             let cap = self.childAccounts[addr]
             if cap == nil {
                 return nil
@@ -411,7 +412,7 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to an owned account
         ///
-        access(Restricted) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}? {
+        access(Manage) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}? {
             if let cap = self.ownedAccounts[addr] {
                 return cap.borrow()
             }
@@ -422,7 +423,7 @@ access(all) contract HybridCustody {
         /// Removes specified child account from the Manager's child accounts. Callbacks to the child account remove
         /// any associated resources and Capabilities
         ///
-        access(Restricted) fun removeOwned(addr: Address) {
+        access(Manage) fun removeOwned(addr: Address) {
             if let acct = self.ownedAccounts.remove(key: addr) {
                 if acct.check() {
                     acct.borrow()!.seal()
@@ -566,13 +567,13 @@ access(all) contract HybridCustody {
 
         /// Sets the CapabiltyFactory.Manager Capability
         ///
-        access(Restricted) fun setCapabilityFactory(cap: Capability<&{CapabilityFactory.Getter}>) {
+        access(contract) fun setCapabilityFactory(cap: Capability<&{CapabilityFactory.Getter}>) {
             self.factory = cap
         }
  
         /// Sets the Filter Capability as the one provided
         ///
-        access(Restricted) fun setCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>) {
+        access(contract) fun setCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>) {
             self.filter = cap
         }
 
@@ -705,7 +706,7 @@ access(all) contract HybridCustody {
             }
 
             let acct = child.borrowAccount()
-            if let ownedAcct = acct.storage.borrow<auth(Restricted) &OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
+            if let ownedAcct = acct.storage.borrow<auth(Owner) &OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
                 ownedAcct.removeParent(parent: parent)
             }
         }
@@ -823,7 +824,7 @@ access(all) contract HybridCustody {
         /// 4. Publish the newly made private link to the designated parent's inbox for them to claim on their @Manager
         ///    resource.
         ///
-        access(Restricted) fun publishToParent(
+        access(Publish | Owner) fun publishToParent(
             parentAddress: Address,
             factory: Capability<&{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
@@ -923,7 +924,7 @@ access(all) contract HybridCustody {
         /// configured for the provided parent address. Once done, the parent will not have any valid capabilities with
         /// which to access the child account.
         ///
-        access(Restricted) fun removeParent(parent: Address): Bool {
+        access(Owner | Remove) fun removeParent(parent: Address): Bool {
             if self.parents[parent] == nil {
                 return false
             }
@@ -1071,14 +1072,14 @@ access(all) contract HybridCustody {
 
         /// Retrieves a reference to the ChildAccount associated with the given parent account if one exists.
         ///
-        access(Restricted) fun borrowChildAccount(parent: Address): auth(Restricted) &ChildAccount? {
+        access(Owner) fun borrowChildAccount(parent: Address): auth(Restricted) &ChildAccount? {
             let identifier = HybridCustody.getChildAccountIdentifier(parent)
             return self.borrowAccount().storage.borrow<auth(Restricted) &ChildAccount>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Sets the CapabilityFactory Manager for the specified parent in the associated ChildAccount.
         ///
-        access(Restricted) fun setCapabilityFactoryForParent(
+        access(Owner) fun setCapabilityFactoryForParent(
             parent: Address,
             cap: Capability<&{CapabilityFactory.Getter}>
         ) {
@@ -1088,21 +1089,21 @@ access(all) contract HybridCustody {
 
         /// Sets the Filter for the specified parent in the associated ChildAccount.
         ///
-        access(Restricted) fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+        access(Owner) fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
             let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
             p.setCapabilityFilter(cap: cap)
         }
 
         /// Retrieves a reference to the Delegator associated with the given parent account if one exists.
         ///
-        access(Restricted) fun borrowCapabilityDelegatorForParent(parent: Address): auth(Mutate) &CapabilityDelegator.Delegator? {
+        access(Owner) fun borrowCapabilityDelegatorForParent(parent: Address): auth(Mutate) &CapabilityDelegator.Delegator? {
             let identifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
             return self.borrowAccount().storage.borrow<auth(Mutate) &CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Adds the provided Capability to the Delegator associated with the given parent account.
         ///
-        access(Restricted) fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
+        access(Owner) fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
             let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
             let delegator = self.borrowCapabilityDelegatorForParent(parent: parent)
                 ?? panic("could not borrow capability delegator resource for parent address")
@@ -1111,7 +1112,7 @@ access(all) contract HybridCustody {
 
         /// Removes the provided Capability from the Delegator associated with the given parent account.
         ///
-        access(Restricted) fun removeCapabilityFromDelegator(parent: Address, cap: Capability) {
+        access(Owner) fun removeCapabilityFromDelegator(parent: Address, cap: Capability) {
             let p = self.borrowChildAccount(parent: parent) ?? panic("could not find parent address")
             let delegator = self.borrowCapabilityDelegatorForParent(parent: parent)
                 ?? panic("could not borrow capability delegator resource for parent address")
