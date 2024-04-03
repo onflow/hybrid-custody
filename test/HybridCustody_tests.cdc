@@ -1107,6 +1107,52 @@ fun testRemoveOwned() {
     Test.assertEqual(nil, ownershipEvent.owner)
 }
 
+access(all)
+fun testManager_burnCallback() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    txExecutor("hybrid-custody/destroy_manager.cdc", [parent], [], nil)
+
+    let e = Test.eventsOfType(Type<HybridCustody.AccountUpdated>()).removeLast() as! HybridCustody.AccountUpdated
+    Test.assertEqual(e.child, child.address)
+}
+
+access(all)
+fun testChildAccount_burnCallback() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let beforeChildren = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]))! as! [Address]
+    Test.assert(beforeChildren.contains(child.address), message: "missing child address")
+
+    txExecutor("hybrid-custody/destroy_child.cdc", [child], [parent.address], nil)
+
+    let e = Test.eventsOfType(Type<HybridCustody.ChildAccount.ResourceDestroyed>()).removeLast() as! HybridCustody.ChildAccount.ResourceDestroyed
+    Test.assertEqual(child.address, e.address)
+    Test.assertEqual(parent.address, e.parent)
+
+    // make sure that the parent no longer has the child account (burn callback should have removed it)
+    let afterChildren: [Address] = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]))! as! [Address]
+    Test.assert(!afterChildren.contains(child.address), message: "child address found but should not have been")
+}
+
+access(all)
+fun testOwnedAccount_burnCallback() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    txExecutor("hybrid-custody/destroy_owned_account.cdc", [child], [], nil)
+
+    let children = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]))! as! [Address]
+    Test.assert(!children.contains(child.address), message: "child account found when it should not have been")
+}
+
 // --------------- End Test Cases ---------------
 
 

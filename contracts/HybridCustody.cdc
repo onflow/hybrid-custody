@@ -60,7 +60,7 @@ access(all) contract HybridCustody {
     /// ChildAccount added/removed from Manager
     ///     active  : added to Manager
     ///     !active : removed from Manager
-    access(all) event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
+    access(all) event AccountUpdated(id: UInt64?, child: Address, parent: Address?, active: Bool)
     /// OwnedAccount added/removed or sealed
     ///     active && owner != nil  : added to Manager 
     ///     !active && owner == nil : removed from Manager
@@ -359,9 +359,11 @@ access(all) contract HybridCustody {
             // Get the child account id before removing capability
             let id: UInt64 = acct.uuid
 
-            acct.parentRemoveChildCallback(parent: self.owner!.address) 
+            if self.owner != nil {
+                acct.parentRemoveChildCallback(parent: self.owner!.address) 
+            }
 
-            emit AccountUpdated(id: id, child: cap.address, parent: self.owner!.address, active: false)
+            emit AccountUpdated(id: id, child: cap.address, parent: self.owner?.address, active: false)
         }
 
         /// Contract callback that removes a child account from the Manager's child accounts in the event a child
@@ -783,11 +785,7 @@ access(all) contract HybridCustody {
         }
 
         access(contract) fun burnCallback() {
-            let keys = self.resources.keys
-            for k in keys {
-                let r <- self.resources.remove(key: k)!
-                Burner.burn(<- r)
-            }
+            self.parentRemoveChildCallback(parent: self.parent)
         }
     }
 
@@ -997,7 +995,7 @@ access(all) contract HybridCustody {
 
             let parentManager = getAccount(parent).capabilities.get<&{ManagerPublic}>(HybridCustody.ManagerPublicPath)
             if parentManager?.check() == true {
-                parentManager!.borrow()?.removeParentCallback(child: self.owner!.address)
+                parentManager!.borrow()?.removeParentCallback(child: acct.address)
             }
 
             return true
@@ -1211,11 +1209,6 @@ access(all) contract HybridCustody {
         }
 
         access(contract) fun burnCallback() {
-            for k in self.resources.keys {
-                let r <- self.resources.remove(key: k)!
-                Burner.burn(<-r)
-            }
-
             for p in self.parents.keys {
                 self.removeParent(parent: p)
             }
