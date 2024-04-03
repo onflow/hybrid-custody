@@ -1,9 +1,9 @@
 import "HybridCustody"
 import "MetadataViews"
 
-pub fun main(parent: Address, child: Address): String {
-    let acct = getAuthAccount(parent)
-    let m = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+access(all) fun main(parent: Address, child: Address): String {
+    let acct = getAuthAccount<auth(Storage) &Account>(parent)
+    let m = acct.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager not found")
 
     let c = m.borrowAccount(addr: child) ?? panic("child not found")

@@ -1,8 +1,9 @@
 import "HybridCustody"
 import "ExampleNFT"
+import "NonFungibleToken"
 
-pub fun main(parent: Address, child: Address, isPublic: Bool) {
-    let m = getAuthAccount(parent).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+access(all) fun main(parent: Address, child: Address, isPublic: Bool) {
+    let m = getAuthAccount<auth(Storage) &Account>(parent).storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
         ?? panic("manager not found")
     let acct = m.borrowAccount(addr: child)
         ?? panic("child account not found in manager")

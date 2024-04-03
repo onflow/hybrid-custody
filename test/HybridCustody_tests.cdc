@@ -17,8 +17,8 @@ access(all) let FilterKindAll = "all"
 access(all) let FilterKindAllowList = "allowlist"
 access(all) let FilterKindDenyList = "denylist"
 
-access(all) let exampleNFTPublicIdentifier = "ExampleNFTCollection"
-access(all) let exampleNFT2PublicIdentifier = "ExampleNFT2Collection"
+access(all) let exampleNFTPublicIdentifier = "exampleNFTCollection"
+access(all) let exampleNFT2PublicIdentifier = "exampleNFT2Collection"
 
 // --------------- Test cases ---------------
 
@@ -52,6 +52,8 @@ fun testSetupFactoryWithFT() {
     let tmp = Test.createAccount()
     setupFactoryManager(tmp)
 
+    txExecutor("example-token/setup.cdc", [tmp], [], nil)
+
     scriptExecutor("factory/get_ft_provider_from_factory.cdc", [tmp.address])
     scriptExecutor("factory/get_ft_balance_from_factory.cdc", [tmp.address])
     scriptExecutor("factory/get_ft_receiver_from_factory.cdc", [tmp.address])
@@ -65,17 +67,18 @@ fun testSetupChildAccount() {
 
 access(all)
 fun testPublishAccount() {
-    let tmp = Test.createAccount()
-    setupOwnedAccount(tmp, FilterKindAll)
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupOwnedAccount(child, FilterKindAll)
+    setupNFTCollection(child)
 
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
 
-    let parent = Test.createAccount()
+    txExecutor("hybrid-custody/publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address], nil)
 
-    txExecutor("hybrid-custody/publish_to_parent.cdc", [tmp], [parent.address, factory.address, filter.address], nil)
-
-    scriptExecutor("hybrid-custody/get_collection_from_inbox.cdc", [parent.address, tmp.address])
+    scriptExecutor("hybrid-custody/get_collection_from_inbox.cdc", [parent.address, child.address])
 }
 
 access(all)
@@ -103,6 +106,9 @@ fun testSetupOwnedAccountAndPublishRedeemed() {
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
 
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
+
     let parent = Test.createAccount()
 
     txExecutor("hybrid-custody/setup_owned_account_and_publish_to_parent.cdc", [child], [parent.address, factory.address, filter.address, nil, nil, nil], nil)
@@ -118,6 +124,9 @@ fun testSetupOwnedAccountWithDisplayPublishRedeemed() {
 
     let factory = getTestAccount(nftFactory)
     let filter = getTestAccount(FilterKindAll)
+
+    setupFilter(filter, FilterKindAll)
+    setupFactoryManager(factory)
 
     let parent = Test.createAccount()
 
@@ -270,7 +279,10 @@ fun testSeal() {
 
     let numKeysBefore = getNumValidKeys(child)
     Test.assert(numKeysBefore > 0, message: "no keys to revoke")
-    Test.assert(checkAuthAccountDefaultCap(account: child), message: "Missing Auth Account Capability at default path")
+
+    // Get the controller ID for the current Account capability
+    let controllerID = getAccountCapControllerID(account: child)
+        ?? panic("controller ID should not be nil")
 
     let owner = getOwner(child: child)
     Test.assert(owner! == child.address, message: "mismatched owner")
@@ -278,7 +290,9 @@ fun testSeal() {
     txExecutor("hybrid-custody/relinquish_ownership.cdc", [child], [], nil)
     let numKeysAfter = getNumValidKeys(child)
     Test.assert(numKeysAfter == 0, message: "not all keys were revoked")
-    Test.assert(!checkAuthAccountDefaultCap(account: child), message: "Found Auth Account Capability at default path")
+    let newControllerID = getAccountCapControllerID(account: child)
+        ?? panic("new controller ID should not be nil")
+    Test.assert(newControllerID != controllerID, message: "Found Auth Account Capability at default path")
     let ownerAfter = getOwner(child: child)
     Test.assert(ownerAfter == nil, message: "should not have an owner anymore")
 }
@@ -767,6 +781,8 @@ fun testGetChildAccountNFTCapabilities(){
 
     let isPublic = true
     setupNFT2Collection(child)
+    setupNFTCollection(child)
+
     addNFTCollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
     addNFT2CollectionToDelegator(child: child, parent: parent, isPublic: isPublic)
 
@@ -793,6 +809,9 @@ fun testGetNFTsAccessibleFromChildAccount(){
     setupNFTCollection(child)
     setupNFT2Collection(child)
 
+    setupNFTCollection(parent)
+    setupNFT2Collection(parent)
+
     mintNFTDefault(accounts[exampleNFT]!, receiver: child)
 
     let expectedChildIDs = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
@@ -810,7 +829,7 @@ fun testGetNFTsAccessibleFromChildAccount(){
         {child.address: expectedChildIDs}
     ])
 
-    // Mint new nfts from ExampleNFT2 and assert that get_accessible_child_nfts.cdc does not return these nfts.
+    // // Mint new nfts from ExampleNFT2 and assert that get_accessible_child_nfts.cdc does not return these nfts.
     mintExampleNFT2Default(accounts[exampleNFT2]!, receiver: child)
     let expectedChildIDs2 = (scriptExecutor("example-nft-2/get_ids.cdc", [child.address]) as! [UInt64]?)!
     let expectedAddressToIDs2: {Address: [UInt64]} = {child.address: expectedChildIDs2, parent.address: expectedParentIDs}
@@ -821,11 +840,11 @@ fun testGetNFTsAccessibleFromChildAccount(){
     )
 
     // revoke the ExampleNFT2 provider capability, preventing it from being returned.
-    let paths: [CapabilityPath] = [
-        /private/exampleNFT2Collection,
-        /private/exampleNFTCollection
+    let paths: [StoragePath] = [
+        /storage/exampleNFT2Collection,
+        /storage/exampleNFTCollection
     ]
-    txExecutor("misc/unlink_paths.cdc", [child], [paths], nil)
+    txExecutor("misc/unlink_from_storage_paths.cdc", [child], [paths], nil)
 
     let expectedAddressToIDsFails: {Address: [UInt64]} = {child.address: expectedChildIDs2}
     expectScriptFailure(
@@ -846,7 +865,6 @@ fun testGetChildAccountFTCapabilities(){
 
     let ftTypeIds = scriptExecutor("hybrid-custody/get_child_account_ft_capabilities.cdc", [parent.address])! as! {Address: [String]}
     Test.assert(ftTypeIds[child.address]![0] == nftIdentifier, message: "typeId should be: ".concat(nftIdentifier))
-
 }
 
 access(all)
@@ -1130,8 +1148,8 @@ fun getNumValidKeys(_ child: Test.TestAccount): Int {
 }
 
 access(all)
-fun checkAuthAccountDefaultCap(account: Test.TestAccount): Bool {
-    return scriptExecutor("hybrid-custody/check_default_auth_acct_linked_path.cdc", [account.address])! as! Bool
+fun getAccountCapControllerID(account: Test.TestAccount): UInt64? {
+    return scriptExecutor("hybrid-custody/get_account_cap_con_id.cdc", [account.address]) as! UInt64?
 }
 
 access(all)
@@ -1223,7 +1241,7 @@ fun setup() {
     accounts["nftCapFactory"] = adminAccount
 
     // helper nft contract so we can actually talk to nfts with tests
-    deploy("ExampleNFT", "../modules/flow-nft/contracts/ExampleNFT.cdc")
+    deploy("ExampleNFT", "../contracts/standard/ExampleNFT.cdc")
     deploy("ExampleNFT2", "../contracts/standard/ExampleNFT2.cdc")
     deploy("ExampleToken", "../contracts/standard/ExampleToken.cdc")
 

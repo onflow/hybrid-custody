@@ -31,6 +31,7 @@ import "CapabilityFilter"
 access(all) contract HybridCustody {
 
     access(all) entitlement Owner
+    access(all) entitlement Child
     access(all) entitlement Publish
     access(all) entitlement Manage
 
@@ -102,6 +103,9 @@ access(all) contract HybridCustody {
 
         /// A callback function to mark a parent as redeemed on the child account.
         access(contract) fun setRedeemed(_ addr: Address)
+
+        /// A helper function to find what controller Id to ask for if you are looking for a specific type of capability
+        access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64?
     }
 
     /// Private interface accessible to the owner of the OwnedAccount
@@ -206,19 +210,20 @@ access(all) contract HybridCustody {
         access(all) view fun getAddress(): Address
         access(all) view fun getCapabilityFactoryManager(): &{CapabilityFactory.Getter}?
         access(all) view fun getCapabilityFilter(): &{CapabilityFilter.Filter}?
+        access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64?
     }
 
     /// Methods accessible to the designated parent of a ChildAccount
     ///
     access(all) resource interface AccountPrivate {
-        access(Capabilities) view fun getCapability(controllerID: UInt64, type: Type): Capability? {
+        access(Child) view fun getCapability(controllerID: UInt64, type: Type): Capability? {
             post {
                 result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
                     "Capability is not allowed by this account's Parent"
             }
         }
         access(all) view fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
-        access(Capabilities) view fun getPrivateCapFromDelegator(type: Type): Capability? {
+        access(Child) view fun getPrivateCapFromDelegator(type: Type): Capability? {
             post {
                 result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
                     "Capability is not allowed by this account's Parent"
@@ -236,8 +241,8 @@ access(all) contract HybridCustody {
     /// Entry point for a parent to obtain, maintain and access Capabilities or perform other actions on child accounts
     ///
     access(all) resource interface ManagerPrivate {
-        access(Manage) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
-        access(Manage) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
+        access(Manage) fun addAccount(cap: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
+        access(Manage) fun borrowAccount(addr: Address): auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
         access(Manage) fun removeChild(addr: Address)
         access(Manage) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
         access(Manage) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
@@ -265,7 +270,7 @@ access(all) contract HybridCustody {
     access(all) resource Manager: ManagerPrivate, ManagerPublic, ViewResolver.Resolver {
 
         /// Mapping of restricted access child account Capabilities indexed by their address
-        access(self) let childAccounts: {Address: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>}
+        access(self) let childAccounts: {Address: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>}
         /// Mapping of unrestricted owned account Capabilities indexed by their address
         access(self) let ownedAccounts: {Address: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>}
 
@@ -299,7 +304,7 @@ access(all) contract HybridCustody {
         /// Adds a ChildAccount Capability to this Manager. If a default Filter is set in the manager, it will also be
         /// added to the ChildAccount
         ///
-        access(Manage) fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>) {
+        access(Manage) fun addAccount(cap: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>) {
             pre {
                 self.childAccounts[cap.address] == nil: "There is already a child account with this address"
             }
@@ -390,7 +395,7 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to a child account
         ///
-        access(Manage) fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, ViewResolver.Resolver}? {
+        access(Manage) fun borrowAccount(addr: Address): auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}? {
             let cap = self.childAccounts[addr]
             if cap == nil {
                 return nil
@@ -443,7 +448,7 @@ access(all) contract HybridCustody {
         /// mechanism intended to easily transfer 'root' access on this account to another account and an attempt to
         /// minimize access vectors.
         ///
-        access(Owner) fun giveOwnership(addr: Address, to: Address) {
+        access(Manage) fun giveOwnership(addr: Address, to: Address) {
             let acct = self.ownedAccounts.remove(key: addr)
                 ?? panic("account not found")
 
@@ -584,7 +589,7 @@ access(all) contract HybridCustody {
         /// Capabilities, see `getPrivateCapFromDelegator()` and `getPublicCapFromDelegator()` which use the
         /// `Delegator` retrieval path.
         ///
-        access(Capabilities) view fun getCapability(controllerID: UInt64, type: Type): Capability? {
+        access(Child) view fun getCapability(controllerID: UInt64, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
 
             let f = self.factory.borrow()!.getFactory(type)
@@ -611,7 +616,7 @@ access(all) contract HybridCustody {
         /// Retrieves a private Capability from the Delegator or nil none is found of the given type. Useful for
         /// arbitrary Capability retrieval
         ///
-        access(Capabilities) view fun getPrivateCapFromDelegator(type: Type): Capability? {
+        access(Child) view fun getPrivateCapFromDelegator(type: Type): Capability? {
             if let d = self.delegator.borrow() {
                 return d.getPrivateCapability(type)
             }
@@ -753,6 +758,15 @@ access(all) contract HybridCustody {
             return self.factory.check() ? self.factory.borrow() : nil
         }
 
+        access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64? {
+            let child = self.childCap.borrow()
+            if child == nil {
+                return nil
+            }
+
+            return child!.getControllerIDForType(type: type, forPath: forPath)
+        }
+
         // TODO: burnCallback and ResourceDestoryed event
         // destroy () {
         //     destroy <- self.resources
@@ -871,7 +885,7 @@ access(all) contract HybridCustody {
             let childAccountPrivatePath = PrivatePath(identifier: identifier)!
 
             acct.storage.save(<-childAcct, to: childAccountStorage)            
-            let delegatorCap = acct.capabilities.storage.issue<&{AccountPrivate, AccountPublic, ViewResolver.Resolver}>(childAccountStorage)
+            let delegatorCap = acct.capabilities.storage.issue<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>(childAccountStorage)
             assert(delegatorCap.check(), message: "Delegator capability check failed")
 
             acct.inbox.publish(delegatorCap, name: identifier, recipient: parentAddress)
@@ -898,7 +912,7 @@ access(all) contract HybridCustody {
         /// Returns a reference to the encapsulated account object
         ///
         access(contract) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account {
-            return self.acct.borrow()!
+            return self.acct.borrow() ?? panic("unable to borrow Account Capability")
         }
 
         /// Returns the addresses of all associated parents pending and active
@@ -1002,14 +1016,19 @@ access(all) contract HybridCustody {
             
             let acct = self.borrowAccount()
             // Unlink existing owner's Capability if owner exists
-            if self.acctOwner != nil {
-                acct.capabilities.account.getController(byCapabilityID: self.acct.id)?.delete()
-            }
-
+            // TODO: is this still needed? Sealing the account should revoke and rotate all
+            // existing account links which should mean this one is already gone.
+            // if self.acctOwner != nil {
+            //     acct.capabilities.account.getController(byCapabilityID: self.acct.id)?.delete()
+            // }
 
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
-            let cap = acct.capabilities.storage.issue<&{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
+            let cap = acct.capabilities.storage.issue<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
+
+            // make sure we can borrow the newly issued owned account
+            cap.borrow()!.borrowAccount()
+
             acct.inbox.publish(cap, name: identifier, recipient: to)
 
             self.pendingOwner = to
@@ -1043,11 +1062,7 @@ access(all) contract HybridCustody {
             let acct = self.borrowAccount()
 
             // Find all active AuthAccount capabilities so they can be removed after we make the new auth account cap
-            let idsToDestroy: [UInt64] = []
-            acct.capabilities.account.forEachController(fun(con: &AccountCapabilityController): Bool {
-                idsToDestroy.append(con.capabilityID)
-                return true
-            })
+            let controllersToDestroy = acct.capabilities.account.getControllers()
 
             // Link a new AuthAccount Capability
             let acctCap = acct.capabilities.account.issue<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()
@@ -1057,9 +1072,11 @@ access(all) contract HybridCustody {
 
             // cleanup, remove all previously found paths. We had to do it in this order because we will be unlinking
             // the existing path which will cause a deference issue with the originally borrowed auth account
-            for id in idsToDestroy {
-                newAcct.capabilities.account.getController(byCapabilityID: id)?.delete()
+            for con in controllersToDestroy {
+                newAcct.capabilities.account.getController(byCapabilityID: con.capabilityID)?.delete()
             }
+
+            assert(self.acct.check(), message: "new auth account capability is not valid")
         }
 
         /// Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one
@@ -1143,6 +1160,21 @@ access(all) contract HybridCustody {
         ///
         access(Owner) fun setDisplay(_ d: MetadataViews.Display) {
             self.display = d
+        }
+
+        access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64? {
+            let acct = self.acct.borrow()
+            if acct == nil {
+                return nil
+            }
+
+            for c in acct!.capabilities.storage.getControllers(forPath: forPath) {
+                if c.borrowType.isSubtype(of: type) {
+                    return c.capabilityID
+                }
+            }
+
+            return nil
         }
 
         init(

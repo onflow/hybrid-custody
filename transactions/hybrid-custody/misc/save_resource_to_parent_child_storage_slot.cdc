@@ -2,10 +2,10 @@ import "ExampleToken"
 import "HybridCustody"
 
 transaction(parent: Address) {
-    prepare(acct: AuthAccount) {
-        let v <- ExampleToken.createEmptyVault()
+    prepare(acct: auth(Storage) &Account) {
+        let v <- ExampleToken.createEmptyVault(vaultType: Type<@ExampleToken.Vault>())
         let identifier = HybridCustody.getChildAccountIdentifier(parent)
         let storagePath = StoragePath(identifier: identifier)!
-        acct.save(<-v, to: storagePath)
+        acct.storage.save(<-v, to: storagePath)
     }
 }

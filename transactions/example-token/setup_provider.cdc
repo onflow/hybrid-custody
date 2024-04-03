@@ -1,13 +1,13 @@
 import "FungibleToken"
 import "ExampleToken"
+import "FungibleTokenMetadataViews"
 
 transaction {
-    prepare(acct: AuthAccount) {
-    // Create Provider capability that can be used by parent to access the child's vault and transfer tokens
-     let providerPath = /private/exampleTokenProvider
-
-        acct.unlink(providerPath)
-        acct.link<&{FungibleToken.Provider}>(providerPath, target: ExampleToken.VaultStoragePath)
+    prepare(acct: auth(Capabilities) &Account) {
+        let vaultData = ExampleToken.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
+            ?? panic("Could not get the vault data view for ExampleToken")
+    
+        acct.capabilities.storage.issue<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(vaultData.storagePath)
     }
 }
  

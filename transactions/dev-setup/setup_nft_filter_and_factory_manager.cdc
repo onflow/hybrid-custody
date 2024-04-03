@@ -45,50 +45,57 @@ access(all) fun withoutPrefix(_ input: String): String{
 /// For more info, see docs at https://developers.onflow.org/docs/hybrid-custody/
 ////
 transaction(nftContractAddress: Address, nftContractName: String) {
-    prepare(acct: AuthAccount) {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
 
         /* --- CapabilityFactory Manager configuration --- */
         //
-        if acct.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
+        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
             let f <- CapabilityFactory.createFactoryManager()
-            acct.save(<-f, to: CapabilityFactory.StoragePath)
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
-            acct.unlink(CapabilityFactory.PublicPath)
-            acct.link<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath, target: CapabilityFactory.StoragePath)
+        if acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() != true {
+            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath),
+                at: CapabilityFactory.PublicPath
+            )
         }
 
         assert(
-            acct.getCapability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check(),
+            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() == true,
             message: "CapabilityFactory is not setup properly"
         )
 
-        let factoryManager = acct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+        let factoryManager = acct.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("CapabilityFactory Manager not found")
 
         // Add NFT-related Factories to the Manager
         factoryManager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        factoryManager.updateFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
 
         /* --- AllowlistFilter configuration --- */
         //
-        if acct.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath) == nil {
-            acct.save(<-CapabilityFilter.create(Type<@CapabilityFilter.AllowlistFilter>()), to: CapabilityFilter.StoragePath)
+        if acct.storage.borrow<&AnyResource>(from: CapabilityFilter.StoragePath) == nil {
+            acct.storage.save(<-CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowlistFilter>()), to: CapabilityFilter.StoragePath)
         }
 
-        if !acct.getCapability<&CapabilityFilter.AllowlistFilter{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check() {
-            acct.unlink(CapabilityFilter.PublicPath)
-            acct.link<&CapabilityFilter.AllowlistFilter{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath, target: CapabilityFilter.StoragePath)
+        if acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)?.check() != true {
+            acct.capabilities.unpublish(CapabilityFilter.PublicPath)
+
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath),
+                at: CapabilityFilter.PublicPath
+            )
         }
 
         assert(
-            acct.getCapability<&CapabilityFilter.AllowlistFilter{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(),
+            acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)?.check() == true,
             message: "AllowlistFilter is not setup properly"
         )
 
-        let filter = acct.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
+        let filter = acct.storage.borrow<auth(Mutate) &CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
             ?? panic("AllowlistFilter does not exist")
 
         // Construct an NFT Collection Type from the provided args & add to the AllowlistFilter

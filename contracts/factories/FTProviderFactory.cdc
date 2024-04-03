@@ -9,7 +9,7 @@ access(all) contract FTProviderFactory {
                     return nil
                 }
 
-                return con.capability as! Capability<&auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>
+                return con.capability as! Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>
             }
 
             return nil

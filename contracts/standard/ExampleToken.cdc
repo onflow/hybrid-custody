@@ -276,6 +276,12 @@ access(all) contract ExampleToken: FungibleToken {
         return nil
     }
 
+    // EMULATOR ONLY, anyone can mint tokens
+    access(all) fun createNewMinter(allowedAmount: UFix64): @Minter {
+        emit MinterCreated(allowedAmount: allowedAmount)
+        return <-create Minter(allowedAmount: allowedAmount)
+    }
+
     init() {
         self.totalSupply = 1000.0
 

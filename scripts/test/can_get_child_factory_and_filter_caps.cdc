@@ -2,12 +2,25 @@ import "HybridCustody"
 
 // @addr - The address of the child account
 // @parent - The parent account that this child is assigned to
-pub fun main(addr: Address, parent: Address): Bool {
+access(all) fun main(addr: Address, parent: Address): Bool {
     let identifier = HybridCustody.getChildAccountIdentifier(parent)
     let path = PrivatePath(identifier: identifier) ?? panic("invalid public path identifier for parent address")
 
-    let acctPublic = getAuthAccount(addr).getCapability<&HybridCustody.ChildAccount{HybridCustody.AccountPublic}>(path)
-        .borrow() ?? panic("account public not found")
+    let acct = getAuthAccount<auth(Capabilities) &Account>(addr)
+    var controllerID: UInt64? = nil
+    for c in acct.capabilities.storage.getControllers(forPath: StoragePath(identifier: identifier)!) {
+        if c.borrowType.isSubtype(of: Type<&{HybridCustody.AccountPublic}>()) {
+            controllerID = c.capabilityID
+            break
+        }
+    }
+
+    assert(controllerID != nil, message: "could not find controller id for parent identifier")
+
+    let controller = getAuthAccount<auth(Capabilities) &Account>(addr).capabilities.storage.getController(byCapabilityID: controllerID!)
+        ?? panic("controller not found")
+    let cap = controller.capability as! Capability<&{HybridCustody.AccountPublic}>
+    let acctPublic = cap.borrow()!
     
     let factory = acctPublic.getCapabilityFactoryManager()
     assert(factory != nil, message: "capability factory is not valid")
