@@ -1,6 +1,7 @@
 // Third-party imports
 import "MetadataViews"
 import "ViewResolver"
+import "Burner"
 
 // HC-owned imports
 import "CapabilityFactory"
@@ -204,7 +205,6 @@ access(all) contract HybridCustody {
     /// necessarily the same.
     ///
     access(all) resource interface AccountPublic {
-        // TODO: This has been disabled because you cannot get a capability without providing a type T anymore in Cadence 1.0
         access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability?
         access(all) view fun getPublicCapFromDelegator(type: Type): Capability?
         access(all) view fun getAddress(): Address
@@ -267,7 +267,8 @@ access(all) contract HybridCustody {
     /// A resource for an account which fills the Parent role of the Child-Parent account management Model. A Manager
     /// can redeem or remove child accounts, and obtain any capabilities exposed by the child account to them.
     ///
-    access(all) resource Manager: ManagerPrivate, ManagerPublic, ViewResolver.Resolver {
+    access(all) resource Manager: ManagerPrivate, ManagerPublic, ViewResolver.Resolver, Burner.Burnable {
+        access(all) event ResourceDestroyed(uuid: UInt64 = self.uuid)
 
         /// Mapping of restricted access child account Capabilities indexed by their address
         access(self) let childAccounts: {Address: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>}
@@ -498,10 +499,13 @@ access(all) contract HybridCustody {
             self.resources <- {}
         }
 
-        // TODO: burnCallback and ResourceDestroyed event
-        // destroy () {
-        //     destroy self.resources
-        // }
+        access(all) fun burnCallback() {
+            let keys = self.resources.keys
+            for k in keys {
+                let r <- self.resources.remove(key: k)!
+                Burner.burn(<-r)
+            }
+        }
     }
 
     /// The ChildAccount resource sits between a child account and a parent and is stored on the same account as the
@@ -513,7 +517,9 @@ access(all) contract HybridCustody {
     /// able to manage all ChildAccount resources it shares, without worrying about whether the upstream parent can do
     /// anything to prevent it.
     /// 
-    access(all) resource ChildAccount: AccountPrivate, AccountPublic, ViewResolver.Resolver {
+    access(all) resource ChildAccount: AccountPrivate, AccountPublic, ViewResolver.Resolver, Burner.Burnable {
+        access(all) event ResourceDestroyed(uuid: UInt64 = self.uuid, address: Address = self.childCap.address, parent: Address = self.parent)
+
         /// A Capability providing access to the underlying child account
         access(self) let childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, ViewResolver.Resolver}>
 
@@ -767,10 +773,13 @@ access(all) contract HybridCustody {
             return child!.getControllerIDForType(type: type, forPath: forPath)
         }
 
-        // TODO: burnCallback and ResourceDestoryed event
-        // destroy () {
-        //     destroy <- self.resources
-        // }
+        access(contract) fun burnCallback() {
+            let keys = self.resources.keys
+            for k in keys {
+                let r <- self.resources.remove(key: k)!
+                Burner.burn(<- r)
+            }
+        }
     }
 
     /// A resource which sits on the account it manages to make it easier for apps to configure the behavior they want 
@@ -782,7 +791,8 @@ access(all) contract HybridCustody {
     /// accounts would still exist, allowing a form of Hybrid Custody which has no true owner over an account, but
     /// shared partial ownership.
     ///
-    access(all) resource OwnedAccount: OwnedAccountPrivate, BorrowableAccount, OwnedAccountPublic, ViewResolver.Resolver {
+    access(all) resource OwnedAccount: OwnedAccountPrivate, BorrowableAccount, OwnedAccountPublic, ViewResolver.Resolver, Burner.Burnable {
+        access(all) event ResourceDestroyed(uuid: UInt64 = self.uuid, addr: Address = self.acct.address)
         /// Capability on the underlying account object
         access(self) var acct: Capability<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>
 
@@ -1015,12 +1025,6 @@ access(all) contract HybridCustody {
             self.seal()
             
             let acct = self.borrowAccount()
-            // Unlink existing owner's Capability if owner exists
-            // TODO: is this still needed? Sealing the account should revoke and rotate all
-            // existing account links which should mean this one is already gone.
-            // if self.acctOwner != nil {
-            //     acct.capabilities.account.getController(byCapabilityID: self.acct.id)?.delete()
-            // }
 
             // Link a Capability for the new owner, retrieve & publish
             let identifier =  HybridCustody.getOwnerIdentifier(to)
@@ -1192,10 +1196,12 @@ access(all) contract HybridCustody {
             self.display = nil
         }
 
-        // TODO: Use the burner interface
-        // destroy () {
-        //     destroy <- self.resources
-        // }
+        access(all) fun burnCallback() {
+            for k in self.resources.keys {
+                let r <- self.resources.remove(key: k)!
+                Burner.burn(<-r)
+            }
+        }
     }
 
     /// Utility function to get the path identifier for a parent address when interacting with a ChildAccount and its
