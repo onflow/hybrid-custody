@@ -84,7 +84,7 @@ access(all) contract HybridCustody {
     /// An OwnedAccount shares the BorrowableAccount capability to itelf with ChildAccount resources
     ///
     access(all) resource interface BorrowableAccount {
-        access(contract) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account
+        access(contract) view fun _borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account
         access(all) view fun check(): Bool
     }
 
@@ -182,7 +182,7 @@ access(all) contract HybridCustody {
         access(all) view fun getParentAddresses(): [Address]
 
         /// Borrows this OwnedAccount's AuthAccount Capability
-        access(contract) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account
+        access(Owner) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account
 
         /// Returns the current owner of this account, if there is one
         access(all) view fun getOwner(): Address?
@@ -245,7 +245,7 @@ access(all) contract HybridCustody {
         access(Manage) fun borrowAccount(addr: Address): auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
         access(Manage) fun removeChild(addr: Address)
         access(Manage) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
-        access(Manage) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
+        access(Manage) fun borrowOwnedAccount(addr: Address): auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
         access(Manage) fun removeOwned(addr: Address)
         access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
@@ -418,7 +418,7 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to an owned account
         ///
-        access(Manage) fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}? {
+        access(Manage) fun borrowOwnedAccount(addr: Address): auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}? {
             if let cap = self.ownedAccounts[addr] {
                 return cap.borrow()
             }
@@ -612,7 +612,7 @@ access(all) contract HybridCustody {
                 return nil
             }
 
-            let acct = child.borrowAccount()
+            let acct = child._borrowAccount()
             let tmp = f!.getCapability(acct: acct, controllerID: controllerID)
             if tmp == nil {
                 return nil
@@ -660,7 +660,7 @@ access(all) contract HybridCustody {
                 return nil
             }
 
-            let acct = child.borrowAccount()
+            let acct = child._borrowAccount()
             return f!.getPublicCapability(acct: acct, path: path)
         }
 
@@ -673,7 +673,7 @@ access(all) contract HybridCustody {
         /// Sets the child account as redeemed by the given Address
         ///
         access(contract) fun setRedeemed(_ addr: Address) {
-            let acct = self.childCap.borrow()!.borrowAccount()
+            let acct = self.childCap.borrow()!._borrowAccount()
             if let o = acct.storage.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
                 o.setRedeemed(addr)
             }
@@ -683,7 +683,7 @@ access(all) contract HybridCustody {
         ///
         access(Owner) fun borrowCapabilityDelegator(): auth(Capabilities) &CapabilityDelegator.Delegator? {
             let path = HybridCustody.getCapabilityDelegatorIdentifier(self.parent)
-            return self.childCap.borrow()!.borrowAccount().storage.borrow<auth(Capabilities) &CapabilityDelegator.Delegator>(
+            return self.childCap.borrow()!._borrowAccount().storage.borrow<auth(Capabilities) &CapabilityDelegator.Delegator>(
                 from: StoragePath(identifier: path)!
             )
         }
@@ -731,7 +731,7 @@ access(all) contract HybridCustody {
                 return
             }
 
-            let acct = child.borrowAccount()
+            let acct = child._borrowAccount()
             if let ownedAcct = acct.storage.borrow<auth(Owner) &OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
                 ownedAcct.removeParent(parent: parent)
             }
@@ -930,8 +930,13 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to the encapsulated account object
         ///
-        access(contract) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account {
+        access(Owner) view fun borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account {
             return self.acct.borrow() ?? panic("unable to borrow Account Capability")
+        }
+
+        // Used internally so that child account resources are able to borrow their underlying Account reference
+        access(contract) view fun _borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account {
+            return self.borrowAccount()
         }
 
         /// Returns the addresses of all associated parents pending and active

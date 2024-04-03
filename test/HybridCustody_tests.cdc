@@ -1,5 +1,6 @@
 import Test
 import "test_helpers.cdc"
+import "HybridCustody"
 
 access(all) let adminAccount = Test.getAccount(0x0000000000000007)
 access(all) let accounts: {String: Test.TestAccount} = {}
@@ -964,6 +965,148 @@ fun testGetChildAccountCapabilityFilterAndFactory() {
     scriptExecutor("test/can_get_child_factory_and_filter_caps.cdc", [child.address, parent.address])
 }
 
+access(all)
+fun testSetCapabilityFactoryForParent() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let newFactory = Test.createAccount()
+    setupEmptyFactory(newFactory)
+
+    txExecutor("hybrid-custody/set_capability_factory_for_parent.cdc", [child], [parent.address, newFactory.address], nil)
+
+    expectScriptFailure(
+        "hybrid-custody/get_nft_provider_capability.cdc",
+        [parent.address, child.address],
+        "capability not found"
+    )
+}
+
+access(all)
+fun testSetCapabilityFilterForParent() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let newFilter = Test.createAccount()
+    setupFilter(newFilter, FilterKindAllowList)
+
+    txExecutor("hybrid-custody/set_capability_filter_for_parent.cdc", [child], [parent.address, newFilter.address], nil)
+
+    expectScriptFailure(
+        "hybrid-custody/get_nft_provider_capability.cdc",
+        [parent.address, child.address],
+        "capability not found"
+    )
+}
+
+access(all)
+fun testSetChildAccountDisplay_toNil() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    txExecutor("hybrid-custody/metadata/set_child_account_display_to_nil.cdc", [parent], [child.address], nil)
+
+    expectScriptFailure(
+        "hybrid-custody/metadata/resolve_child_display_name.cdc",
+        [parent.address, child.address],
+        "unable to resolve metadata display"
+    )
+}
+
+access(all)
+fun testRemoveChild_invalidChildAccountCapability() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    txExecutor("hybrid-custody/unlink_child_capability.cdc", [child], [parent.address], nil)
+
+    txExecutor("hybrid-custody/remove_child_account.cdc", [parent], [child.address], nil)
+
+    let e = Test.eventsOfType(Type<HybridCustody.AccountUpdated>()).removeLast() as! HybridCustody.AccountUpdated
+    Test.assert(e.child == child.address, message: "unexpected AccountUpdated value")
+}
+
+access(all)
+fun testBorrowAccount_nilCapability() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+    txExecutor("hybrid-custody/unlink_child_capability.cdc", [child], [parent.address], nil)
+
+    expectScriptFailure(
+        "hybrid-custody/metadata/resolve_child_display_name.cdc",
+        [parent.address, child.address],
+        "child not found"
+    )    
+}
+
+access(all)
+fun testBorrowAccountPublic() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let res = scriptExecutor("hybrid-custody/get_account_public_address.cdc", [parent.address, child.address])! as! Address
+    Test.assertEqual(child.address, res)
+
+    txExecutor("hybrid-custody/remove_child_account.cdc", [parent], [child.address], nil)
+
+    expectScriptFailure("hybrid-custody/get_account_public_address.cdc", [parent.address, child.address], "child account not found")
+}
+
+access(all) fun testBorrowOwnedAccount() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    let owner = Test.createAccount()
+    setupAccountManager(owner)
+
+    txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil)
+    Test.assert(getPendingOwner(child: child)! == owner.address, message: "child account pending ownership was not updated correctly")
+
+    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil)
+
+    let res = scriptExecutor("hybrid-custody/borrow_owned_account.cdc", [owner.address, child.address])! as! Address
+    Test.assertEqual(child.address, res)
+
+    expectScriptFailure("hybrid-custody/borrow_owned_account.cdc", [owner.address, parent.address], "could not borrow owned account")
+}
+
+access(all)
+fun testRemoveOwned() {
+    let child = Test.createAccount()
+    let owner = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: Test.createAccount())
+    setupAccountManager(owner)
+
+    txExecutor("hybrid-custody/transfer_ownership.cdc", [child], [owner.address], nil)
+    Test.assert(getPendingOwner(child: child)! == owner.address, message: "child account pending ownership was not updated correctly")
+
+    txExecutor("hybrid-custody/accept_ownership.cdc", [owner], [child.address, nil, nil], nil)
+
+    // remove the owned account
+    txExecutor("hybrid-custody/remove_owned_account.cdc", [owner], [child.address], nil)
+
+    let sealEvent = Test.eventsOfType(Type<HybridCustody.AccountSealed>()).removeLast() as! HybridCustody.AccountSealed
+    Test.assertEqual(child.address, sealEvent.address)
+
+    let ownershipEvent = Test.eventsOfType(Type<HybridCustody.OwnershipUpdated>()).removeLast() as! HybridCustody.OwnershipUpdated
+    Test.assertEqual(owner.address, ownershipEvent.previousOwner!)
+    Test.assertEqual(nil, ownershipEvent.owner)
+}
+
 // --------------- End Test Cases ---------------
 
 
@@ -1016,6 +1159,11 @@ fun setupOwnedAccount(_ acct: Test.TestAccount, _ filterKind: String) {
 access(all)
 fun setupFactoryManager(_ acct: Test.TestAccount) {
     txExecutor("factory/setup_nft_ft_manager.cdc", [acct], [], nil)
+}
+
+access(all)
+fun setupEmptyFactory(_ acct: Test.TestAccount) {
+    txExecutor("factory/setup_empty_factory.cdc", [acct], [], nil)
 }
 
 access(all)
