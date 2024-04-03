@@ -1,0 +1,4 @@
+ignore:
+  - "contracts/standard/ExampleNFT.cdc"
+  - "contracts/standard/ExampleNFT2.cdc"
+  - "contracts/standard/ExampleToken.cdc"
