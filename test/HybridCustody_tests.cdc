@@ -1,6 +1,8 @@
 import Test
 import "test_helpers.cdc"
 import "HybridCustody"
+import "NonFungibleToken"
+import "ExampleNFT"
 
 access(all) let adminAccount = Test.getAccount(0x0000000000000007)
 access(all) let accounts: {String: Test.TestAccount} = {}
@@ -1151,6 +1153,31 @@ fun testOwnedAccount_burnCallback() {
 
     let children = (scriptExecutor("hybrid-custody/get_child_addresses.cdc", [parent.address]))! as! [Address]
     Test.assert(!children.contains(child.address), message: "child account found when it should not have been")
+}
+
+access(all)
+fun testGetPublicCapability() {
+    let child = Test.createAccount()
+    let parent = Test.createAccount()
+
+    setupChildAndParent_FilterKindAll(child: child, parent: parent)
+
+    setupNFTCollection(child)
+    mintNFTDefault(accounts[exampleNFT]!, receiver: child)
+
+    let ids = scriptExecutor(
+        "hybrid-custody/get_collection_public_from_child.cdc",
+        [parent.address, child.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, Type<&{NonFungibleToken.CollectionPublic}>()]
+    )! as! [UInt64]
+    Test.assert(ids.length > 0, message: "unexpected number of nfts in collection")
+
+    // now try with a type that doesn't have a factory configured for it
+    Test.expectFailure(fun() {
+        scriptExecutor(
+            "hybrid-custody/get_collection_public_from_child.cdc",
+            [parent.address, child.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, Type<&ExampleNFT.Collection>()]
+        )! as! [UInt64]
+    }, errorMessageSubstring: "could not get capability")
 }
 
 // --------------- End Test Cases ---------------

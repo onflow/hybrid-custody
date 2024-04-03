@@ -507,12 +507,6 @@ access(all) contract HybridCustody {
                 self.ownedAccounts.length == 0: "cannot destroy a manager with owned accounts"
             }
 
-            let keys = self.resources.keys
-            for k in keys {
-                let r <- self.resources.remove(key: k)!
-                Burner.burn(<-r)
-            }
-
             for c in self.childAccounts.keys {
                 self.removeChild(addr: c)
             }
@@ -676,9 +670,7 @@ access(all) contract HybridCustody {
         ///
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!._borrowAccount()
-            if let o = acct.storage.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
-                o.setRedeemed(addr)
-            }
+            acct.storage.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)?.setRedeemed(addr)
         }
 
         /// Returns a reference to the stored delegator, generally used for arbitrary Capability retrieval
