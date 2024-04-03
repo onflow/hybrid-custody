@@ -2,3 +2,8 @@ ignore:
   - "contracts/standard/ExampleNFT.cdc"
   - "contracts/standard/ExampleNFT2.cdc"
   - "contracts/standard/ExampleToken.cdc"
+  - "contracts/factories/FTBalanceFactory.cdc"
+  - "contracts/factories/FTProviderFactory.cdc"
+  - "contracts/factories/FTReceiverFactory.cdc"
+  - "contracts/factories/NFTCollectionPublicFactory.cdc"
+  - "contracts/factories/NFTProviderFactory.cdc"
