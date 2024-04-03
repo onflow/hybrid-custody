@@ -30,7 +30,6 @@ import "CapabilityFilter"
 /// Repo reference: https://github.com/onflow/hybrid-custody
 ///
 access(all) contract HybridCustody {
-
     access(all) entitlement Owner
     access(all) entitlement Child
     access(all) entitlement Publish
@@ -330,7 +329,7 @@ access(all) contract HybridCustody {
 
             self.filter = cap
         }
-        
+
         /// Sets the Filter Capability for this Manager, propagating to the specified child account
         ///
         access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
@@ -501,6 +500,10 @@ access(all) contract HybridCustody {
             self.resources <- {}
         }
 
+        // When a manager resource is destroyed, attempt to remove this parent from every
+        // child account it currently has
+        //
+        // Destruction will fail if there are any owned account to prevent loss of access to an account
         access(contract) fun burnCallback() {
             pre {
                 // Prevent accidental burning of a resource that has ownership of other accounts
@@ -776,6 +779,7 @@ access(all) contract HybridCustody {
             return child!.getControllerIDForType(type: type, forPath: forPath)
         }
 
+        // When a ChildAccount is destroyed, attempt to remove it from the parent account as well
         access(contract) fun burnCallback() {
             self.parentRemoveChildCallback(parent: self.parent)
         }
@@ -1200,6 +1204,7 @@ access(all) contract HybridCustody {
             self.display = nil
         }
 
+        // When an OwnedAccount is destroyed, remove it from every configured parent account
         access(contract) fun burnCallback() {
             for p in self.parents.keys {
                 self.removeParent(parent: p)
