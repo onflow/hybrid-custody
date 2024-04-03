@@ -499,11 +499,20 @@ access(all) contract HybridCustody {
             self.resources <- {}
         }
 
-        access(all) fun burnCallback() {
+        access(contract) fun burnCallback() {
+            pre {
+                // Prevent accidental burning of a resource that has ownership of other accounts
+                self.ownedAccounts.length == 0: "cannot destroy a manager with owned accounts"
+            }
+
             let keys = self.resources.keys
             for k in keys {
                 let r <- self.resources.remove(key: k)!
                 Burner.burn(<-r)
+            }
+
+            for c in self.childAccounts.keys {
+                self.removeChild(addr: c)
             }
         }
     }
@@ -969,14 +978,14 @@ access(all) contract HybridCustody {
             for c in childAccountControllers {
                 c.delete()
             }
-            destroy <- acct.storage.load<@AnyResource>(from: storagePath)
+            Burner.burn(<- acct.storage.load<@AnyResource>(from: storagePath))
 
             let delegatorStoragePath = StoragePath(identifier: capDelegatorIdentifier)!
             let delegatorControllers = acct.capabilities.storage.getControllers(forPath: delegatorStoragePath)
             for c in delegatorControllers {
                 c.delete()
             }
-            destroy <- acct.storage.load<@AnyResource>(from: delegatorStoragePath)
+            Burner.burn(<- acct.storage.load<@AnyResource>(from: delegatorStoragePath))
 
             self.parents.remove(key: parent)
             emit AccountUpdated(id: self.uuid, child: self.acct.address, parent: parent, active: false)
@@ -1196,10 +1205,14 @@ access(all) contract HybridCustody {
             self.display = nil
         }
 
-        access(all) fun burnCallback() {
+        access(contract) fun burnCallback() {
             for k in self.resources.keys {
                 let r <- self.resources.remove(key: k)!
                 Burner.burn(<-r)
+            }
+
+            for p in self.parents.keys {
+                self.removeParent(parent: p)
             }
         }
     }
