@@ -16,13 +16,12 @@
 access(all) contract CapabilityFactory {
     
     access(all) let StoragePath: StoragePath
-    access(all) let PrivatePath: PrivatePath
     access(all) let PublicPath: PublicPath
     
     /// Factory structures a common interface for Capability retrieval from a given account at a specified path
     ///
     access(all) struct interface Factory {
-        access(Capabilities) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability?
+        access(all) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability?
         access(all) view fun getPublicCapability(acct: auth(Capabilities) &Account, path: PublicPath): Capability?
     }
 
@@ -61,7 +60,7 @@ access(all) contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to add
         ///
-        access(Mutate) fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Mutate | Insert) fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             pre {
                 !self.factories.containsKey(t): "Factory of given type already exists"
             }
@@ -73,7 +72,7 @@ access(all) contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to replace existing Factory
         ///
-        access(Mutate) fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Mutate | Insert) fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             self.factories[t] = f
         }
 
@@ -81,7 +80,7 @@ access(all) contract CapabilityFactory {
         ///
         /// @param t: Type the Factory is indexed on
         ///
-        access(Mutate) fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
+        access(Mutate | Remove) fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
             return self.factories.remove(key: t)
         }
 
@@ -100,7 +99,6 @@ access(all) contract CapabilityFactory {
     init() {
         let identifier = "CapabilityFactory_".concat(self.account.address.toString())
         self.StoragePath = StoragePath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
     }
 }

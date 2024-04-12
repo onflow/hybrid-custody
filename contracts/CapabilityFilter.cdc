@@ -39,7 +39,7 @@ access(all) contract CapabilityFilter {
         /// 
         /// @param type: The type to add to the denied types mapping
         ///
-        access(Mutate) fun addType(_ type: Type) {
+        access(Mutate | Insert) fun addType(_ type: Type) {
             self.deniedTypes.insert(key: type, true)
             emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: true)
         }
@@ -48,7 +48,7 @@ access(all) contract CapabilityFilter {
         ///
         /// @param type: The type to remove from the denied types mapping
         ///
-        access(Mutate) fun removeType(_ type: Type) {
+        access(Mutate | Remove) fun removeType(_ type: Type) {
             if let removed = self.deniedTypes.remove(key: type) {
                 emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
             }
@@ -56,7 +56,7 @@ access(all) contract CapabilityFilter {
 
         /// Removes all types from the mapping of denied types
         ///
-        access(Mutate) fun removeAllTypes() {
+        access(Mutate | Remove) fun removeAllTypes() {
             for type in self.deniedTypes.keys {
                 self.removeType(type)
             }
@@ -106,7 +106,7 @@ access(all) contract CapabilityFilter {
         /// 
         /// @param type: The type to add to the allowed types mapping
         ///
-        access(Mutate) fun addType(_ type: Type) {
+        access(Mutate | Insert) fun addType(_ type: Type) {
             self.allowedTypes.insert(key: type, true)
             emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: true)
         }
@@ -115,7 +115,7 @@ access(all) contract CapabilityFilter {
         ///
         /// @param type: The type to remove from the denied types mapping
         ///
-        access(Mutate) fun removeType(_ type: Type) {
+        access(Mutate | Remove) fun removeType(_ type: Type) {
             if let removed = self.allowedTypes.remove(key: type) {
                 emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
             }
@@ -123,7 +123,7 @@ access(all) contract CapabilityFilter {
 
         /// Removes all types from the mapping of denied types
         ///
-        access(Mutate) fun removeAllTypes() {
+        access(Mutate | Remove) fun removeAllTypes() {
             for type in self.allowedTypes.keys {
                 self.removeType(type)
             }

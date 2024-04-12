@@ -4,7 +4,7 @@ import "NonFungibleToken"
 import "ExampleNFT"
 
 access(all) fun main(address: Address): Bool {
-    let privateCaps: [Capability] = getAuthAccount<auth(Capabilities) &Account>(address).capabilities.storage.issue<auth(Capabilities) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath)
+    let privateCaps: [Capability] = getAuthAccount<auth(Capabilities) &Account>(address).capabilities.storage.issue<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath)
         .borrow()
         ?.getAllPrivate()
         ?? panic("could not borrow delegator")

@@ -7,7 +7,7 @@ access(all) fun main(addr: Address): Bool {
     let acct = getAuthAccount<auth(Capabilities) &Account>(addr)
 
     let delegator = 
-        acct.capabilities.storage.issue<auth(Capabilities) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath).borrow()
+        acct.capabilities.storage.issue<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath).borrow()
         ?? panic("could not borrow delegator")
 
     let desiredType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()

@@ -32,7 +32,6 @@ import "CapabilityFilter"
 access(all) contract HybridCustody {
     access(all) entitlement Owner
     access(all) entitlement Child
-    access(all) entitlement Publish
     access(all) entitlement Manage
 
     /* --- Canonical Paths --- */
@@ -114,7 +113,7 @@ access(all) contract HybridCustody {
         /// supplied factory and filter to manage what can be obtained from the child account, and a new
         /// CapabilityDelegator resource is created for the sharing of one-off capabilities. Each of these pieces of
         /// access control are managed through the child account.
-        access(Publish | Owner) fun publishToParent(
+        access(Owner) fun publishToParent(
             parentAddress: Address,
             factory: Capability<&{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
@@ -542,7 +541,7 @@ access(all) contract HybridCustody {
         /// certain type. When using the CapabilityDelegator, you do not have the ability to specify which path a
         /// capability came from. For instance, Dapper Wallet might choose to expose a Capability to their Full TopShot
         /// collection, but only to the path that the collection exists in.
-        access(self) let delegator: Capability<auth(Capabilities) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>
+        access(self) let delegator: Capability<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>
 
         /// managerCapabilityFilter is a component optionally given to a child account when a manager redeems it. If
         /// this filter is not nil, any Capability returned through the `getCapability` function checks that the
@@ -673,9 +672,9 @@ access(all) contract HybridCustody {
 
         /// Returns a reference to the stored delegator, generally used for arbitrary Capability retrieval
         ///
-        access(Owner) fun borrowCapabilityDelegator(): auth(Capabilities) &CapabilityDelegator.Delegator? {
+        access(Owner) fun borrowCapabilityDelegator(): auth(CapabilityDelegator.Get) &CapabilityDelegator.Delegator? {
             let path = HybridCustody.getCapabilityDelegatorIdentifier(self.parent)
-            return self.childCap.borrow()!._borrowAccount().storage.borrow<auth(Capabilities) &CapabilityDelegator.Delegator>(
+            return self.childCap.borrow()!._borrowAccount().storage.borrow<auth(CapabilityDelegator.Get) &CapabilityDelegator.Delegator>(
                 from: StoragePath(identifier: path)!
             )
         }
@@ -733,7 +732,7 @@ access(all) contract HybridCustody {
             _ childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, ViewResolver.Resolver}>,
             _ factory: Capability<&{CapabilityFactory.Getter}>,
             _ filter: Capability<&{CapabilityFilter.Filter}>,
-            _ delegator: Capability<auth(Capabilities) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>,
+            _ delegator: Capability<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>,
             _ parent: Address
         ) {
             pre {
@@ -852,7 +851,7 @@ access(all) contract HybridCustody {
         /// 4. Publish the newly made private link to the designated parent's inbox for them to claim on their @Manager
         ///    resource.
         ///
-        access(Publish | Owner) fun publishToParent(
+        access(Owner) fun publishToParent(
             parentAddress: Address,
             factory: Capability<&{CapabilityFactory.Getter}>,
             filter: Capability<&{CapabilityFilter.Filter}>
@@ -881,7 +880,7 @@ access(all) contract HybridCustody {
             let pubCap = acct.capabilities.storage.issue<&{CapabilityDelegator.GetterPublic}>(capDelegatorStorage)
             acct.capabilities.publish(pubCap, at: capDelegatorPublic)
 
-            let delegator = acct.capabilities.storage.issue<auth(Capabilities) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(capDelegatorStorage)
+            let delegator = acct.capabilities.storage.issue<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>(capDelegatorStorage)
             assert(delegator.check(), message: "failed to setup capability delegator for parent address")
 
             let borrowableCap = self.borrowAccount().capabilities.storage.issue<&{BorrowableAccount, OwnedAccountPublic, ViewResolver.Resolver}>(

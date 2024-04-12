@@ -12,8 +12,9 @@ access(all) contract CapabilityDelegator {
     /* --- Canonical Paths --- */
     //
     access(all) let StoragePath: StoragePath
-    access(all) let PrivatePath: PrivatePath
     access(all) let PublicPath: PublicPath
+
+    access(all) entitlement Get
     
     /* --- Events --- */
     //
@@ -23,13 +24,13 @@ access(all) contract CapabilityDelegator {
     /// Private interface for Capability retrieval
     ///
     access(all) resource interface GetterPrivate {
-        access(Capabilities) view fun getPrivateCapability(_ type: Type): Capability? {
+        access(Get) view fun getPrivateCapability(_ type: Type): Capability? {
             post {
                 result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type"
             }
         }
         access(all) view fun findFirstPrivateType(_ type: Type): Type?
-        access(Capabilities) fun getAllPrivate(): [Capability]
+        access(Get) fun getAllPrivate(): [Capability]
     }
 
     /// Exposes public Capability retrieval
@@ -66,7 +67,7 @@ access(all) contract CapabilityDelegator {
         /// @param type: Type of the Capability to retrieve
         /// @return Capability of the given Type if it exists, nil otherwise
         ///
-        access(Capabilities) view fun getPrivateCapability(_ type: Type): Capability? {
+        access(Get) view fun getPrivateCapability(_ type: Type): Capability? {
             return self.privateCapabilities[type]
         }
 
@@ -82,7 +83,7 @@ access(all) contract CapabilityDelegator {
         ///
         /// @return List of all private Capabilities
         ///
-        access(Capabilities) fun getAllPrivate(): [Capability] {
+        access(Get) fun getAllPrivate(): [Capability] {
             return self.privateCapabilities.values
         }
 
@@ -122,7 +123,7 @@ access(all) contract CapabilityDelegator {
         /// @param cap: Capability to add
         /// @param isPublic: Whether the Capability should be public or private
         ///
-        access(Mutate) fun addCapability(cap: Capability, isPublic: Bool) {
+        access(Mutate | Insert) fun addCapability(cap: Capability, isPublic: Bool) {
             pre {
                 cap.check<&AnyResource>(): "Invalid Capability provided"
             }
@@ -138,7 +139,7 @@ access(all) contract CapabilityDelegator {
         ///
         /// @param cap: Capability to remove
         ///
-        access(Mutate) fun removeCapability(cap: Capability) {
+        access(Mutate | Remove) fun removeCapability(cap: Capability) {
             if let removedPublic = self.publicCapabilities.remove(key: cap.getType()) {
                 emit DelegatorUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
             }
@@ -167,7 +168,6 @@ access(all) contract CapabilityDelegator {
     init() {
         let identifier = "CapabilityDelegator_".concat(self.account.address.toString())
         self.StoragePath = StoragePath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
     }
 }
