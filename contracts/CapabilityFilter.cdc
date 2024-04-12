@@ -12,7 +12,6 @@ access(all) contract CapabilityFilter {
     //
     access(all) let StoragePath: StoragePath
     access(all) let PublicPath: PublicPath
-    access(all) let PrivatePath: PrivatePath
 
     /* --- Events --- */
     //
@@ -210,6 +209,5 @@ access(all) contract CapabilityFilter {
         
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
     }
 }

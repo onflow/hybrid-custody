@@ -15,7 +15,7 @@ access(all) contract NFTCollectionPublicFactory {
             return nil
         }
 
-        access(all) view fun getPublicCapability(acct: auth(Capabilities) &Account, path: PublicPath): Capability? {
+        access(all) view fun getPublicCapability(acct: &Account, path: PublicPath): Capability? {
             return acct.capabilities.get<&{NonFungibleToken.CollectionPublic}>(path)
         }
     }

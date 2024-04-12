@@ -22,7 +22,7 @@ access(all) contract CapabilityFactory {
     ///
     access(all) struct interface Factory {
         access(all) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability?
-        access(all) view fun getPublicCapability(acct: auth(Capabilities) &Account, path: PublicPath): Capability?
+        access(all) view fun getPublicCapability(acct: &Account, path: PublicPath): Capability?
     }
 
     /// Getter defines an interface for retrieval of a Factory if contained within the implementing resource
