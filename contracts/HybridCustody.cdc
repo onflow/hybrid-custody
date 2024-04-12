@@ -41,14 +41,9 @@ access(all) contract HybridCustody {
     //
     access(all) let OwnedAccountStoragePath: StoragePath
     access(all) let OwnedAccountPublicPath: PublicPath
-    access(all) let OwnedAccountPrivatePath: PrivatePath
 
     access(all) let ManagerStoragePath: StoragePath
     access(all) let ManagerPublicPath: PublicPath
-    access(all) let ManagerPrivatePath: PrivatePath
-
-    access(all) let LinkedAccountPrivatePath: PrivatePath
-    access(all) let BorrowableAccountPrivatePath: PrivatePath
 
     /* --- Events --- */
     //
@@ -153,7 +148,7 @@ access(all) contract HybridCustody {
         }
 
         /// Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the
-        /// account to start managing their own filter for retrieving Capabilities on Private Paths
+        /// account to start managing their own filter for retrieving Capabilities
         access(Owner) fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
             pre {
                 cap.check(): "Invalid CapabilityFilter Capability provided"
@@ -596,8 +591,8 @@ access(all) contract HybridCustody {
             self.filter = cap
         }
 
-        /// The main function to a child account's capabilities from a parent account. When a PrivatePath type is used,
-        /// the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to
+        /// The main function to a child account's capabilities from a parent account. When getting a capability, the CapabilityFilter will be borrowed and
+        /// the Capability being returned will be checked against it to
         /// ensure that borrowing is permitted. If not allowed, nil is returned.
         /// Also know that this method retrieves Capabilities via the CapabilityFactory path. To retrieve arbitrary 
         /// Capabilities, see `getPrivateCapFromDelegator()` and `getPublicCapFromDelegator()` which use the
@@ -882,7 +877,6 @@ access(all) contract HybridCustody {
             }
 
             let capDelegatorPublic = PublicPath(identifier: capDelegatorIdentifier)!
-            // let capDelegatorPrivate = PrivatePath(identifier: capDelegatorIdentifier)!
 
             let pubCap = acct.capabilities.storage.issue<&{CapabilityDelegator.GetterPublic}>(capDelegatorStorage)
             acct.capabilities.publish(pubCap, at: capDelegatorPublic)
@@ -895,7 +889,6 @@ access(all) contract HybridCustody {
             )
 
             let childAcct <- create ChildAccount(borrowableCap, factory, filter, delegator, parentAddress)
-            let childAccountPrivatePath = PrivatePath(identifier: identifier)!
 
             acct.storage.save(<-childAcct, to: childAccountStorage)            
             let delegatorCap = acct.capabilities.storage.issue<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>(childAccountStorage)
@@ -1261,15 +1254,10 @@ access(all) contract HybridCustody {
     init() {
         let identifier = "HybridCustodyChild_".concat(self.account.address.toString())
         self.OwnedAccountStoragePath = StoragePath(identifier: identifier)!
-        self.OwnedAccountPrivatePath = PrivatePath(identifier: identifier)!
         self.OwnedAccountPublicPath = PublicPath(identifier: identifier)!
-
-        self.LinkedAccountPrivatePath = PrivatePath(identifier: "LinkedAccountPrivatePath_".concat(identifier))!
-        self.BorrowableAccountPrivatePath = PrivatePath(identifier: "BorrowableAccountPrivatePath_".concat(identifier))!
 
         let managerIdentifier = "HybridCustodyManager_".concat(self.account.address.toString())
         self.ManagerStoragePath = StoragePath(identifier: managerIdentifier)!
         self.ManagerPublicPath = PublicPath(identifier: managerIdentifier)!
-        self.ManagerPrivatePath = PrivatePath(identifier: managerIdentifier)!
     }
 }
