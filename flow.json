@@ -134,6 +134,14 @@
         "testnet": "294e44e1ec6993c6"
       }
     },
+    "NFTCollectionFactory": {
+      "source": "./contracts/factories/NFTCollectionFactory.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "testing": "0000000000000007",
+        "testnet": "294e44e1ec6993c6"
+      }
+    },
     "FungibleToken": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/FungibleToken.cdc",
       "aliases": {
