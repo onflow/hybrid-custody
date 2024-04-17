@@ -7,3 +7,5 @@ ignore:
   - "contracts/factories/FTReceiverFactory.cdc"
   - "contracts/factories/NFTCollectionPublicFactory.cdc"
   - "contracts/factories/NFTProviderFactory.cdc"
+  - "contracts/factories/FTVaultFactory.cdc"
+  - "contracts/factories/NFTCollectionFactory.cdc"

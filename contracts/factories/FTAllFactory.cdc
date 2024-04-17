@@ -5,11 +5,11 @@ access(all) contract FTAllFactory {
     access(all) struct Factory: CapabilityFactory.Factory {
         access(all) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability? {
             if let con = acct.capabilities.storage.getController(byCapabilityID: controllerID) {
-                if !con.capability.check<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Balance, FungibleToken.Receiver}>() {
+                if !con.capability.check<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>() {
                     return nil
                 }
                 
-                return con.capability as! Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Balance, FungibleToken.Receiver}>
+                return con.capability as! Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>
             }
 
             return nil

@@ -54,6 +54,15 @@
         "mainnet": "d8a7e05a7ac670c0"
       }
     },
+    "FTVaultFactory": {
+      "source": "./contracts/factories/FTVaultFactory.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "testing": "0000000000000007",
+        "testnet": "294e44e1ec6993c6",
+        "mainnet": "d8a7e05a7ac670c0"
+      }
+    },
     "FTBalanceFactory": {
       "source": "./contracts/factories/FTBalanceFactory.cdc",
       "aliases": {
@@ -328,6 +337,8 @@
         "NFTProviderFactory",
         "NFTProviderAndCollectionFactory",
         "NFTCollectionPublicFactory",
+        "FTVaultFactory",
+        "NFTCollectionFactory",
         "ExampleNFT",
         "ExampleNFT2",
         "ExampleToken",
@@ -354,7 +365,9 @@
         "FTAllFactory",
         "FTBalanceFactory",
         "FTReceiverBalanceFactory",
-        "FTReceiverFactory"
+        "FTReceiverFactory",
+        "FTVaultFactory",
+        "NFTCollectionFactory"
       ]
     },
     "mainnet": {
@@ -370,7 +383,9 @@
         "FTAllFactory",
         "FTBalanceFactory",
         "FTReceiverBalanceFactory",
-        "FTReceiverFactory"
+        "FTReceiverFactory",
+        "FTVaultFactory",
+        "NFTCollectionFactory"
       ]
     }
   }
