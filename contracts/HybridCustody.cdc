@@ -1100,9 +1100,9 @@ access(all) contract HybridCustody {
 
         /// Retrieves a reference to the ChildAccount associated with the given parent account if one exists.
         ///
-        access(Owner) fun borrowChildAccount(parent: Address): auth(Capabilities) &ChildAccount? {
+        access(Owner) fun borrowChildAccount(parent: Address): auth(Child) &ChildAccount? {
             let identifier = HybridCustody.getChildAccountIdentifier(parent)
-            return self.borrowAccount().storage.borrow<auth(Capabilities) &ChildAccount>(from: StoragePath(identifier: identifier)!)
+            return self.borrowAccount().storage.borrow<auth(Child) &ChildAccount>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Sets the CapabilityFactory Manager for the specified parent in the associated ChildAccount.
