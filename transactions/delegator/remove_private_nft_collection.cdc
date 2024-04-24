@@ -6,7 +6,7 @@ import "ExampleNFT"
 
 transaction {
     prepare(acct: auth(BorrowValue, Capabilities) &Account) {
-        let delegator = acct.storage.borrow<auth(Mutate) &CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
+        let delegator = acct.storage.borrow<auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
             ?? panic("delegator not found")
         
         let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData

@@ -5,7 +5,7 @@ import "ExampleNFT"
 
 transaction {
     prepare(acct: auth(BorrowValue, Capabilities) &Account) {
-        let delegator = acct.storage.borrow<auth(Mutate) &CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
+        let delegator = acct.storage.borrow<auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
             ?? panic("delegator not found")
 
         let sharedCap 

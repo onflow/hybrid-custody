@@ -67,7 +67,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
             message: "CapabilityFactory is not setup properly"
         )
 
-        let factoryManager = acct.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+        let factoryManager = acct.storage.borrow<auth(CapabilityFactory.Owner) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("CapabilityFactory Manager not found")
 
         // Add NFT-related Factories to the Manager
@@ -95,7 +95,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
             message: "AllowlistFilter is not setup properly"
         )
 
-        let filter = acct.storage.borrow<auth(Mutate) &CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
+        let filter = acct.storage.borrow<auth(CapabilityFilter.Owner) &CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
             ?? panic("AllowlistFilter does not exist")
 
         // Construct an NFT Collection Type from the provided args & add to the AllowlistFilter

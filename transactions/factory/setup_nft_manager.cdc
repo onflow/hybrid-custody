@@ -24,7 +24,7 @@ transaction {
             message: "CapabilityFactory is not setup properly"
         )
 
-        let manager = acct.storage.borrow<auth(Mutate) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+        let manager = acct.storage.borrow<auth(CapabilityFactory.Owner) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
             ?? panic("manager not found")
 
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())

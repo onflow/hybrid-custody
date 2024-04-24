@@ -234,13 +234,13 @@ access(all) contract HybridCustody {
     /// Entry point for a parent to obtain, maintain and access Capabilities or perform other actions on child accounts
     ///
     access(all) resource interface ManagerPrivate {
-        access(Manage | Insert) fun addAccount(cap: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
+        access(Manage) fun addAccount(cap: Capability<auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}>)
         access(Manage) fun borrowAccount(addr: Address): auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}?
-        access(Manage | Remove) fun removeChild(addr: Address)
-        access(Manage | Insert) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
+        access(Manage) fun removeChild(addr: Address)
+        access(Manage) fun addOwnedAccount(cap: Capability<auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}>)
         access(Manage) fun borrowOwnedAccount(addr: Address): auth(Owner) &{OwnedAccountPrivate, OwnedAccountPublic, ViewResolver.Resolver}?
-        access(Manage | Remove) fun removeOwned(addr: Address)
-        access(Manage | Mutate) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+        access(Manage) fun removeOwned(addr: Address)
+        access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             pre {
                 cap == nil || cap!.check(): "Invalid Manager Capability Filter"
             }
@@ -282,7 +282,7 @@ access(all) contract HybridCustody {
 
         /// Sets the Display on the ChildAccount. If nil, the display is removed.
         ///
-        access(Manage | Mutate) fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
+        access(Manage) fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
             pre {
                 self.childAccounts[address] != nil: "There is no child account with this address"
             }
@@ -316,7 +316,7 @@ access(all) contract HybridCustody {
 
         /// Sets the default Filter Capability for this Manager. Does not propagate to child accounts.
         ///
-        access(Manage | Mutate) fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
+        access(Manage) fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
             pre {
                 cap == nil || cap!.check(): "supplied capability must be nil or check must pass"
             }
@@ -326,7 +326,7 @@ access(all) contract HybridCustody {
 
         /// Sets the Filter Capability for this Manager, propagating to the specified child account
         ///
-        access(Manage | Mutate) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+        access(Manage) fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
             let acct = self.borrowAccount(addr: childAddress) 
                 ?? panic("child account not found")
 
@@ -1124,9 +1124,9 @@ access(all) contract HybridCustody {
 
         /// Retrieves a reference to the Delegator associated with the given parent account if one exists.
         ///
-        access(Owner) fun borrowCapabilityDelegatorForParent(parent: Address): auth(Mutate) &CapabilityDelegator.Delegator? {
+        access(Owner) fun borrowCapabilityDelegatorForParent(parent: Address): auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator? {
             let identifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
-            return self.borrowAccount().storage.borrow<auth(Mutate) &CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
+            return self.borrowAccount().storage.borrow<auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Adds the provided Capability to the Delegator associated with the given parent account.
