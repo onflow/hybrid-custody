@@ -10,7 +10,7 @@ access(all) fun main(addr: Address): Bool {
         acct.capabilities.storage.issue<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath).borrow()
         ?? panic("could not borrow delegator")
 
-    let desiredType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
+    let desiredType = Type<Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>>()
     let foundType = delegator.findFirstPrivateType(desiredType) ?? panic("no type found")
     
     let nakedCap = delegator.getPrivateCapability(foundType) ?? panic("requested capability type was not found")

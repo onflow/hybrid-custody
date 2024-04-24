@@ -38,9 +38,9 @@ fun testGetSupportedTypesFromManager() {
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
         Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
     ]
     for e in expectedTypes {
         Test.assert(supportedTypes.contains(e), message: "missing expected type in supported types")
@@ -51,7 +51,7 @@ access(all)
 fun testAddFactoryFails() {
     expectScriptFailure(
         "test/add_type_for_nft_provider_factory.cdc",
-        [creator.address, Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()],
+        [creator.address, Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()],
         "Factory of given type already exists"
     )
 }
@@ -71,9 +71,9 @@ fun testAddFactorySucceeds() {
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
         Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(),
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>(),
         Type<&{NonFungibleToken.Receiver}>()
     ]
 
@@ -121,9 +121,9 @@ fun testSetupNFTManager() {
     let supportedTypes = scriptExecutor("factory/get_supported_types_from_manager.cdc", [tmp.address])! as! [Type]
 
     let expectedTypes = [
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
     ]
     
     for e in expectedTypes {
@@ -180,9 +180,9 @@ fun testSetupNFTFTManager() {
         Type<&{FungibleToken.Receiver}>(),
         Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(),
         Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(),
         Type<&{NonFungibleToken.CollectionPublic}>(),
-        Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+        Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
     ]
 
     for e in expectedTypes {

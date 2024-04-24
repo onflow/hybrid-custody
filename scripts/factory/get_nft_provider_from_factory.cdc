@@ -13,8 +13,8 @@ access(all) fun main(addr: Address) {
     let controllers = acct.capabilities.storage.getControllers(forPath: d.storagePath)
 
     for c in controllers {
-        if c.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()) {
-            factory.getCapability(acct: acct, controllerID: c.capabilityID)! as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>
+        if c.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()) {
+            factory.getCapability(acct: acct, controllerID: c.capabilityID)! as! Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>
             return 
         }
     }

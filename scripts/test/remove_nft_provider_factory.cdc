@@ -10,7 +10,7 @@ access(all) fun main(address: Address): Bool {
     
     let expectedType = Type<NFTProviderFactory.Factory>()
     
-    if let removed = managerRef.removeFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()) {
+    if let removed = managerRef.removeFactory(Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()) {
         return removed.getType() == expectedType
     }
 

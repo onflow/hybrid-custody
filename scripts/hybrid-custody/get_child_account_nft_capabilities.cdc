@@ -9,7 +9,7 @@ access(all) fun main(addr: Address): AnyStruct {
 
   var typeIdsWithProvider: {Address: [String]} = {}
   
-  let providerType = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+  let providerType = Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
 
   // Iterate through child accounts
   for address in manager.getChildAddresses() {
@@ -26,7 +26,7 @@ access(all) fun main(addr: Address): AnyStruct {
         }
 
         if let cap = childAcct.getCapability(controllerID: c.capabilityID, type: providerType) {
-          let providerCap = cap as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}> 
+          let providerCap = cap as! Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}> 
 
           if !providerCap.check(){
             continue

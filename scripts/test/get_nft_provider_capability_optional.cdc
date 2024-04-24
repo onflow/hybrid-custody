@@ -14,7 +14,7 @@ access(all) fun main(parent: Address, child: Address, returnsNil: Bool): Bool {
 
     let collectionData = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-    let type = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+    let type = Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
     let controllerID = childAcct.getControllerIDForType(type: type, forPath: collectionData.storagePath)
         ?? panic("could not find controller for desired type")
 

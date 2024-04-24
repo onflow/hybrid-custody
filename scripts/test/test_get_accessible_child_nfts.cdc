@@ -29,7 +29,7 @@ access(all) fun main(addr: Address, expectedAddressToIDs: {Address: [UInt64]}){
   var typeIdsWithProvider: {Address: [String]} = {}
   var nftViews: {Address: {UInt64: MetadataViews.Display}} = {}
 
-  let providerType = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+  let providerType = Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
   let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
 
   for address in manager.getChildAddresses() {

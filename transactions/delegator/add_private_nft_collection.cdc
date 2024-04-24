@@ -11,7 +11,7 @@ transaction {
         
         let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
         
-        let sharedCap = acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(d.storagePath)
+        let sharedCap = acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>(d.storagePath)
         
         delegator.addCapability(cap: sharedCap, isPublic: false)
     }

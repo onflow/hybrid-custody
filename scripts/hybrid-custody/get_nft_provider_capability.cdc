@@ -14,7 +14,7 @@ access(all) fun main(parent: Address, child: Address) {
 
     let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-    let desiredType = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
+    let desiredType = Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>()
     let controllerID = childAcct.getControllerIDForType(type: desiredType, forPath: d.storagePath)
         ?? panic("no capability found for desired type")
 
