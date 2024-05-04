@@ -10,7 +10,7 @@ transaction {
             acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() != true {
+        if !acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
             acct.capabilities.unpublish(CapabilityFactory.PublicPath)
 
             let cap = acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath)
@@ -18,7 +18,7 @@ transaction {
         }
 
         assert(
-            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)!.check(),
+            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check(),
             message: "CapabilityFactory is not setup properly"
         )
     }

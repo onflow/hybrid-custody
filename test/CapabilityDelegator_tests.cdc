@@ -60,7 +60,7 @@ fun testShareExampleNFTCollectionPrivate() {
     Test.assert(e.isPublic == false)
     Test.assert(e.active)
 
-    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>>()
+    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
     Test.assertEqual(capabilityType, e.capabilityType)
 }
 
@@ -101,7 +101,7 @@ fun testRemoveExampleNFTCollectionPrivate() {
     Test.assert(e.isPublic == false)
     Test.assert(e.active == false)
 
-    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>>()
+    let capabilityType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
     Test.assertEqual(capabilityType, e.capabilityType)
 
     let scriptCode = loadCode("delegator/find_nft_provider_cap.cdc", "scripts")

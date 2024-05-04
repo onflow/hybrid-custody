@@ -7,7 +7,6 @@ transaction(filterAddress: Address, childAddress: Address) {
             ?? panic("manager not found")
 
         let cap = getAccount(filterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("failed to get filter capability")
         assert(cap.check(), message: "capability filter is not valid")
 
         m.setManagerCapabilityFilter(cap: cap, childAddress: childAddress)

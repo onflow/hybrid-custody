@@ -15,6 +15,6 @@ transaction {
         let cap = acct.capabilities.storage.issue<&{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>(d.storagePath)
         acct.capabilities.publish(cap, at: d.publicPath)
 
-        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.storagePath)
+        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.storagePath)
     }
 }

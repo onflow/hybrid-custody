@@ -82,7 +82,6 @@ transaction(
 
         // Get the CapabilityFilter.Filter Capability
         let filter = getAccount(filterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("filter capability was not valid")
         assert(filter.check(), message: "capability filter is not configured properly")
 
         // Configure access for the delegatee parent account

@@ -51,11 +51,9 @@ transaction(
 
         // Get CapabilityFactory & CapabilityFilter Capabilities
         let factory = getAccount(factoryAddress).capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
-            ?? panic("failed to get factory capability")
         assert(factory.check(), message: "factory address is not configured properly")
 
         let filter = getAccount(filterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("failed to get filter capability")
         assert(filter.check(), message: "capability filter is not configured properly")
 
         // Finally publish a ChildAccount capability on the signing account to the specified parent

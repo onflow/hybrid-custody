@@ -9,7 +9,7 @@ access(all) fun main(address: Address): Bool {
         ?.getAllPrivate()
         ?? panic("could not borrow delegator")
 
-    let desiredType: Type = Type<Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>>()
+    let desiredType: Type = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
 
     return privateCaps.length == 1 && privateCaps[0].getType() == desiredType
 }

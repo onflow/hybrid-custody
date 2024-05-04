@@ -9,7 +9,6 @@ transaction(addr: Address) {
             ?? panic("manager not found")
         
         let cap = getAccount(addr).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("invalid capability filter address found")
         manager.setDefaultManagerCapabilityFilter(cap: cap)
     }
 }

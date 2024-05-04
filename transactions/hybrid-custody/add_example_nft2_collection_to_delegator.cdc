@@ -11,7 +11,7 @@ transaction(parent: Address, isPublic: Bool) {
         let child = o.borrowChildAccount(parent: parent)
             ?? panic("child account not found")
 
-        let cap = acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &ExampleNFT2.Collection>(ExampleNFT2.CollectionStoragePath)
+        let cap = acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &ExampleNFT2.Collection>(ExampleNFT2.CollectionStoragePath)
         o.addCapabilityToDelegator(parent: parent, cap: cap, isPublic: isPublic)
     }
 }

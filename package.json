@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@flowtyio/flow-contracts": "^0.1.0-beta.11"
+    "@flowtyio/flow-contracts": "^0.1.0-beta.19"
   }
 }

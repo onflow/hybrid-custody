@@ -54,7 +54,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
             acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
         }
 
-        if acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() != true {
+        if !acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() {
             acct.capabilities.unpublish(CapabilityFactory.PublicPath)
             acct.capabilities.publish(
                 acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath),
@@ -63,7 +63,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
         }
 
         assert(
-            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)?.check() == true,
+            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check() == true,
             message: "CapabilityFactory is not setup properly"
         )
 
@@ -72,8 +72,8 @@ transaction(nftContractAddress: Address, nftContractName: String) {
 
         // Add NFT-related Factories to the Manager
         factoryManager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
-        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
-        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        factoryManager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
 
         /* --- AllowlistFilter configuration --- */
         //
@@ -81,7 +81,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
             acct.storage.save(<-CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowlistFilter>()), to: CapabilityFilter.StoragePath)
         }
 
-        if acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)?.check() != true {
+        if !acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(){
             acct.capabilities.unpublish(CapabilityFilter.PublicPath)
 
             acct.capabilities.publish(
@@ -91,7 +91,7 @@ transaction(nftContractAddress: Address, nftContractName: String) {
         }
 
         assert(
-            acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)?.check() == true,
+            acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(),
             message: "AllowlistFilter is not setup properly"
         )
 

@@ -12,6 +12,6 @@ transaction {
             at: CapabilityFilter.PublicPath
         )
 
-        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)?.check() == true, message: "failed to setup filter")
+        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(), message: "failed to setup filter")
     }
 }

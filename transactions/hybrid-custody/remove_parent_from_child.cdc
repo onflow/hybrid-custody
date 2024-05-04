@@ -7,7 +7,7 @@ transaction(parent: Address) {
 
         owned.removeParent(parent: parent)
 
-        let manager = getAccount(parent).capabilities.get<&{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)!
+        let manager = getAccount(parent).capabilities.get<&{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath)
             .borrow() ?? panic("manager not found")
         let children = manager.getChildAddresses()
         assert(!children.contains(acct.address), message: "removed child is still in manager resource")

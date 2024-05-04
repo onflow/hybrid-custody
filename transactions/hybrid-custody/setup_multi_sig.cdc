@@ -48,7 +48,6 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
         if parentFilterAddress != nil {
             filter = getAccount(parentFilterAddress!).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-                ?? panic("parent filter address provided but it was not valid")
         }
 
         if parentAcct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
@@ -73,11 +72,9 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
             ?? panic("owned account not found")
 
         let factory = getAccount(childAccountFactoryAddress).capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
-            ?? panic("child account factory capability was nil")
         assert(factory.check(), message: "factory address is not configured properly")
 
         let filterForChild = getAccount(childAccountFilterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-            ?? panic("child account filter capability was nil")
         assert(filterForChild.check(), message: "capability filter is not configured properly")
 
         owned.publishToParent(parentAddress: parentAcct.address, factory: factory, filter: filterForChild)

@@ -17,6 +17,6 @@ transaction {
             at: d.publicPath
         )
 
-        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{ExampleNFT2.ExampleNFT2CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.storagePath)
+        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &{ExampleNFT2.ExampleNFT2CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.storagePath)
     }
 }

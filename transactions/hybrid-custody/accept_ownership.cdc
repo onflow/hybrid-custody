@@ -9,7 +9,6 @@ transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPa
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
         if filterAddress != nil && filterPath != nil {
             filter = getAccount(filterAddress!).capabilities.get<&{CapabilityFilter.Filter}>(filterPath!)
-                ?? panic("filter address given but capability was not found")
         }
 
         if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {

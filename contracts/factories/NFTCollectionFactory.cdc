@@ -5,11 +5,11 @@ access(all) contract NFTProviderAndCollectionFactory {
     access(all) struct WithdrawFactory: CapabilityFactory.Factory {
         access(all) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability? {
             if let con = acct.capabilities.storage.getController(byCapabilityID: controllerID) {
-                if !con.capability.check<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Collection}>() {
+                if !con.capability.check<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>() {
                     return nil
                 }
 
-                return con.capability as! Capability<auth(NonFungibleToken.Withdraw, NonFungibleToken.Owner) &{NonFungibleToken.Collection}>
+                return con.capability as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>
             }
 
             return nil
@@ -34,15 +34,12 @@ access(all) contract NFTProviderAndCollectionFactory {
         }
 
         access(all) view fun getPublicCapability(acct: &Account, path: PublicPath): Capability? {
-            if let cap = acct.capabilities.get<&{NonFungibleToken.Collection}>(path) {
-                if !cap.check() {
-                    return nil
-                }
-                
-                return cap
+            let cap = acct.capabilities.get<&{NonFungibleToken.Collection}>(path)
+            if !cap.check() {
+                return nil
             }
-
-            return nil
+            
+            return cap
         }
     }
 }
