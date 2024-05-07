@@ -34,15 +34,13 @@ access(all) contract FTVaultFactory {
         }
 
         access(all) view fun getPublicCapability(acct: &Account, path: PublicPath): Capability? {
-            if let cap = acct.capabilities.get<&{FungibleToken.Vault}>(path) {
-                if !cap.check() {
-                    return nil
-                }
-                
-                return cap
+            let cap = acct.capabilities.get<&{FungibleToken.Vault}>(path)
+            if !cap.check() {
+                return nil
             }
+                
+            return cap
 
-            return nil
         }
     }
 }
