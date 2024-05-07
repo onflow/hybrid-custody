@@ -18,7 +18,6 @@ access(all) contract CapabilityFactory {
     access(all) let StoragePath: StoragePath
     access(all) let PublicPath: PublicPath
 
-    access(all) entitlement Owner
     access(all) entitlement Add
     access(all) entitlement Delete
     
@@ -64,7 +63,7 @@ access(all) contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to add
         ///
-        access(Owner | Add) fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Add) fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             pre {
                 !self.factories.containsKey(t): "Factory of given type already exists"
             }
@@ -76,7 +75,7 @@ access(all) contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to replace existing Factory
         ///
-        access(Owner | Add) fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Add) fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             self.factories[t] = f
         }
 
@@ -84,7 +83,7 @@ access(all) contract CapabilityFactory {
         ///
         /// @param t: Type the Factory is indexed on
         ///
-        access(Owner | Delete) fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
+        access(Delete) fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
             return self.factories.remove(key: t)
         }
 

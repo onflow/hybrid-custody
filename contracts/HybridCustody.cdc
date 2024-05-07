@@ -1124,9 +1124,9 @@ access(all) contract HybridCustody {
 
         /// Retrieves a reference to the Delegator associated with the given parent account if one exists.
         ///
-        access(Owner) fun borrowCapabilityDelegatorForParent(parent: Address): auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator? {
+        access(Owner) fun borrowCapabilityDelegatorForParent(parent: Address): auth(CapabilityDelegator.Get, CapabilityDelegator.Add, CapabilityDelegator.Delete) &CapabilityDelegator.Delegator? {
             let identifier = HybridCustody.getCapabilityDelegatorIdentifier(parent)
-            return self.borrowAccount().storage.borrow<auth(CapabilityDelegator.Owner) &CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
+            return self.borrowAccount().storage.borrow<auth(CapabilityDelegator.Get, CapabilityDelegator.Add, CapabilityDelegator.Delete) &CapabilityDelegator.Delegator>(from: StoragePath(identifier: identifier)!)
         }
 
         /// Adds the provided Capability to the Delegator associated with the given parent account.

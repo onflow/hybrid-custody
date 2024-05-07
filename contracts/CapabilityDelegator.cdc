@@ -15,7 +15,6 @@ access(all) contract CapabilityDelegator {
     access(all) let PublicPath: PublicPath
 
     access(all) entitlement Get
-    access(all) entitlement Owner
     access(all) entitlement Add
     access(all) entitlement Delete
     
@@ -126,7 +125,7 @@ access(all) contract CapabilityDelegator {
         /// @param cap: Capability to add
         /// @param isPublic: Whether the Capability should be public or private
         ///
-        access(Owner | Add) fun addCapability(cap: Capability, isPublic: Bool) {
+        access(Add) fun addCapability(cap: Capability, isPublic: Bool) {
             pre {
                 cap.check<&AnyResource>(): "Invalid Capability provided"
             }
@@ -142,7 +141,7 @@ access(all) contract CapabilityDelegator {
         ///
         /// @param cap: Capability to remove
         ///
-        access(Owner | Delete) fun removeCapability(cap: Capability) {
+        access(Delete) fun removeCapability(cap: Capability) {
             if let removedPublic = self.publicCapabilities.remove(key: cap.getType()) {
                 emit DelegatorUpdated(id: self.uuid, capabilityType: cap.getType(), isPublic: true, active: false)
             }
