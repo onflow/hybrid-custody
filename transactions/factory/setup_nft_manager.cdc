@@ -15,12 +15,12 @@ transaction {
 
         acct.capabilities.unpublish(CapabilityFactory.PublicPath)
         acct.capabilities.publish(
-            acct.capabilities.storage.issue<&{CapabilityFactory.Getter}>(CapabilityFactory.StoragePath),
+            acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath),
             at: CapabilityFactory.PublicPath
         )
 
         assert(
-            acct.capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath).check(),
+            acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check(),
             message: "CapabilityFactory is not setup properly"
         )
 

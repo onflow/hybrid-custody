@@ -76,8 +76,7 @@ transaction(
         let owned = newAccount.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)!
 
         // Get the CapabilityFactory.Manager Capability
-        let factory = getAccount(factoryAddress).capabilities
-            .get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)!
+        let factory = getAccount(factoryAddress).capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory address is not configured properly")
 
         // Get the CapabilityFilter.Filter Capability

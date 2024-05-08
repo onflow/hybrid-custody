@@ -71,7 +71,7 @@ transaction(parentFilterAddress: Address?, childAccountFactoryAddress: Address, 
         let owned = childAcct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 
-        let factory = getAccount(childAccountFactoryAddress).capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+        let factory = getAccount(childAccountFactoryAddress).capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory address is not configured properly")
 
         let filterForChild = getAccount(childAccountFilterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)

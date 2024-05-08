@@ -50,7 +50,7 @@ transaction(
         }
 
         // Get CapabilityFactory & CapabilityFilter Capabilities
-        let factory = getAccount(factoryAddress).capabilities.get<&{CapabilityFactory.Getter}>(CapabilityFactory.PublicPath)
+        let factory = getAccount(factoryAddress).capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory address is not configured properly")
 
         let filter = getAccount(filterAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
