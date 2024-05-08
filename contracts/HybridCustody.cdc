@@ -541,7 +541,7 @@ access(all) contract HybridCustody {
         /// certain type. When using the CapabilityDelegator, you do not have the ability to specify which path a
         /// capability came from. For instance, Dapper Wallet might choose to expose a Capability to their Full TopShot
         /// collection, but only to the path that the collection exists in.
-        access(self) let delegator: Capability<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>
+        access(self) let delegator: Capability<auth(CapabilityDelegator.Get) &CapabilityDelegator.Delegator>
 
         /// managerCapabilityFilter is a component optionally given to a child account when a manager redeems it. If
         /// this filter is not nil, any Capability returned through the `getCapability` function checks that the
