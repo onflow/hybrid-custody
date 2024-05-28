@@ -4,12 +4,12 @@ import "NonFungibleToken"
 import "ExampleNFT"
 
 transaction {
-    prepare(acct: AuthAccount) {
-        let delegator = acct.borrow<&CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
+    prepare(acct: auth(BorrowValue, Capabilities) &Account) {
+        let delegator = acct.storage.borrow<auth(CapabilityDelegator.Delete) &CapabilityDelegator.Delegator>(from: CapabilityDelegator.StoragePath)
             ?? panic("delegator not found")
 
         let sharedCap 
-            = acct.getCapability<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>(ExampleNFT.CollectionPublicPath)
+            = acct.capabilities.get<&{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>(ExampleNFT.CollectionPublicPath)
         delegator.removeCapability(cap: sharedCap)
     }
 }

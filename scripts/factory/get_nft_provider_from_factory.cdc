@@ -4,13 +4,20 @@ import "NonFungibleToken"
 
 import "NFTProviderFactory"
 
-pub fun main(addr: Address) {
-    let acct = getAuthAccount(addr)
-    let ref = &acct as &AuthAccount
+access(all) fun main(addr: Address) {
+    let acct = getAuthAccount<auth(Capabilities) &Account>(addr)
 
     let factory = NFTProviderFactory.Factory()
+    let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-    let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
+    let controllers = acct.capabilities.storage.getControllers(forPath: d.storagePath)
 
-    let provider = factory.getCapability(acct: ref, path: d.providerPath) as! Capability<&{NonFungibleToken.Provider}>
+    for c in controllers {
+        if c.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()) {
+            factory.getCapability(acct: acct, controllerID: c.capabilityID)! as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>
+            return 
+        }
+    }
+
+    panic("should not reach this point")
 }

@@ -3,14 +3,14 @@ import "CapabilityDelegator"
 import "NonFungibleToken"
 import "ExampleNFT"
 
-pub fun main(addr: Address): Bool {
-    let acct = getAuthAccount(addr)
+access(all) fun main(addr: Address): Bool {
+    let acct = getAuthAccount<auth(Capabilities) &Account>(addr)
 
     let delegator = 
-        acct.getCapability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.PrivatePath).borrow()
+        acct.capabilities.storage.issue<auth(CapabilityDelegator.Get) &{CapabilityDelegator.GetterPrivate}>(CapabilityDelegator.StoragePath).borrow()
         ?? panic("could not borrow delegator")
 
-    let desiredType = Type<Capability<&ExampleNFT.Collection{NonFungibleToken.Provider}>>()
+    let desiredType = Type<Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>>()
     let foundType = delegator.findFirstPrivateType(desiredType) ?? panic("no type found")
     
     let nakedCap = delegator.getPrivateCapability(foundType) ?? panic("requested capability type was not found")

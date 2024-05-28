@@ -1,5 +1,6 @@
 import "NonFungibleToken"
 import "MetadataViews"
+import "ViewResolver"
 import "HybridCustody"
 
 /* 
@@ -10,7 +11,7 @@ import "HybridCustody"
 
 /// Assertion method to ensure passing test
 ///
-pub fun assertPassing(result: {Address: [MetadataViews.NFTCollectionData]}, expectedAddressToCollectionLength: {Address: Int}) {
+access(all) fun assertPassing(result: {Address: [MetadataViews.NFTCollectionData]}, expectedAddressToCollectionLength: {Address: Int}) {
     for address in result.keys {
         if expectedAddressToCollectionLength[address] == nil {
             panic("Address ".concat(address.toString()).concat(" found but not expected!"))
@@ -23,29 +24,31 @@ pub fun assertPassing(result: {Address: [MetadataViews.NFTCollectionData]}, expe
 
 /// Helper function that retrieves data about all publicly accessible NFTs in an account
 ///
-pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollectionData] {
+access(all) fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollectionData] {
 
-    let account: AuthAccount = getAuthAccount(address)
+    let account: auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account = getAuthAccount<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>(address)
     let data: [MetadataViews.NFTCollectionData] = []
 
-    let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>()
+    let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic, ViewResolver.ResolverCollection}>()
     let viewType: Type = Type<MetadataViews.NFTCollectionData>()
 
     // Iterate over each public path
-    account.forEachStored(fun (path: StoragePath, type: Type): Bool {
+    account.storage.forEachStored(fun (path: StoragePath, type: Type): Bool {
         // Return if not the type we're looking for
         if !type.isInstance(collectionType) && !type.isSubtype(of: collectionType) {
             return true
         }
-        if let collectionRef = account
-            .borrow<&{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(from: path) {
+        if let collectionRef = account.storage
+            .borrow<&{NonFungibleToken.CollectionPublic, ViewResolver.ResolverCollection}>(from: path) {
             // Return early if no Resolver found in the Collection
             let ids: [UInt64]= collectionRef.getIDs()
             if ids.length == 0 {
                 return true
             }
+
             // Otherwise, attempt to get the NFTCollectionData & append if exists
-            if let dataView = collectionRef.borrowViewResolver(id: ids[0]).resolveView(viewType) as! MetadataViews.NFTCollectionData? {
+            let nft = collectionRef.borrowNFT(ids[0]) ?? panic("nft not found")
+            if let dataView = nft.resolveView(viewType) as! MetadataViews.NFTCollectionData? {
                 data.append(dataView)
             }
         }
@@ -57,16 +60,16 @@ pub fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCollection
 /// Script that retrieve data about all NFT Collections in the storage of an account and any of its child accounts
 ///
 // pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionData]} {
-pub fun main(address: Address, expectedAddressToCollectionLength: {Address: Int}) {
+access(all) fun main(address: Address, expectedAddressToCollectionLength: {Address: Int}) {
     
     let allNFTData: {Address: [MetadataViews.NFTCollectionData]} = {address: getAllViewsFromAddress(address)}
     let seen: [Address] = [address]
     
     /* Iterate over any child accounts */ 
     //
-    if let managerRef = getAccount(address).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(
+    if let managerRef = getAccount(address).capabilities.get<&{HybridCustody.ManagerPublic}>(
             HybridCustody.ManagerPublicPath
-        ).borrow() {
+        )!.borrow() {
 
         for childAddress in managerRef.getChildAddresses() {
             allNFTData.insert(key: childAddress, getAllViewsFromAddress(childAddress))

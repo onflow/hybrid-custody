@@ -49,7 +49,7 @@ fun expectScriptFailure(
 access(all)
 fun txExecutor(
     _ txName: String,
-    _ signers: [Test.Account],
+    _ signers: [Test.TestAccount],
     _ arguments: [AnyStruct],
     _ expectedError: String?
 ): Bool {

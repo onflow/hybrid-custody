@@ -2,13 +2,20 @@ import "HybridCustody"
 import "NonFungibleToken"
 import "ExampleNFT"
 
-pub fun main(parent: Address, child: Address) {
-    let acct = getAuthAccount(parent)
+access(all) fun main(parent: Address, child: Address) {
+    let acct = getAuthAccount<auth(Storage, Capabilities, Inbox) &Account>(parent)
+    let childAcct: auth(Storage, Capabilities, Inbox) &Account = getAuthAccount<auth(Storage, Capabilities, Inbox) &Account>(child)
     let inboxIdentifier = HybridCustody.getChildAccountIdentifier(parent)
 
-    let cap = acct.inbox.claim<&HybridCustody.ChildAccount{HybridCustody.AccountPrivate}>(inboxIdentifier, provider: child)
+    let cap = acct.inbox.claim<auth(HybridCustody.Child) &{HybridCustody.AccountPrivate}>(inboxIdentifier, provider: child)
         ?? panic("no inbox entry found")
 
-    cap.borrow()!.getCapability(path: ExampleNFT.CollectionPublicPath, type: Type<&{NonFungibleToken.CollectionPublic}>())
-        ?? panic("capability not found")
+    for c in childAcct.capabilities.storage.getControllers(forPath: ExampleNFT.CollectionStoragePath) {
+        if c.borrowType.isSubtype(of: Type<&{NonFungibleToken.CollectionPublic}>()) {
+            cap.borrow()!.getCapability(controllerID: c.capabilityID, type: Type<&{NonFungibleToken.CollectionPublic}>())
+            return
+        }
+    }
+
+    panic("this should not be reached")
 }

@@ -3,7 +3,7 @@ import "HybridCustody"
 
 /// Queries for $FLOW balance of a given Address and all its associated accounts
 ///
-pub fun main(address: Address): {Address: UFix64} {
+access(all) fun main(address: Address): {Address: UFix64} {
 
     // Get the balance for the given address
     let balances: {Address: UFix64} = { address: getAccount(address).balance }
@@ -12,7 +12,7 @@ pub fun main(address: Address): {Address: UFix64} {
     
     /* Iterate over any associated accounts */ 
     //
-    if let managerRef = getAuthAccount(address).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
+    if let managerRef = getAuthAccount<auth(Storage) &Account>(address).storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
         
         for childAccount in managerRef.getChildAddresses() {
             balances.insert(key: childAccount, getAccount(childAccount).balance)

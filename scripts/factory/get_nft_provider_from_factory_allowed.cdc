@@ -9,20 +9,30 @@ import "NFTProviderFactory"
 /// Determines if ExampleNFT Provider both has a Factory at the ruleAddr and is allowed by the AllowlistFilter found in
 /// the ruleAddr account.
 ///
-pub fun main(filterFactoryAddr: Address, providerAddr: Address): Bool {
-    let ruleAcct = getAuthAccount(filterFactoryAddr)
-    let providerAcct = &getAuthAccount(providerAddr) as! &AuthAccount
+access(all) fun main(filterFactoryAddr: Address, providerAddr: Address): Bool {
+    let ruleAcct = getAuthAccount<auth(Storage, Capabilities) &Account>(filterFactoryAddr)
+    let providerAcct = getAuthAccount<auth(Storage, Capabilities) &Account>(providerAddr)
 
-    let factoryManager = ruleAcct.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+    let factoryManager = ruleAcct.storage.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
         ?? panic("Problem borrowing CapabilityFactory Manager")
-    let factory = factoryManager.getFactory(Type<&{NonFungibleToken.Provider}>())
+    let factory = factoryManager.getFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>())
         ?? panic("No factory for NFT Provider found")
 
-    let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
+    let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-    let provider = factory.getCapability(acct: providerAcct, path: d.providerPath) as! Capability<&{NonFungibleToken.Provider}>
+    var controllerID: UInt64? = nil
+    for c in providerAcct.capabilities.storage.getControllers(forPath: d.storagePath) {
+        if c.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()) {
+            controllerID = c.capabilityID
+            break
+        }
+    }
 
-    let filter = ruleAcct.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
+    assert(controllerID != nil, message: "could not find existing provider capcon")
+
+    let provider = factory.getCapability(acct: providerAcct, controllerID: controllerID!)! as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>
+
+    let filter = ruleAcct.storage.borrow<&CapabilityFilter.AllowlistFilter>(from: CapabilityFilter.StoragePath)
         ?? panic("Problem borrowing CapabilityFilter AllowlistFilter")
     
     return filter.allowed(cap: provider)

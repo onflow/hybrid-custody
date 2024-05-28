@@ -1,5 +1,8 @@
 import "NonFungibleToken"
 import "MetadataViews"
+import "ViewResolver"
+import "ExampleNFT"
+
 import "HybridCustody"
 
 /* 
@@ -10,34 +13,29 @@ import "HybridCustody"
 
 /// Assertion method to ensure passing test
 ///
-pub fun assertPassing(result: {Address: {UInt64: MetadataViews.Display}}, expectedAddressToIDs: {Address: [UInt64]}) {
-
+access(all) fun assertPassing(result: {Address: {UInt64: MetadataViews.Display}}, expectedAddressToIDs: {Address: [UInt64]}) {
     for address in result.keys {
-        if expectedAddressToIDs[address] == nil {
-            panic("Address ".concat(address.toString()).concat(" found but not expected!"))
-        }
-        let expectedIDs: [UInt64] = expectedAddressToIDs[address]!
-        for i, id in result[address]!.keys {
-            if expectedIDs[i] != id {
-                panic("Resulting ID does not match expected ID!")
-            }
+        let expectedIDs: [UInt64] = expectedAddressToIDs[address] ?? panic("address expected but not found")
+
+        for id in result[address]!.keys {
+            assert(expectedIDs.contains(id), message: "id expected but was not found")
         }
     }
 }
 
 /// Returns resolved Display from given address at specified path for each ID or nil if ResolverCollection is not found
 ///
-pub fun getViews(_ address: Address, _ resolverCollectionPath: PublicPath): {UInt64: MetadataViews.Display} {
-    
-    let account: PublicAccount = getAccount(address)
+access(all) fun getViews(_ address: Address, _ resolverCollectionPath: PublicPath): {UInt64: MetadataViews.Display} {
+    let account: &Account = getAccount(address)
     let views: {UInt64: MetadataViews.Display} = {}
 
     // Borrow the Collection
     if let collection = account
-        .getCapability<&{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(resolverCollectionPath).borrow() {
+        .capabilities.get<&{NonFungibleToken.CollectionPublic}>(resolverCollectionPath)!.borrow() {
         // Iterate over IDs & resolve the view
         for id in collection.getIDs() {
-            let display = collection.borrowViewResolver(id: id).resolveView(Type<MetadataViews.Display>()) as! MetadataViews.Display
+            let nft = collection.borrowNFT(id) ?? panic("could not borrow NFT")
+            let display = nft.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
             views.insert(key: id, display)
         }
     }
@@ -48,18 +46,17 @@ pub fun getViews(_ address: Address, _ resolverCollectionPath: PublicPath): {UIn
 /// Queries for MetadataViews.Display each NFT across all associated accounts from Collections at the provided
 /// PublicPath
 ///
-// pub fun main(address: Address, resolverCollectionPath: PublicPath): {Address: {UInt64: MetadataViews.Display}} {
-pub fun main(address: Address, resolverCollectionPath: PublicPath, expectedAddressToIDs: {Address: [UInt64]}) {
-
+access(all) fun main(address: Address, resolverCollectionPath: PublicPath, expectedAddressToIDs: {Address: [UInt64]}) {
     let allViews: {Address: {UInt64: MetadataViews.Display}} = {address: getViews(address, resolverCollectionPath)}
     let seen: [Address] = [address]
     
     /* Iterate over any associated accounts */ 
     //
-    if let managerRef = getAuthAccount(address).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
+    if let managerRef = getAuthAccount<auth(Storage) &Account>(address).storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
         
         for childAccount in managerRef.getChildAddresses() {
-            allViews.insert(key: childAccount, getViews(address, resolverCollectionPath))
+            let views = getViews(childAccount, resolverCollectionPath)
+            allViews.insert(key: childAccount, views)
             seen.append(childAccount)
         }
 

@@ -1,9 +1,9 @@
 import "HybridCustody"
 import "MetadataViews"
 
-pub fun main(addr: Address, name: String, desc: String, thumbnail: String): Bool {
-    let acct = getAuthAccount(addr)
-    let owned = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+access(all) fun main(addr: Address, name: String, desc: String, thumbnail: String): Bool {
+    let acct = getAuthAccount<auth(Storage) &Account>(addr)
+    let owned = acct.storage.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
         ?? panic("no owned account found")
     let display = owned.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
 

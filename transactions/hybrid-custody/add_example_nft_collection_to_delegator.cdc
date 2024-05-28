@@ -5,16 +5,13 @@ import "NonFungibleToken"
 import "ExampleNFT"
 
 transaction(parent: Address, isPublic: Bool) {
-    prepare(acct: AuthAccount) {
-        let o = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+    prepare(acct: auth(Storage, Capabilities) &Account) {
+        let o = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
         let child: &HybridCustody.ChildAccount = o.borrowChildAccount(parent: parent)
             ?? panic("child account not found")
 
-        let path = /private/exampleNFTFullCollection
-        acct.link<&ExampleNFT.Collection>(path, target: ExampleNFT.CollectionStoragePath)
-        let cap = acct.getCapability<&ExampleNFT.Collection>(path)
-
+        let cap = acct.capabilities.storage.issue<&ExampleNFT.Collection>(ExampleNFT.CollectionStoragePath)
         o.addCapabilityToDelegator(parent: parent, cap: cap, isPublic: isPublic)
     }
 }

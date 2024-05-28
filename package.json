@@ -1,0 +1,17 @@
+{
+  "name": "hybrid-custody",
+  "version": "1.0.0",
+  "description": "![Tests](https://github.com/onflow/hybrid-custody/actions/workflows/integration-tests.yml/badge.svg) [![codecov](https://codecov.io/gh/onflow/hybrid-custody/branch/main/graph/badge.svg?token=5GWD5NHEKF)](https://codecov.io/gh/onflow/hybrid-custody)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./test.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@flowtyio/flow-contracts": "^0.1.0-beta.19"
+  }
+}

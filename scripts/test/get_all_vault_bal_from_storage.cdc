@@ -4,9 +4,9 @@ import "HybridCustody"
 
 /// Returns a mapping of balances indexed on the Type of resource containing the balance
 ///
-pub fun getAllBalancesInStorage(_ address: Address): {String: UFix64} {
+access(all) fun getAllBalancesInStorage(_ address: Address): {String: UFix64} {
     // Get the account
-    let account: AuthAccount = getAuthAccount(address)
+    let account: auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account = getAuthAccount<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>(address)
     // Init for return value
     let balances: {String: UFix64} = {}
     // Track seen Types in array
@@ -14,10 +14,10 @@ pub fun getAllBalancesInStorage(_ address: Address): {String: UFix64} {
     // Assign the type we'll need
     let balanceType: Type = Type<@{FungibleToken.Balance}>()
     // Iterate over all stored items & get the path if the type is what we're looking for
-    account.forEachStored(fun (path: StoragePath, type: Type): Bool {
+    account.storage.forEachStored(fun (path: StoragePath, type: Type): Bool {
         if type.isInstance(balanceType) || type.isSubtype(of: balanceType) {
             // Get a reference to the resource & its balance
-            let vaultRef = account.borrow<&{FungibleToken.Balance}>(from: path)!
+            let vaultRef = account.storage.borrow<&{FungibleToken.Balance}>(from: path)!
             // Insert a new values if it's the first time we've seen the type
             if !seen.contains(type) {
                 balances.insert(key: type.identifier, vaultRef.balance)
@@ -34,7 +34,7 @@ pub fun getAllBalancesInStorage(_ address: Address): {String: UFix64} {
 
 /// Queries for FT.Vault balance of all FT.Vaults in the specified account and all of its associated accounts
 ///
-pub fun main(address: Address): {Address: {String: UFix64}} {
+access(all) fun main(address: Address): {Address: {String: UFix64}} {
 
     // Get the balance for the given address
     let balances: {Address: {String: UFix64}} = { address: getAllBalancesInStorage(address) }
@@ -43,9 +43,7 @@ pub fun main(address: Address): {Address: {String: UFix64}} {
     
     /* Iterate over any associated accounts */ 
     //
-    if let managerRef = getAuthAccount(address)
-        .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
-        
+    if let managerRef = getAuthAccount<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>(address).storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
         for childAccount in managerRef.getChildAddresses() {
             balances.insert(key: childAccount, getAllBalancesInStorage(address))
             seen.append(childAccount)

@@ -1,5 +1,5 @@
-pub fun main(addr: Address): Int {
-    let acct = getAuthAccount(addr)
+access(all) fun main(addr: Address): Int {
+    let acct = getAuthAccount<auth(Keys) &Account>(addr)
     var count = 0
 
     acct.keys.forEach(fun (key: AccountKey): Bool {

@@ -2,32 +2,40 @@
 
 import "HybridCustody"
 import "CapabilityFilter"
-import "MetadataViews"
+import "ViewResolver"
 
 transaction(childAddress: Address, filterAddress: Address?, filterPath: PublicPath?) {
-    prepare(acct: AuthAccount) {
+    prepare(acct: auth(Storage, Capabilities, Inbox) &Account) {
         var filter: Capability<&{CapabilityFilter.Filter}>? = nil
         if filterAddress != nil && filterPath != nil {
-            filter = getAccount(filterAddress!).getCapability<&{CapabilityFilter.Filter}>(filterPath!)
+            filter = getAccount(filterAddress!).capabilities.get<&{CapabilityFilter.Filter}>(filterPath!)
         }
 
-        if acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
+        if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
             let m <- HybridCustody.createManager(filter: filter)
-            acct.save(<- m, to: HybridCustody.ManagerStoragePath)
+            acct.storage.save(<- m, to: HybridCustody.ManagerStoragePath)
 
-            acct.unlink(HybridCustody.ManagerPublicPath)
-            acct.unlink(HybridCustody.ManagerPrivatePath)
+            for c in acct.capabilities.storage.getControllers(forPath: HybridCustody.ManagerStoragePath) {
+                c.delete()
+            }
 
-            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerPrivatePath, target: HybridCustody.ManagerStoragePath)
-            acct.link<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath, target: HybridCustody.ManagerStoragePath)
+            acct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
+
+            acct.capabilities.storage.issue<auth(HybridCustody.Manage) &{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath),
+                at: HybridCustody.ManagerPublicPath
+            )
         }
 
         let inboxName = HybridCustody.getOwnerIdentifier(acct.address) 
-        let cap = acct.inbox.claim<&AnyResource{HybridCustody.OwnedAccountPrivate, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}>(inboxName, provider: childAddress)
+        let cap = acct.inbox.claim<auth(HybridCustody.Owner) &{HybridCustody.OwnedAccountPrivate, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(inboxName, provider: childAddress)
             ?? panic("owned account cap not found")
 
-        let manager = acct.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+        let manager = acct.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager no found")
+
+        let ownedAcct = cap.borrow() ?? panic("could not borrow owned account capability")
 
         manager.addOwnedAccount(cap: cap)
     }

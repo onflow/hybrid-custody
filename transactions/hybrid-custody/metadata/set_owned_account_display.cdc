@@ -2,8 +2,8 @@ import "HybridCustody"
 import "MetadataViews"
 
 transaction(name: String, description: String, thumbnail: String) {
-    prepare(acct: AuthAccount) {
-        let o = acct.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+    prepare(acct: auth(Storage) &Account) {
+        let o = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("account not found")
         
         let d = MetadataViews.Display(

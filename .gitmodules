@@ -1,9 +1,9 @@
 [submodule "modules/flow-nft"]
 	path = modules/flow-nft
-	url = https://github.com/Flowtyio/flow-nft.git
-[submodule "flow-ft"]
-	path = flow-ft
-	url = https://github.com/Flowtyio/flow-ft.git
+	url = https://github.com/onflow/flow-nft.git
 [submodule "modules/flow-utils"]
 	path = modules/flow-utils
-	url = https://github.com/Flowtyio/flow-utils.git
+	url = https://github.com/green-goo-dao/flow-utils.git
+[submodule "modules/flow-ft"]
+	path = modules/flow-ft
+	url = https://github.com/onflow/flow-ft.git

@@ -4,3 +4,4 @@ coverage.lcov
 *.pkey
 *.private
 *.pem
+node_modules/
