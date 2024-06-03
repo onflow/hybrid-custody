@@ -3,9 +3,6 @@
 ![Tests](https://github.com/onflow/hybrid-custody/actions/workflows/integration-tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/onflow/hybrid-custody/branch/main/graph/badge.svg?token=5GWD5NHEKF)](https://codecov.io/gh/onflow/hybrid-custody)
 
-**NOTE: This contract is still under development, its address is likely to be redeployed to testnet once it is
-finished**
-
 **Please see [Flow's documentation about account
 linking](https://developers.flow.com/concepts/hybrid-custody/guides/linking-accounts) for more information and
 examples.**
