@@ -21,10 +21,11 @@ they can:
 
 ## Deployment Details
 
-| Network | Address                                                                              |
-| ------- | ------------------------------------------------------------------------------------ |
-| Testnet | [0x294e44e1ec6993c6](https://testnet.contractbrowser.com/account/0x294e44e1ec6993c6) |
-| Mainnet | [0xd8a7e05a7ac670c0](https://contractbrowser.com/account/0xd8a7e05a7ac670c0) |
+| Network    | Address                                                                              |
+| ---------- | ------------------------------------------------------------------------------------ |
+| Testnet    | [0x294e44e1ec6993c6](https://testnet.contractbrowser.com/account/0x294e44e1ec6993c6) |
+| Mainnet    | [0xd8a7e05a7ac670c0](https://contractbrowser.com/account/0xd8a7e05a7ac670c0)         |
+| Previewnet | [0x28b81f5880d5554e](https://previewnet.flowdiver.io/account/28b81f5880d5554e)    |
 
 ### Hosted `CapabilityFactory` & `CapabilityFilter` Implementations
 

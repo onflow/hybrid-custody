@@ -6,7 +6,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "CapabilityFactory": {
@@ -15,7 +16,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "CapabilityFilter": {
@@ -24,7 +26,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "ExampleNFT": {
@@ -51,7 +54,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FTVaultFactory": {
@@ -60,7 +64,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FTBalanceFactory": {
@@ -69,7 +74,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FTProviderFactory": {
@@ -78,7 +84,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FTReceiverBalanceFactory": {
@@ -87,7 +94,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FTReceiverFactory": {
@@ -96,7 +104,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "HybridCustody": {
@@ -105,7 +114,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "NFTCollectionPublicFactory": {
@@ -114,7 +124,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "NFTProviderAndCollectionFactory": {
@@ -123,7 +134,8 @@
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
         "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0"
+        "mainnet": "d8a7e05a7ac670c0",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "NFTProviderFactory": {
@@ -131,7 +143,8 @@
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6"
+        "testnet": "294e44e1ec6993c6",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "NFTCollectionFactory": {
@@ -139,87 +152,95 @@
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
         "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6"
+        "testnet": "294e44e1ec6993c6",
+        "previewnet": "28b81f5880d5554e"
       }
     },
     "FungibleToken": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/FungibleToken.cdc",
       "aliases": {
-        "emulator": "0xee82856bf20e2aa6",
-        "testnet": "0x9a0766d93b6608b7",
-        "mainnet": "0xf233dcee88fe0abe"
+        "emulator": "ee82856bf20e2aa6",
+        "testnet": "9a0766d93b6608b7",
+        "mainnet": "f233dcee88fe0abe",
+        "previewnet": "a0225e7000ac82a9"
       }
     },
     "FungibleTokenMetadataViews": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/FungibleTokenMetadataViews.cdc",
       "aliases": {
-        "emulator": "0xee82856bf20e2aa6",
-        "testnet": "0x9a0766d93b6608b7",
-        "mainnet": "0xf233dcee88fe0abe"
+        "emulator": "ee82856bf20e2aa6",
+        "testnet": "9a0766d93b6608b7",
+        "mainnet": "f233dcee88fe0abe",
+        "previewnet": "a0225e7000ac82a9"
       }
     },
     "Burner": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/Burner.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x9a0766d93b6608b7",
-        "mainnet": "0xf233dcee88fe0abe"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "9a0766d93b6608b7",
+        "mainnet": "f233dcee88fe0abe",
+        "previewnet": "b6763b4399a888c8"
       }
     },
     "FlowToken": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/FlowToken.cdc",
       "aliases": {
-        "emulator": "0x0ae53cb6e3f42a79",
-        "testnet": "0x7e60df042a9c0868",
-        "mainnet": "0x1654653399040a61"
+        "emulator": "0ae53cb6e3f42a79",
+        "testnet": "7e60df042a9c0868",
+        "mainnet": "1654653399040a61",
+        "previewnet": "4445e7ad11568276"
       }
     },
     "NonFungibleToken": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/NonFungibleToken.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x631e88ae7f1d7c20",
-        "mainnet": "0x1d7e57aa55817448"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "631e88ae7f1d7c20",
+        "mainnet": "1d7e57aa55817448",
+        "previewnet": "b6763b4399a888c8"
       }
     },
     "StringUtils": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/StringUtils.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x31ad40c07a2a9788",
-        "mainnet": "0xa340dc0a4ec828ab"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "31ad40c07a2a9788",
+        "mainnet": "a340dc0a4ec828ab"
       }
     },
     "ArrayUtils": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/ArrayUtils.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x31ad40c07a2a9788",
-        "mainnet": "0xa340dc0a4ec828ab"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "31ad40c07a2a9788",
+        "mainnet": "a340dc0a4ec828ab"
       }
     },
     "AddressUtils": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/AddressUtils.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x31ad40c07a2a9788",
-        "mainnet": "0xa340dc0a4ec828ab"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "31ad40c07a2a9788",
+        "mainnet": "a340dc0a4ec828ab"
       }
     },
     "MetadataViews": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/MetadataViews.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x631e88ae7f1d7c20",
-        "mainnet": "0x1d7e57aa55817448"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "631e88ae7f1d7c20",
+        "mainnet": "1d7e57aa55817448",
+        "previewnet": "b6763b4399a888c8"
       }
     },
     "ViewResolver": {
       "source": "./node_modules/@flowtyio/flow-contracts/contracts/ViewResolver.cdc",
       "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x631e88ae7f1d7c20",
-        "mainnet": "0x1d7e57aa55817448"
+        "emulator": "f8d6e0586b0a20c7",
+        "testnet": "631e88ae7f1d7c20",
+        "mainnet": "1d7e57aa55817448",
+        "previewnet": "b6763b4399a888c8"
       }
     }
   },
@@ -227,6 +248,7 @@
     "emulator": "127.0.0.1:3569",
     "testing": "127.0.0.1:3569",
     "mainnet": "access.mainnet.nodes.onflow.org:9000",
+    "previewnet": "access.previewnet.nodes.onflow.org:9000",
     "sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
     "testnet": "access.devnet.nodes.onflow.org:9000"
   },
@@ -240,7 +262,7 @@
       }
     },
     "allow-all-testnet": {
-      "address": "0xe2664be06bb0fe62",
+      "address": "e2664be06bb0fe62",
       "key": {
         "type": "google-kms",
         "hashAlgorithm": "SHA2_256",
@@ -263,6 +285,13 @@
         "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
       }
     },
+    "hc-previewnet": {
+      "address": "28b81f5880d5554e",
+      "key": {
+        "type": "file",
+        "location": "./hc-previewnet.pkey"
+      }
+    },
     "hc-testnet": {
       "address": "294e44e1ec6993c6",
       "key": {
@@ -280,7 +309,7 @@
       }
     },
     "ft-manager-testnet": {
-      "address": "0x08bed9e8508ed20e",
+      "address": "08bed9e8508ed20e",
       "key": {
         "type": "google-kms",
         "hashAlgorithm": "SHA2_256",
@@ -296,7 +325,7 @@
       }
     },
     "nft-ft-manager-testnet": {
-      "address": "0x1b7fa5972fcb8af5",
+      "address": "1b7fa5972fcb8af5",
       "key": {
         "type": "google-kms",
         "hashAlgorithm": "SHA2_256",
@@ -312,7 +341,7 @@
       }
     },
     "nft-manager-testnet": {
-      "address": "0x1055970ee34ef4dc",
+      "address": "1055970ee34ef4dc",
       "key": {
         "type": "google-kms",
         "hashAlgorithm": "SHA2_256",
@@ -380,6 +409,24 @@
     },
     "mainnet": {
       "hc-mainnet": [
+        "CapabilityDelegator",
+        "CapabilityFactory",
+        "CapabilityFilter",
+        "HybridCustody",
+        "NFTProviderFactory",
+        "NFTProviderAndCollectionFactory",
+        "NFTCollectionPublicFactory",
+        "FTProviderFactory",
+        "FTAllFactory",
+        "FTBalanceFactory",
+        "FTReceiverBalanceFactory",
+        "FTReceiverFactory",
+        "FTVaultFactory",
+        "NFTCollectionFactory"
+      ]
+    },
+    "previewnet": {
+      "hc-previewnet": [
         "CapabilityDelegator",
         "CapabilityFactory",
         "CapabilityFilter",
