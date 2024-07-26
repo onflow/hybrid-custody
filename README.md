@@ -34,12 +34,12 @@ they can:
 > generalized implementations likely cover most use cases, but you'll want to weigh the decision to use them according
 > to your risk tolerance and specific scenario.
 
-| Use Case | Testnet Address                                                                       | Mainnet Address                         |
-| -------- | ------------------------------------------------------------------------------------- | --------------------------------------- |
-| NFT Capability Factories       | [0x1055970ee34ef4dc](https://f.dnz.dev/0x1055970ee34ef4dc/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0xee9ff4f07a2d6dad](https://f.dnz.dev/0xee9ff4f07a2d6dad/storage/CapabilityFactory_0xd8a7e05a7ac670c0) |
-| FT Capability Factories        | [0x08bed9e8508ed20e](https://f.dnz.dev/0x08bed9e8508ed20e/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0x410aa603925923d9](https://f.dnz.dev/0x410aa603925923d9/storage/CapabilityFactory_0xd8a7e05a7ac670c0) |
-| NFT + FT Capability Factories  | [0x1b7fa5972fcb8af5](https://f.dnz.dev/0x1b7fa5972fcb8af5/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0x071d382668250606](https://f.dnz.dev/0x071d382668250606/storage/CapabilityFactory_0xd8a7e05a7ac670c0) |
-| AllowAllFilter                 | [0xe2664be06bb0fe62](https://f.dnz.dev/0xe2664be06bb0fe62/storage/CapabilityFilter_0x294e44e1ec6993c6) | [0x78e93a79b05d0d7d](https://f.dnz.dev/0x78e93a79b05d0d7d/storage/CapabilityFilter_0xd8a7e05a7ac670c0)  |
+| Use Case | Testnet Address | Mainnet Address | Previewnet Address |
+| -------- | --------------- | --------------- | ------------------ |
+| NFT Capability Factories       | [0x1055970ee34ef4dc](https://f.dnz.dev/0x1055970ee34ef4dc/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0xee9ff4f07a2d6dad](https://f.dnz.dev/0xee9ff4f07a2d6dad/storage/CapabilityFactory_0xd8a7e05a7ac670c0) | [0x80340a153332a5fc](https://f.dnz.dev/0x80340a153332a5fc/raw/storage/CapabilityFactory_0x28b81f5880d5554e) |
+| FT Capability Factories        | [0x08bed9e8508ed20e](https://f.dnz.dev/0x08bed9e8508ed20e/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0x410aa603925923d9](https://f.dnz.dev/0x410aa603925923d9/storage/CapabilityFactory_0xd8a7e05a7ac670c0) | [0x7207d6fbbbccaf42](https://f.dnz.dev/0x7207d6fbbbccaf42/raw/storage/CapabilityFactory_0x28b81f5880d5554e)
+| NFT + FT Capability Factories  | [0x1b7fa5972fcb8af5](https://f.dnz.dev/0x1b7fa5972fcb8af5/storage/CapabilityFactory_0x294e44e1ec6993c6) | [0x071d382668250606](https://f.dnz.dev/0x071d382668250606/storage/CapabilityFactory_0xd8a7e05a7ac670c0) | [0x96606f26aa36af9d](https://f.dnz.dev/0x96606f26aa36af9d/raw/storage/CapabilityFactory_0x28b81f5880d5554e) |
+| AllowAllFilter                 | [0xe2664be06bb0fe62](https://f.dnz.dev/0xe2664be06bb0fe62/storage/CapabilityFilter_0x294e44e1ec6993c6) | [0x78e93a79b05d0d7d](https://f.dnz.dev/0x78e93a79b05d0d7d/storage/CapabilityFilter_0xd8a7e05a7ac670c0)  | [0x6453b3c822c8a523](https://f.dnz.dev/0x6453b3c822c8a523/raw/storage/CapabilityFilter_0x28b81f5880d5554e) |
 
 ## Development
 

@@ -292,6 +292,34 @@
         "location": "./hc-previewnet.pkey"
       }
     },
+    "ft-manager-previewnet": {
+      "address": "7207d6fbbbccaf42",
+      "key": {
+        "type": "file",
+        "location": "./hc-previewnet.pkey"
+      }
+    },
+    "nft-ft-manager-previewnet": {
+      "address": "96606f26aa36af9d",
+      "key": {
+        "type": "file",
+        "location": "./hc-previewnet.pkey"
+      }
+    },
+    "nft-manager-previewnet": {
+      "address": "80340a153332a5fc",
+      "key": {
+        "type": "file",
+        "location": "./hc-previewnet.pkey"
+      }
+    },
+    "allow-all-previewnet": {
+      "address": "6453b3c822c8a523",
+      "key": {
+        "type": "file",
+        "location": "./hc-previewnet.pkey"
+      }
+    },
     "hc-testnet": {
       "address": "294e44e1ec6993c6",
       "key": {
