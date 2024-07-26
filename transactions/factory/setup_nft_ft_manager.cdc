@@ -5,11 +5,13 @@ import "CapabilityFactory"
 import "NFTCollectionPublicFactory"
 import "NFTProviderAndCollectionFactory"
 import "NFTProviderFactory"
+import "NFTCollectionFactory"
 import "FTProviderFactory"
 import "FTBalanceFactory"
 import "FTReceiverBalanceFactory"
 import "FTReceiverFactory"
 import "FTAllFactory"
+import "FTVaultFactory"
 
 transaction {
     prepare(acct: auth(Storage, Capabilities) &Account) {
@@ -35,10 +37,14 @@ transaction {
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
         manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
         manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>(), NFTCollectionFactory.WithdrawFactory())
+        manager.updateFactory(Type<&{NonFungibleToken.Collection}>(), NFTCollectionFactory.Factory())
         manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(), FTProviderFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Balance}>(), FTBalanceFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(), FTReceiverBalanceFactory.Factory())
         manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
+        manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Vault}>(), FTVaultFactory.WithdrawFactory())
+        manager.updateFactory(Type<&{FungibleToken.Vault}>(), FTVaultFactory.Factory())
     }
 }

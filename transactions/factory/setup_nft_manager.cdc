@@ -4,6 +4,7 @@ import "CapabilityFactory"
 import "NFTCollectionPublicFactory"
 import "NFTProviderAndCollectionFactory"
 import "NFTProviderFactory"
+import "NFTCollectionFactory"
 
 transaction {
     prepare(acct: auth(Storage, Capabilities) &Account) {
@@ -30,5 +31,7 @@ transaction {
         manager.updateFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
         manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
         manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+        manager.updateFactory(Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>(), NFTCollectionFactory.WithdrawFactory())
+        manager.updateFactory(Type<&{NonFungibleToken.Collection}>(), NFTCollectionFactory.Factory())
     }
 }

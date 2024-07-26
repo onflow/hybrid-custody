@@ -1448,11 +1448,13 @@ fun setup() {
     accounts["NFTCollectionPublicFactory"] = adminAccount
     accounts["NFTProviderAndCollectionFactory"] = adminAccount
     accounts["NFTProviderFactory"] = adminAccount
+    accounts["NFTCollectionFactory"] = adminAccount
     accounts["FTProviderFactory"] = adminAccount
     accounts["FTBalanceFactory"] = adminAccount
     accounts["FTReceiverBalanceFactory"] = adminAccount
     accounts["FTReceiverFactory"] = adminAccount
     accounts["FTAllFactory"] = adminAccount
+    accounts["FTVaultFactory"] = adminAccount
     accounts["ExampleNFT"] = adminAccount
     accounts["ExampleNFT2"] = adminAccount
     accounts["ExampleToken"] = adminAccount
@@ -1473,10 +1475,12 @@ fun setup() {
     deploy("NFTCollectionPublicFactory", "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
     deploy("NFTProviderFactory", "../contracts/factories/NFTProviderFactory.cdc")
+    deploy("NFTCollectionFactory", "../contracts/factories/NFTCollectionFactory.cdc")
     deploy("FTProviderFactory", "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", "../contracts/factories/FTBalanceFactory.cdc")
     deploy("FTReceiverBalanceFactory", "../contracts/factories/FTReceiverBalanceFactory.cdc")
     deploy("FTReceiverFactory", "../contracts/factories/FTReceiverFactory.cdc")
     deploy("FTAllFactory", "../contracts/factories/FTAllFactory.cdc")
+    deploy("FTVaultFactory", "../contracts/factories/FTVaultFactory.cdc")
     deploy("HybridCustody", "../contracts/HybridCustody.cdc")
 }
