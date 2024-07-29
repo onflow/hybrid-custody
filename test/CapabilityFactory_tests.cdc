@@ -211,11 +211,13 @@ fun setup() {
     deploy("NFTProviderFactory", "../contracts/factories/NFTProviderFactory.cdc")
     deploy("NFTCollectionPublicFactory", "../contracts/factories/NFTCollectionPublicFactory.cdc")
     deploy("NFTProviderAndCollectionFactory", "../contracts/factories/NFTProviderAndCollectionFactory.cdc")
+    deploy("NFTCollectionFactory", "../contracts/factories/NFTCollectionFactory.cdc")
     deploy("FTProviderFactory", "../contracts/factories/FTProviderFactory.cdc")
     deploy("FTBalanceFactory", "../contracts/factories/FTBalanceFactory.cdc")
     deploy("FTReceiverFactory", "../contracts/factories/FTReceiverFactory.cdc")
     deploy("FTReceiverBalanceFactory", "../contracts/factories/FTReceiverBalanceFactory.cdc")
     deploy("FTAllFactory", "../contracts/factories/FTAllFactory.cdc")
+    deploy("FTVaultFactory", "../contracts/factories/FTVaultFactory.cdc")
 }
 
 // BEGIN SECTION - transactions used in tests

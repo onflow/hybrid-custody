@@ -6,6 +6,7 @@ import "FTBalanceFactory"
 import "FTReceiverBalanceFactory"
 import "FTReceiverFactory"
 import "FTAllFactory"
+import "FTVaultFactory"
 
 transaction {
     prepare(acct: auth(Storage, Capabilities) &Account) {
@@ -35,5 +36,7 @@ transaction {
         manager.updateFactory(Type<&{FungibleToken.Receiver}>(), FTReceiverFactory.Factory())
         manager.updateFactory(Type<&{FungibleToken.Receiver, FungibleToken.Balance}>(), FTReceiverBalanceFactory.Factory())
         manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance}>(), FTAllFactory.Factory())
+        manager.updateFactory(Type<auth(FungibleToken.Withdraw) &{FungibleToken.Vault}>(), FTVaultFactory.WithdrawFactory())
+        manager.updateFactory(Type<&{FungibleToken.Vault}>(), FTVaultFactory.Factory())
     }
 }
