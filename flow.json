@@ -1,475 +1,417 @@
 {
-  "contracts": {
-    "CapabilityDelegator": {
-      "source": "./contracts/CapabilityDelegator.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "CapabilityFactory": {
-      "source": "./contracts/CapabilityFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "CapabilityFilter": {
-      "source": "./contracts/CapabilityFilter.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "ExampleNFT": {
-      "source": "./contracts/standard/ExampleNFT.cdc",
-      "aliases": {
-        "testing": "0000000000000007"
-      }
-    },
-    "ExampleNFT2": {
-      "source": "./contracts/standard/ExampleNFT2.cdc",
-      "aliases": {
-        "testing": "0000000000000007"
-      }
-    },
-    "ExampleToken": {
-      "source": "./contracts/standard/ExampleToken.cdc",
-      "aliases": {
-        "testing": "0000000000000007"
-      }
-    },
-    "FTAllFactory": {
-      "source": "./contracts/factories/FTAllFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FTVaultFactory": {
-      "source": "./contracts/factories/FTVaultFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FTBalanceFactory": {
-      "source": "./contracts/factories/FTBalanceFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FTProviderFactory": {
-      "source": "./contracts/factories/FTProviderFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FTReceiverBalanceFactory": {
-      "source": "./contracts/factories/FTReceiverBalanceFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FTReceiverFactory": {
-      "source": "./contracts/factories/FTReceiverFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "HybridCustody": {
-      "source": "./contracts/HybridCustody.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "NFTCollectionPublicFactory": {
-      "source": "./contracts/factories/NFTCollectionPublicFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "NFTProviderAndCollectionFactory": {
-      "source": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "mainnet": "d8a7e05a7ac670c0",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "NFTProviderFactory": {
-      "source": "./contracts/factories/NFTProviderFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "NFTCollectionFactory": {
-      "source": "./contracts/factories/NFTCollectionFactory.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testing": "0000000000000007",
-        "testnet": "294e44e1ec6993c6",
-        "previewnet": "28b81f5880d5554e"
-      }
-    },
-    "FungibleToken": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/FungibleToken.cdc",
-      "aliases": {
-        "emulator": "ee82856bf20e2aa6",
-        "testnet": "9a0766d93b6608b7",
-        "mainnet": "f233dcee88fe0abe",
-        "previewnet": "a0225e7000ac82a9"
-      }
-    },
-    "FungibleTokenMetadataViews": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/FungibleTokenMetadataViews.cdc",
-      "aliases": {
-        "emulator": "ee82856bf20e2aa6",
-        "testnet": "9a0766d93b6608b7",
-        "mainnet": "f233dcee88fe0abe",
-        "previewnet": "a0225e7000ac82a9"
-      }
-    },
-    "Burner": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/Burner.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "9a0766d93b6608b7",
-        "mainnet": "f233dcee88fe0abe",
-        "previewnet": "b6763b4399a888c8"
-      }
-    },
-    "FlowToken": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/FlowToken.cdc",
-      "aliases": {
-        "emulator": "0ae53cb6e3f42a79",
-        "testnet": "7e60df042a9c0868",
-        "mainnet": "1654653399040a61",
-        "previewnet": "4445e7ad11568276"
-      }
-    },
-    "NonFungibleToken": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/NonFungibleToken.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "631e88ae7f1d7c20",
-        "mainnet": "1d7e57aa55817448",
-        "previewnet": "b6763b4399a888c8"
-      }
-    },
-    "StringUtils": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/StringUtils.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "31ad40c07a2a9788",
-        "mainnet": "a340dc0a4ec828ab"
-      }
-    },
-    "ArrayUtils": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/ArrayUtils.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "31ad40c07a2a9788",
-        "mainnet": "a340dc0a4ec828ab"
-      }
-    },
-    "AddressUtils": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/flow-utils/AddressUtils.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "31ad40c07a2a9788",
-        "mainnet": "a340dc0a4ec828ab"
-      }
-    },
-    "MetadataViews": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/MetadataViews.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "631e88ae7f1d7c20",
-        "mainnet": "1d7e57aa55817448",
-        "previewnet": "b6763b4399a888c8"
-      }
-    },
-    "ViewResolver": {
-      "source": "./node_modules/@flowtyio/flow-contracts/contracts/ViewResolver.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "631e88ae7f1d7c20",
-        "mainnet": "1d7e57aa55817448",
-        "previewnet": "b6763b4399a888c8"
-      }
-    }
-  },
-  "networks": {
-    "emulator": "127.0.0.1:3569",
-    "testing": "127.0.0.1:3569",
-    "mainnet": "access.mainnet.nodes.onflow.org:9000",
-    "previewnet": "access.previewnet.nodes.onflow.org:9000",
-    "sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
-    "testnet": "access.devnet.nodes.onflow.org:9000"
-  },
-  "accounts": {
-    "allow-all-mainnet": {
-      "address": "78e93a79b05d0d7d",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "allow-all-testnet": {
-      "address": "e2664be06bb0fe62",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "emulator-account": {
-      "address": "f8d6e0586b0a20c7",
-      "key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
-    },
-    "emulator-ft": {
-      "address": "ee82856bf20e2aa6",
-      "key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
-    },
-    "hc-mainnet": {
-      "address": "d8a7e05a7ac670c0",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "hc-previewnet": {
-      "address": "28b81f5880d5554e",
-      "key": {
-        "type": "file",
-        "location": "./hc-previewnet.pkey"
-      }
-    },
-    "ft-manager-previewnet": {
-      "address": "7207d6fbbbccaf42",
-      "key": {
-        "type": "file",
-        "location": "./hc-previewnet.pkey"
-      }
-    },
-    "nft-ft-manager-previewnet": {
-      "address": "96606f26aa36af9d",
-      "key": {
-        "type": "file",
-        "location": "./hc-previewnet.pkey"
-      }
-    },
-    "nft-manager-previewnet": {
-      "address": "80340a153332a5fc",
-      "key": {
-        "type": "file",
-        "location": "./hc-previewnet.pkey"
-      }
-    },
-    "allow-all-previewnet": {
-      "address": "6453b3c822c8a523",
-      "key": {
-        "type": "file",
-        "location": "./hc-previewnet.pkey"
-      }
-    },
-    "hc-testnet": {
-      "address": "294e44e1ec6993c6",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "ft-manager-mainnet": {
-      "address": "410aa603925923d9",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "ft-manager-testnet": {
-      "address": "08bed9e8508ed20e",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "nft-ft-manager-mainnet": {
-      "address": "071d382668250606",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "nft-ft-manager-testnet": {
-      "address": "1b7fa5972fcb8af5",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "nft-manager-mainnet": {
-      "address": "ee9ff4f07a2d6dad",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "nft-manager-testnet": {
-      "address": "1055970ee34ef4dc",
-      "key": {
-        "type": "google-kms",
-        "hashAlgorithm": "SHA2_256",
-        "resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
-      }
-    },
-    "emulator-flowtoken": {
-      "address": "0ae53cb6e3f42a79",
-      "key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
-    }
-  },
-  "deployments": {
-    "emulator": {
-      "emulator-account": [
-        "NonFungibleToken",
-        "MetadataViews",
-        "ViewResolver",
-        "AddressUtils",
-        "StringUtils",
-        "ArrayUtils",
-        "HybridCustody",
-        "CapabilityDelegator",
-        "CapabilityFilter",
-        "CapabilityFactory",
-        "FTProviderFactory",
-        "FTAllFactory",
-        "FTBalanceFactory",
-        "FTReceiverBalanceFactory",
-        "FTReceiverFactory",
-        "NFTProviderFactory",
-        "NFTProviderAndCollectionFactory",
-        "NFTCollectionPublicFactory",
-        "FTVaultFactory",
-        "NFTCollectionFactory",
-        "ExampleNFT",
-        "ExampleNFT2",
-        "ExampleToken",
-        "Burner"
-      ],
-      "emulator-ft": [
-        "FungibleToken",
-        "FungibleTokenMetadataViews"
-      ],
-      "emulator-flowtoken": [
-        "FlowToken"
-      ]
-    },
-    "testnet": {
-      "hc-testnet": [
-        "CapabilityDelegator",
-        "CapabilityFactory",
-        "CapabilityFilter",
-        "HybridCustody",
-        "NFTProviderFactory",
-        "NFTProviderAndCollectionFactory",
-        "NFTCollectionPublicFactory",
-        "FTProviderFactory",
-        "FTAllFactory",
-        "FTBalanceFactory",
-        "FTReceiverBalanceFactory",
-        "FTReceiverFactory",
-        "FTVaultFactory",
-        "NFTCollectionFactory"
-      ]
-    },
-    "mainnet": {
-      "hc-mainnet": [
-        "CapabilityDelegator",
-        "CapabilityFactory",
-        "CapabilityFilter",
-        "HybridCustody",
-        "NFTProviderFactory",
-        "NFTProviderAndCollectionFactory",
-        "NFTCollectionPublicFactory",
-        "FTProviderFactory",
-        "FTAllFactory",
-        "FTBalanceFactory",
-        "FTReceiverBalanceFactory",
-        "FTReceiverFactory",
-        "FTVaultFactory",
-        "NFTCollectionFactory"
-      ]
-    },
-    "previewnet": {
-      "hc-previewnet": [
-        "CapabilityDelegator",
-        "CapabilityFactory",
-        "CapabilityFilter",
-        "HybridCustody",
-        "NFTProviderFactory",
-        "NFTProviderAndCollectionFactory",
-        "NFTCollectionPublicFactory",
-        "FTProviderFactory",
-        "FTAllFactory",
-        "FTBalanceFactory",
-        "FTReceiverBalanceFactory",
-        "FTReceiverFactory",
-        "FTVaultFactory",
-        "NFTCollectionFactory"
-      ]
-    }
-  }
+	"contracts": {
+		"CapabilityDelegator": {
+			"source": "./contracts/CapabilityDelegator.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"CapabilityFactory": {
+			"source": "./contracts/CapabilityFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"CapabilityFilter": {
+			"source": "./contracts/CapabilityFilter.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"ExampleNFT": {
+			"source": "./contracts/standard/ExampleNFT.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"ExampleNFT2": {
+			"source": "./contracts/standard/ExampleNFT2.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"ExampleToken": {
+			"source": "./contracts/standard/ExampleToken.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"FTAllFactory": {
+			"source": "./contracts/factories/FTAllFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTBalanceFactory": {
+			"source": "./contracts/factories/FTBalanceFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTProviderFactory": {
+			"source": "./contracts/factories/FTProviderFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTReceiverBalanceFactory": {
+			"source": "./contracts/factories/FTReceiverBalanceFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTReceiverFactory": {
+			"source": "./contracts/factories/FTReceiverFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTVaultFactory": {
+			"source": "./contracts/factories/FTVaultFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FlowToken": {
+			"source": "./node_modules/@flowtyio/flow-contracts/contracts/FlowToken.cdc",
+			"aliases": {
+				"emulator": "0ae53cb6e3f42a79",
+				"mainnet": "1654653399040a61",
+				"testnet": "7e60df042a9c0868"
+			}
+		},
+		"HybridCustody": {
+			"source": "./contracts/HybridCustody.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTCollectionFactory": {
+			"source": "./contracts/factories/NFTCollectionFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTCollectionPublicFactory": {
+			"source": "./contracts/factories/NFTCollectionPublicFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTProviderAndCollectionFactory": {
+			"source": "./contracts/factories/NFTProviderAndCollectionFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTProviderFactory": {
+			"source": "./contracts/factories/NFTProviderFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		}
+	},
+	"dependencies": {
+		"AddressUtils": {
+			"source": "mainnet://a340dc0a4ec828ab.AddressUtils",
+			"hash": "1723f0954ef25e083483b7c84f93fd159d5cc553746ea1532a79fbbbe4450487",
+			"aliases": {
+				"mainnet": "a340dc0a4ec828ab",
+				"testnet": "31ad40c07a2a9788"
+			}
+		},
+		"ArrayUtils": {
+			"source": "mainnet://a340dc0a4ec828ab.ArrayUtils",
+			"hash": "9e8f2d3e35be82da42b685045af834e16d23bcef1f322603ff91cedd1c9bbad9",
+			"aliases": {
+				"mainnet": "a340dc0a4ec828ab",
+				"testnet": "31ad40c07a2a9788"
+			}
+		},
+		"Burner": {
+			"source": "mainnet://f233dcee88fe0abe.Burner",
+			"hash": "71af18e227984cd434a3ad00bb2f3618b76482842bae920ee55662c37c8bf331",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f233dcee88fe0abe",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"FungibleToken": {
+			"source": "mainnet://f233dcee88fe0abe.FungibleToken",
+			"hash": "1410889b47fef8b02f6867eef3d67a75288a56a651b67a7e815ce273ad301cff",
+			"aliases": {
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"FungibleTokenMetadataViews": {
+			"source": "mainnet://f233dcee88fe0abe.FungibleTokenMetadataViews",
+			"hash": "294ada6a3df68757fcac4d794f62307c2ea4fe49c93f67e3771d3c6d8377dd47",
+			"aliases": {
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"MetadataViews": {
+			"source": "mainnet://1d7e57aa55817448.MetadataViews",
+			"hash": "be26ea7959d7cbc06ac69fe00926b812c4da67984ea2d1bde1029141ae091378",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"NonFungibleToken": {
+			"source": "mainnet://1d7e57aa55817448.NonFungibleToken",
+			"hash": "49a58b950afdaf0728fdb7d4eb47cf4f2ec3077d655f274b7fdeb504c742f528",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"StringUtils": {
+			"source": "mainnet://a340dc0a4ec828ab.StringUtils",
+			"hash": "b401c4b0f711344ed9cd02ff77c91e026f5dfbca6045f140b9ca9d4966707e83",
+			"aliases": {
+				"mainnet": "a340dc0a4ec828ab",
+				"testnet": "31ad40c07a2a9788"
+			}
+		},
+		"ViewResolver": {
+			"source": "mainnet://1d7e57aa55817448.ViewResolver",
+			"hash": "374a1994046bac9f6228b4843cb32393ef40554df9bd9907a702d098a2987bde",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		}
+	},
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"previewnet": "access.previewnet.nodes.onflow.org:9000",
+		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
+		"testing": "127.0.0.1:3569",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"accounts": {
+		"allow-all-mainnet": {
+			"address": "78e93a79b05d0d7d",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"allow-all-testnet": {
+			"address": "e2664be06bb0fe62",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
+		"emulator-flowtoken": {
+			"address": "0ae53cb6e3f42a79",
+			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
+		"emulator-ft": {
+			"address": "ee82856bf20e2aa6",
+			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
+		"ft-manager-mainnet": {
+			"address": "410aa603925923d9",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"ft-manager-testnet": {
+			"address": "08bed9e8508ed20e",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"hc-mainnet": {
+			"address": "d8a7e05a7ac670c0",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"hc-testnet": {
+			"address": "294e44e1ec6993c6",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"nft-ft-manager-mainnet": {
+			"address": "071d382668250606",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"nft-ft-manager-testnet": {
+			"address": "1b7fa5972fcb8af5",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"nft-manager-mainnet": {
+			"address": "ee9ff4f07a2d6dad",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-mainnet/cryptoKeys/hybrid-custody-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"nft-manager-testnet": {
+			"address": "1055970ee34ef4dc",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/hybrid-custody-testnet/cryptoKeys/hybrid-custody-testnet-key/cryptoKeyVersions/1"
+			}
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"NonFungibleToken",
+				"MetadataViews",
+				"ViewResolver",
+				"AddressUtils",
+				"StringUtils",
+				"ArrayUtils",
+				"HybridCustody",
+				"CapabilityDelegator",
+				"CapabilityFilter",
+				"CapabilityFactory",
+				"FTProviderFactory",
+				"FTAllFactory",
+				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
+				"FTReceiverFactory",
+				"NFTProviderFactory",
+				"NFTProviderAndCollectionFactory",
+				"NFTCollectionPublicFactory",
+				"FTVaultFactory",
+				"NFTCollectionFactory",
+				"ExampleNFT",
+				"ExampleNFT2",
+				"ExampleToken",
+				"Burner",
+				"StringUtils",
+				"ArrayUtils",
+				"AddressUtils"
+			],
+			"emulator-flowtoken": [
+				"FlowToken"
+			],
+			"emulator-ft": [
+				"FungibleToken",
+				"FungibleTokenMetadataViews"
+			]
+		},
+		"mainnet": {
+			"hc-mainnet": [
+				"CapabilityDelegator",
+				"CapabilityFactory",
+				"CapabilityFilter",
+				"HybridCustody",
+				"NFTProviderFactory",
+				"NFTProviderAndCollectionFactory",
+				"NFTCollectionPublicFactory",
+				"FTProviderFactory",
+				"FTAllFactory",
+				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
+				"FTReceiverFactory",
+				"FTVaultFactory",
+				"NFTCollectionFactory"
+			]
+		},
+		"testnet": {
+			"hc-testnet": [
+				"CapabilityDelegator",
+				"CapabilityFactory",
+				"CapabilityFilter",
+				"HybridCustody",
+				"NFTProviderFactory",
+				"NFTProviderAndCollectionFactory",
+				"NFTCollectionPublicFactory",
+				"FTProviderFactory",
+				"FTAllFactory",
+				"FTBalanceFactory",
+				"FTReceiverBalanceFactory",
+				"FTReceiverFactory",
+				"FTVaultFactory",
+				"NFTCollectionFactory"
+			]
+		}
+	}
 }

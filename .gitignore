@@ -5,3 +5,4 @@ coverage.lcov
 *.private
 *.pem
 node_modules/
+imports/

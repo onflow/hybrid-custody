@@ -46,10 +46,11 @@ Follow the steps outlined below to set up your development environment.
 
 1. **Initialize and Update Submodules**
 
-   This project uses Git submodules. To initialize and update them, run the following command in your terminal:
+   This project uses [Flow CLI's Dependency Manager](https://developers.flow.com/tools/flow-cli/dependency-manager). To
+   install them, run the following command in your terminal:
 
    ```bash
-   git submodule update --init --recursive
+   flow dependencies install
    ```
 
 2. **Run Flow Emulator**
