@@ -57,6 +57,10 @@ Follow the steps outlined below to set up your development environment.
 
    Kickstart your development by running the flow emulator. Use the following command in your terminal:
 
+## Audit report
+
+Hybrid Custody was audited by Oak Security in July 2023: [final report](https://github.com/oak-security/audit-reports/blob/master/Dapper%20Labs/Audit%20Report%20-%20Hybrid%20Custody%20Smart%20Contracts.pdf).
+
    ```bash
    flow emulator start
    ```
