@@ -4,7 +4,7 @@ import "MetadataViews"
 import "ExampleNFT"
 
 transaction {
-    prepare(acct: auth(Storage, Capabilities) &Account) {
+    prepare(acct: auth(BorrowValue, SaveValue, StorageCapabilities, PublishCapability, UnpublishCapability) &Account) {
         let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
         if acct.storage.borrow<&ExampleNFT.Collection>(from: d.storagePath) == nil {

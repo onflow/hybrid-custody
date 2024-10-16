@@ -4,9 +4,9 @@ import "MetadataViews"
 import "ExampleNFT"
 
 transaction {
-    prepare(acct: AuthAccount) {
-        if acct.borrow<&ExampleNFT.Collection>(from: ExampleNFT.CollectionStoragePath) == nil {
-            acct.save(<- ExampleNFT.createEmptyCollection(), to: ExampleNFT.CollectionStoragePath)
+    prepare(acct: auth(BorrowValue, SaveValue) &Account) {
+        if acct.storage.borrow<&ExampleNFT.Collection>(from: ExampleNFT.CollectionStoragePath) == nil {
+            acct.storage.save(<- ExampleNFT.createEmptyCollection(), to: ExampleNFT.CollectionStoragePath)
         }
     }
 }

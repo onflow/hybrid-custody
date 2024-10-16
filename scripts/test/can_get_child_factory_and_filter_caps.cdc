@@ -4,7 +4,6 @@ import "HybridCustody"
 // @parent - The parent account that this child is assigned to
 access(all) fun main(addr: Address, parent: Address): Bool {
     let identifier = HybridCustody.getChildAccountIdentifier(parent)
-    let path = PrivatePath(identifier: identifier) ?? panic("invalid public path identifier for parent address")
 
     let acct = getAuthAccount<auth(Capabilities) &Account>(addr)
     var controllerID: UInt64? = nil

@@ -649,7 +649,7 @@ fun testGetFlowBalanceByStoragePath() {
 }
 
 access(all)
-fun testGetNFTDisplayViewFromPublic() {
+fun testGetNFTDisplayViewFromStorage() {
     let child = Test.createAccount()
     let parent = Test.createAccount()
 
@@ -669,8 +669,8 @@ fun testGetNFTDisplayViewFromPublic() {
     let expectedAddressToIDs: {Address: [UInt64]} = {parent.address: expectedParentIDs, child.address: expectedChildIDs}
 
     scriptExecutor(
-        "test/test_get_nft_display_view_from_public.cdc",
-        [parent.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
+        "test/test_get_nft_display_view_from_storage.cdc",
+        [parent.address, StoragePath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
     )
 }
 
@@ -822,8 +822,8 @@ fun testGetNFTsAccessibleFromChildAccount(){
     let expectedAddressToIDs: {Address: [UInt64]} = {child.address: expectedChildIDs, parent.address: expectedParentIDs}
 
     scriptExecutor(
-        "test/test_get_nft_display_view_from_public.cdc",
-        [parent.address, PublicPath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
+        "test/test_get_nft_display_view_from_storage.cdc",
+        [parent.address, StoragePath(identifier: exampleNFTPublicIdentifier)!, expectedAddressToIDs]
     )
 
     // Test we have capabilities to access the minted NFTs
@@ -838,8 +838,8 @@ fun testGetNFTsAccessibleFromChildAccount(){
     let expectedAddressToIDs2: {Address: [UInt64]} = {child.address: expectedChildIDs2, parent.address: expectedParentIDs}
 
     scriptExecutor(
-        "test/test_get_nft_display_view_from_public.cdc",
-        [parent.address, PublicPath(identifier: exampleNFT2PublicIdentifier)!, expectedAddressToIDs2]
+        "test/test_get_nft_display_view_from_storage.cdc",
+        [parent.address, StoragePath(identifier: exampleNFT2PublicIdentifier)!, expectedAddressToIDs2]
     )
 
     // revoke the ExampleNFT2 provider capability, preventing it from being returned.
