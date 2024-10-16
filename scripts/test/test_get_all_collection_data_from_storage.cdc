@@ -59,7 +59,7 @@ access(all) fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCo
 
 /// Script that retrieve data about all NFT Collections in the storage of an account and any of its child accounts
 ///
-// pub fun main(address: Address): {Address: [MetadataViews.NFTCollectionData]} {
+// access(all) fun main(address: Address): {Address: [MetadataViews.NFTCollectionData]} {
 access(all) fun main(address: Address, expectedAddressToCollectionLength: {Address: Int}) {
     
     let allNFTData: {Address: [MetadataViews.NFTCollectionData]} = {address: getAllViewsFromAddress(address)}

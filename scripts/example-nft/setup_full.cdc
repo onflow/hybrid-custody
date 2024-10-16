@@ -1,20 +1,18 @@
 import "NonFungibleToken"
 import "MetadataViews"
 
-import ExampleNFT from "ExampleNFT"
+import "ExampleNFT"
 
 transaction {
-    prepare(acct: AuthAccount) {
-        let d = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
+    prepare(acct: auth(BorrowValue, SaveValue, PublishCapability, UnpublishCapability) &Account) {
+        let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
-        if acct.borrow<&ExampleNFT.Collection>(from: d.storagePath) == nil {
-            acct.save(<- ExampleNFT.createEmptyCollection(), to: ExampleNFT.CollectionStoragePath)
+        if acct.storage.borrow<&ExampleNFT.Collection>(from: d.storagePath) == nil {
+            acct.storage.save(<- ExampleNFT.createEmptyCollection(), to: d.storagePath)
         }
 
-        acct.unlink(d.publicPath)
-        acct.link<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic}>(d.publicPath, target: d.storagePath)
-
-        acct.unlink(d.providerPath)
-        acct.link<&ExampleNFT.Collection{ExampleNFT.ExampleNFTCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider}>(d.providerPath, target: d.storagePath)
+        acct.capabilities.unpublish(d.publicPath)
+        let cap = acct.capabilities.storage.issue<&ExampleNFT.Collection>(d.storagePath)
+        acct.capabilities.publish(cap, at: d.publicPath)
     }
 }
