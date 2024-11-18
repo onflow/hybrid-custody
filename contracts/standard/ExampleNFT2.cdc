@@ -14,7 +14,7 @@ import "MetadataViews"
 import "ViewResolver"
 import "FungibleToken"
 
-access(all) contract ExampleNFT2: ViewResolver {
+access(all) contract ExampleNFT2: NonFungibleToken {
 
     access(all) var totalSupply: UInt64
 
@@ -99,7 +99,7 @@ access(all) contract ExampleNFT2: ViewResolver {
                         publicCollection: Type<&ExampleNFT2.Collection>(),
                         publicLinkedType: Type<&ExampleNFT2.Collection>(),
                         createEmptyCollectionFunction: (fun (): @{NonFungibleToken.Collection} {
-                            return <-ExampleNFT2.createEmptyCollection()
+                            return <-ExampleNFT2.createEmptyCollection(nftType: Type<@ExampleNFT2.NFT>())
                         })
                     )
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -124,7 +124,7 @@ access(all) contract ExampleNFT2: ViewResolver {
         }
 
         access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
-            return <- ExampleNFT2.createEmptyCollection()
+            return <- ExampleNFT2.createEmptyCollection(nftType: Type<@ExampleNFT2.NFT>())
         }
     }
 
@@ -215,7 +215,7 @@ access(all) contract ExampleNFT2: ViewResolver {
     }
 
     // public function that anyone can call to create a new empty collection
-    access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
+    access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
         return <- create Collection()
     }
 
@@ -311,7 +311,7 @@ access(all) contract ExampleNFT2: ViewResolver {
                         publicCollection: Type<&ExampleNFT2.Collection>(),
                         publicLinkedType: Type<&ExampleNFT2.Collection>(),
                         createEmptyCollectionFunction: (fun (): @{NonFungibleToken.Collection} {
-                            return <-ExampleNFT2.createEmptyCollection()
+                            return <-ExampleNFT2.createEmptyCollection(nftType: Type<@ExampleNFT2.NFT>())
                         })
                 )
             case Type<MetadataViews.NFTCollectionDisplay>():

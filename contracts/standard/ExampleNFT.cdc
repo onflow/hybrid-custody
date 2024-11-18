@@ -14,7 +14,7 @@ import "MetadataViews"
 import "ViewResolver"
 import "FungibleToken"
 
-access(all) contract ExampleNFT: ViewResolver {
+access(all) contract ExampleNFT: NonFungibleToken {
 
     access(all) var totalSupply: UInt64
 
@@ -99,7 +99,7 @@ access(all) contract ExampleNFT: ViewResolver {
                         publicCollection: Type<&ExampleNFT.Collection>(),
                         publicLinkedType: Type<&ExampleNFT.Collection>(),
                         createEmptyCollectionFunction: (fun (): @{NonFungibleToken.Collection} {
-                            return <-ExampleNFT.createEmptyCollection()
+                            return <-ExampleNFT.createEmptyCollection(nftType: Type<@ExampleNFT.NFT>())
                         })
                     )
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -124,7 +124,7 @@ access(all) contract ExampleNFT: ViewResolver {
         }
 
         access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
-            return <- ExampleNFT.createEmptyCollection()
+            return <- ExampleNFT.createEmptyCollection(nftType: Type<@ExampleNFT.NFT>())
         }
     }
 
@@ -215,7 +215,7 @@ access(all) contract ExampleNFT: ViewResolver {
     }
 
     // public function that anyone can call to create a new empty collection
-    access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
+    access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
         return <- create Collection()
     }
 
@@ -311,7 +311,7 @@ access(all) contract ExampleNFT: ViewResolver {
                         publicCollection: Type<&ExampleNFT.Collection>(),
                         publicLinkedType: Type<&ExampleNFT.Collection>(),
                         createEmptyCollectionFunction: (fun (): @{NonFungibleToken.Collection} {
-                            return <-ExampleNFT.createEmptyCollection()
+                            return <-ExampleNFT.createEmptyCollection(nftType: Type<@ExampleNFT.NFT>())
                         })
                 )
             case Type<MetadataViews.NFTCollectionDisplay>():
