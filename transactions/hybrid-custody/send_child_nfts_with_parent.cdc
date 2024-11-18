@@ -44,7 +44,7 @@ transaction(nftIdentifier: String, ids: [UInt64], to: Address, child: Address) {
         // borrow a reference to the defining contract as a FungibleToken contract reference
         let nftContract = getAccount(contractAddress).contracts.borrow<&{NonFungibleToken}>(name: contractName)
             ?? panic("Provided identifier ".concat(nftIdentifier).concat(" is not defined as a NonFungibleToken"))
-        
+
         // gather the default asset storage data
         self.collectionData = nftContract.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>()) as! MetadataViews.NFTCollectionData?
             ?? panic("Could not get the vault data view for NFT ".concat(nftIdentifier))
@@ -53,11 +53,11 @@ transaction(nftIdentifier: String, ids: [UInt64], to: Address, child: Address) {
         let capType = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()
         let controllerID = childAcct.getControllerIDForType(type: capType, forPath: self.collectionData.storagePath)
             ?? panic("no controller found for capType")
-        
+
         let cap = childAcct.getCapability(controllerID: controllerID, type: capType) ?? panic("no cap found")
         let providerCap = cap as! Capability<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>
         assert(providerCap.check(), message: "invalid provider capability")
-        
+
         // get a reference to the child's stored NFT Collection Provider
         self.provider = providerCap.borrow()!
     }
@@ -68,14 +68,18 @@ transaction(nftIdentifier: String, ids: [UInt64], to: Address, child: Address) {
 
         // get a reference to the recipient's NFT Receiver
         let receiverRef = recipient.capabilities.borrow<&{NonFungibleToken.Receiver}>(self.collectionData.publicPath)
-			?? panic("Could not borrow receiver reference to the recipient's Vault")
+            ?? panic("Could not borrow receiver reference to the recipient's Vault")
 
         for id in ids {
             // withdraw the NFT from the child account's collection & deposit to the recipient's Receiver
+            let nft <- self.provider.withdraw(withdrawID: id)
+            assert(
+                nft.getType() == self.nftType,
+                message: "Expected NFT ".concat(nftIdentifier).concat(" got NFT ".concat(nft.getType().identifier))
+            )
             receiverRef.deposit(
-                token: <-self.provider.withdraw(withdrawID: id)
+                token: <-nft
             )
         }
     }
 }
- 

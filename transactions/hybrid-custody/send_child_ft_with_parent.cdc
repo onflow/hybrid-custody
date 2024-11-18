@@ -44,7 +44,7 @@ transaction(vaultIdentifier: String, amount: UFix64, to: Address, child: Address
         // borrow a reference to the defining contract as a FungibleToken contract reference
         let ftContract = getAccount(contractAddress).contracts.borrow<&{FungibleToken}>(name: contractName)
             ?? panic("Provided identifier ".concat(vaultIdentifier).concat(" is not defined as a FungibleToken"))
-        
+
         // gather the default asset storage data
         self.vaultData = ftContract.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
             ?? panic("Could not get the vault data view for vault ".concat(vaultIdentifier))
@@ -53,11 +53,11 @@ transaction(vaultIdentifier: String, amount: UFix64, to: Address, child: Address
         let capType = Type<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>()
         let controllerID = childAcct.getControllerIDForType(type: capType, forPath: self.vaultData.storagePath)
             ?? panic("no controller found for capType")
-        
+
         let cap = childAcct.getCapability(controllerID: controllerID, type: capType) ?? panic("no cap found")
         let providerCap = cap as! Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>
         assert(providerCap.check(), message: "invalid provider capability")
-        
+
         // Get a reference to the child's stored vault
         let vaultRef = providerCap.borrow()!
 
@@ -78,10 +78,9 @@ transaction(vaultIdentifier: String, amount: UFix64, to: Address, child: Address
 
         // Get a reference to the recipient's Receiver
         let receiverRef = recipient.capabilities.get<&{FungibleToken.Receiver}>(self.vaultData.receiverPath)!.borrow()
-			?? panic("Could not borrow receiver reference to the recipient's Vault")
+            ?? panic("Could not borrow receiver reference to the recipient's Vault")
 
         // Deposit the withdrawn tokens in the recipient's receiver
         receiverRef.deposit(from: <-self.paymentVault)
     }
 }
- 
