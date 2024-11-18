@@ -1,15 +1,32 @@
 import "NonFungibleToken"
 import "MetadataViews"
-import "ExampleNFT"
 
 import "HybridCustody"
-import "FungibleTokenMetadataViews"
 
-transaction(ids: [UInt64], to: Address, child: Address) {
+/// Returns the contract address from a type identifier. Type identifiers are in the form of
+/// A.<ADDRESS>.<CONTRACT_NAME>.<OBJECT_NAME> where ADDRESS omits the `0x` prefix
+///
+access(all)
+view fun getContractAddress(from identifier: String): Address? {
+    let parts = identifier.split(separator: ".")
+    return parts.length == 4 ? Address.fromString("0x".concat(parts[1])) : nil
+}
+
+/// Returns the contract name from a type identifier. Type identifiers are in the form of
+/// A.<ADDRESS>.<CONTRACT_NAME>.<OBJECT_NAME> where ADDRESS omits the `0x` prefix
+///
+access(all)
+view fun getContractName(from identifier: String): String? {
+    let parts = identifier.split(separator: ".")
+    return parts.length == 4 ? parts[2] : nil
+}
+
+transaction(nftIdentifier: String, ids: [UInt64], to: Address, child: Address) {
 
     // reference to the child account's Collection Provider that holds the NFT being transferred
     let provider: auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}
     let collectionData: MetadataViews.NFTCollectionData
+    let nftType: Type
 
     // signer is the parent account
     prepare(signer: auth(Storage) &Account) {
@@ -17,9 +34,20 @@ transaction(ids: [UInt64], to: Address, child: Address) {
         let m = signer.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
             ?? panic("manager does not exist")
         let childAcct = m.borrowAccount(addr: child) ?? panic("child account not found")
+
+        // derive the type and defining contract address & name
+        self.nftType = CompositeType(nftIdentifier) ?? panic("Malformed identifer: ".concat(nftIdentifier))
+        let contractAddress = getContractAddress(from: nftIdentifier)
+            ?? panic("Malformed identifer: ".concat(nftIdentifier))
+        let contractName = getContractName(from: nftIdentifier)
+            ?? panic("Malformed identifer: ".concat(nftIdentifier))
+        // borrow a reference to the defining contract as a FungibleToken contract reference
+        let nftContract = getAccount(contractAddress).contracts.borrow<&{NonFungibleToken}>(name: contractName)
+            ?? panic("Provided identifier ".concat(nftIdentifier).concat(" is not defined as a NonFungibleToken"))
         
-        self.collectionData = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>()) as! MetadataViews.NFTCollectionData?
-            ?? panic("Could not get the vault data view for ExampleNFT")
+        // gather the default asset storage data
+        self.collectionData = nftContract.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>()) as! MetadataViews.NFTCollectionData?
+            ?? panic("Could not get the vault data view for NFT ".concat(nftIdentifier))
 
         // get Provider capability from child account
         let capType = Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Provider}>()

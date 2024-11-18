@@ -718,7 +718,7 @@ fun testSendChildFtsWithParentSigner() {
     let parent = Test.createAccount()
     let child = Test.createAccount()
     let child2 = Test.createAccount()
-    let exampleToken = Test.createAccount()
+    let tmpExampleToken = Test.createAccount()
 
     setupChildAndParent_FilterKindAll(child: child, parent: parent)
 
@@ -728,14 +728,16 @@ fun testSendChildFtsWithParentSigner() {
     setupFT(child)
     setupFTProvider(child)
 
-    txExecutor("example-token/mint_tokens.cdc", [exampleToken], [child.address, mintAmount], nil)
+    txExecutor("example-token/mint_tokens.cdc", [tmpExampleToken], [child.address, mintAmount], nil)
     let balance: UFix64? = getBalance(child)
     Test.assert(balance == mintAmount, message: "balance should be".concat(mintAmount.toString()))
 
     let recipientBalanceBefore: UFix64? = getBalance(child2)
     Test.assert(recipientBalanceBefore == 0.0, message: "recipient balance should be 0")
 
-    txExecutor("hybrid-custody/send_child_ft_with_parent.cdc", [parent], [amount, child2.address, child.address], nil)
+    let vaultIdentifier = buildTypeIdentifier(getTestAccount(exampleToken), exampleToken, "Vault")
+
+    txExecutor("hybrid-custody/send_child_ft_with_parent.cdc", [parent], [vaultIdentifier, amount, child2.address, child.address], nil)
 
     let recipientBalanceAfter: UFix64? = getBalance(child2)
     Test.assert(recipientBalanceAfter == amount, message: "recipient balance should be".concat(amount.toString()))
@@ -763,7 +765,9 @@ fun testSendChildNFTsWithParentSigner() {
     let recipientIDs = (scriptExecutor("example-nft/get_ids.cdc", [recipient.address]) as! [UInt64]?)!
     Test.assert(recipientIDs.length == 0, message: "NFTs found in recipient account without minting")
 
-    txExecutor("hybrid-custody/send_child_nfts_with_parent.cdc", [parent], [childIDs, recipient.address, child.address], nil)
+    let nftIdentifier = buildTypeIdentifier(getTestAccount(exampleNFT), exampleNFT, "NFT")
+
+    txExecutor("hybrid-custody/send_child_nfts_with_parent.cdc", [parent], [nftIdentifier, childIDs, recipient.address, child.address], nil)
 
     let childIDsAfter = (scriptExecutor("example-nft/get_ids.cdc", [child.address]) as! [UInt64]?)!
     Test.assert(childIDsAfter.length == 0, message: "NFTs found in child account after transfer - collection should be empty")
