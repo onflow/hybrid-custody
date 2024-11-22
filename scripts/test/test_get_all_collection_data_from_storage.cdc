@@ -35,7 +35,7 @@ access(all) fun getAllViewsFromAddress(_ address: Address): [MetadataViews.NFTCo
     // Iterate over each public path
     account.storage.forEachStored(fun (path: StoragePath, type: Type): Bool {
         // Return if not the type we're looking for
-        if !type.isInstance(collectionType) && !type.isSubtype(of: collectionType) {
+        if type.isRecovered || (!type.isInstance(collectionType) && !type.isSubtype(of: collectionType)) {
             return true
         }
         if let collectionRef = account.storage

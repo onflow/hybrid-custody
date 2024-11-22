@@ -8,7 +8,7 @@ transaction {
         let d = ExampleNFT.resolveContractView(resourceType: nil, viewType: Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
 
         if acct.storage.borrow<&ExampleNFT.Collection>(from: d.storagePath) == nil {
-            acct.storage.save(<- ExampleNFT.createEmptyCollection(), to: d.storagePath)
+            acct.storage.save(<- ExampleNFT.createEmptyCollection(nftType: Type<@ExampleNFT.NFT>()), to: d.storagePath)
         }
 
         acct.capabilities.unpublish(d.publicPath)
