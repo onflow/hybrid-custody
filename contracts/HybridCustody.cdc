@@ -74,7 +74,7 @@ access(all) contract HybridCustody {
     /// Account has been sealed - keys revoked, new AuthAccount Capability generated
     access(all) event AccountSealed(id: UInt64, address: Address, parents: [Address])
 
-    /// An OwnedAccount shares the BorrowableAccount capability to itelf with ChildAccount resources
+    /// An OwnedAccount shares the BorrowableAccount capability to itself with ChildAccount resources
     ///
     access(all) resource interface BorrowableAccount {
         access(contract) view fun _borrowAccount(): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account
@@ -247,7 +247,6 @@ access(all) contract HybridCustody {
         }
     }
 
-    /// Functions anyone can call on a manager to get information about an account such as What child accounts it has
     /// Functions anyone can call on a manager to get information about an account such as what child accounts it has
     access(all) resource interface ManagerPublic {
         access(all) view fun borrowAccountPublic(addr: Address): &{AccountPublic, ViewResolver.Resolver}?
@@ -392,23 +391,21 @@ access(all) contract HybridCustody {
         /// Returns a reference to a child account
         ///
         access(Manage) fun borrowAccount(addr: Address): auth(Child) &{AccountPrivate, AccountPublic, ViewResolver.Resolver}? {
-            let cap = self.childAccounts[addr]
-            if cap == nil {
-                return nil
+            if let cap = self.childAccounts[addr] {
+                return cap.borrow()
             }
 
-            return cap!.borrow()
+            return nil
         }
 
         /// Returns a reference to a child account's public AccountPublic interface
         ///
         access(all) view fun borrowAccountPublic(addr: Address): &{AccountPublic, ViewResolver.Resolver}? {
-            let cap = self.childAccounts[addr]
-            if cap == nil {
-                return nil
+            if let cap = self.childAccounts[addr] {
+                return cap.borrow()
             }
 
-            return cap!.borrow()
+            return nil
         }
 
         /// Returns a reference to an owned account
@@ -612,9 +609,11 @@ access(all) contract HybridCustody {
             }
 
             let cap = tmp!
-            // Check that private capabilities are allowed by either internal or manager filter (if assigned)
-            // If not allowed, return nil
-            if self.filter.borrow()!.allowed(cap: cap) == false || (self.getManagerCapabilityFilter()?.allowed(cap: cap) ?? true) == false {
+            // The child's own filter is always enforced
+            let childAllows = self.filter.borrow()!.allowed(cap: cap)
+            // The manager filter is optionally set by the parent account; if absent, default to allow
+            let managerAllows = self.getManagerCapabilityFilter()?.allowed(cap: cap) ?? true
+            if !childAllows || !managerAllows {
                 return nil
             }
 
@@ -765,12 +764,11 @@ access(all) contract HybridCustody {
         }
 
         access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64? {
-            let child = self.childCap.borrow()
-            if child == nil {
-                return nil
+            if let child = self.childCap.borrow() {
+                return child.getControllerIDForType(type: type, forPath: forPath)
             }
 
-            return child!.getControllerIDForType(type: type, forPath: forPath)
+            return nil
         }
 
         // When a ChildAccount is destroyed, attempt to remove it from the parent account as well
@@ -896,13 +894,14 @@ access(all) contract HybridCustody {
             acct.inbox.publish(delegatorCap, name: identifier, recipient: parentAddress)
             self.parents[parentAddress] = false
 
+            let filterRef = filter.borrow()!
             emit ChildAccountPublished(
                 ownedAcctID: self.uuid,
                 childAcctID: delegatorCap.borrow()!.uuid,
                 capDelegatorID: delegator.borrow()!.uuid,
                 factoryID: factory.borrow()!.uuid,
-                filterID: filter.borrow()!.uuid,
-                filterType: filter.borrow()!.getType(),
+                filterID: filterRef.uuid,
+                filterType: filterRef.getType(),
                 child: self.getAddress(),
                 pendingParent: parentAddress
             )
@@ -1093,7 +1092,7 @@ access(all) contract HybridCustody {
         ///
         access(Owner) fun seal() {
             self.rotateAuthAccount()
-            self.revokeAllKeys() // There needs to be a path to giving ownership that doesn't revoke keys   
+            self.revokeAllKeys()
             emit AccountSealed(id: self.uuid, address: self.acct.address, parents: self.parents.keys)
             self.currentlyOwned = false
         }
@@ -1168,14 +1167,11 @@ access(all) contract HybridCustody {
         }
 
         access(all) view fun getControllerIDForType(type: Type, forPath: StoragePath): UInt64? {
-            let acct = self.acct.borrow()
-            if acct == nil {
-                return nil
-            }
-
-            for c in acct!.capabilities.storage.getControllers(forPath: forPath) {
-                if c.borrowType.isSubtype(of: type) {
-                    return c.capabilityID
+            if let acct = self.acct.borrow() {
+                for c in acct.capabilities.storage.getControllers(forPath: forPath) {
+                    if c.borrowType.isSubtype(of: type) {
+                        return c.capabilityID
+                    }
                 }
             }
 
