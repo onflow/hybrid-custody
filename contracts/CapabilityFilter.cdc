@@ -115,7 +115,7 @@ access(all) contract CapabilityFilter {
 
         /// Removes a type from the mapping of allowed types
         ///
-        /// @param type: The type to remove from the denied types mapping
+        /// @param type: The type to remove from the allowed types mapping
         ///
         access(Delete) fun removeType(_ type: Type) {
             if let removed = self.allowedTypes.remove(key: type) {
@@ -123,7 +123,7 @@ access(all) contract CapabilityFilter {
             }
         }
 
-        /// Removes all types from the mapping of denied types
+        /// Removes all types from the mapping of allowed types
         ///
         access(Delete) fun removeAllTypes() {
             for type in self.allowedTypes.keys {

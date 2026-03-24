@@ -1,5 +1,6 @@
 coverage.json
 coverage.lcov
+REPORT.md
 .idea
 *.pkey
 *.private
