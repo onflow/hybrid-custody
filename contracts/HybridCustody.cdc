@@ -666,7 +666,9 @@ access(all) contract HybridCustody {
         ///
         access(contract) fun setRedeemed(_ addr: Address) {
             let acct = self.childCap.borrow()!._borrowAccount()
-            acct.storage.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)?.setRedeemed(addr)
+            let ownedAcct = acct.storage.borrow<&OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+                ?? panic("OwnedAccount not found at expected storage path during setRedeemed callback")
+            ownedAcct.setRedeemed(addr)
         }
 
         /// Returns a reference to the stored delegator, generally used for arbitrary Capability retrieval
@@ -868,10 +870,8 @@ access(all) contract HybridCustody {
             assert(acct.storage.borrow<&AnyResource>(from: capDelegatorStorage) == nil, message: "conflicting resource found in capability delegator storage slot for parentAddress")
             assert(acct.storage.borrow<&AnyResource>(from: childAccountStorage) == nil, message: "conflicting resource found in child account storage slot for parentAddress")
 
-            if acct.storage.borrow<&CapabilityDelegator.Delegator>(from: capDelegatorStorage) == nil {
-                let delegator <- CapabilityDelegator.createDelegator()
-                acct.storage.save(<-delegator, to: capDelegatorStorage)
-            }
+            let newDelegator <- CapabilityDelegator.createDelegator()
+            acct.storage.save(<-newDelegator, to: capDelegatorStorage)
 
             let capDelegatorPublic = PublicPath(identifier: capDelegatorIdentifier)!
 

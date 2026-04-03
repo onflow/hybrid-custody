@@ -128,6 +128,12 @@ access(all) contract CapabilityDelegator {
         access(Add) fun addCapability(cap: Capability, isPublic: Bool) {
             pre {
                 cap.check<&AnyResource>(): "Invalid Capability provided"
+                // Enforce the invariant that a capability type exists in at most one partition.
+                // Public and private capabilities of the same type cannot and should not be mixed.
+                !isPublic || self.privateCapabilities[cap.getType()] == nil:
+                    "Capability type already exists in the private partition"
+                isPublic || self.publicCapabilities[cap.getType()] == nil:
+                    "Capability type already exists in the public partition"
             }
             if isPublic {
                 self.publicCapabilities.insert(key: cap.getType(), cap)
