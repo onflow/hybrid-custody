@@ -40,7 +40,7 @@ access(all) contract CapabilityFactory {
     ///
     access(all) resource Manager: Getter {
         /// Mapping of Factories indexed on Type of Capability they retrieve
-        access(all) let factories: {Type: {CapabilityFactory.Factory}}
+        access(self) let factories: {Type: {CapabilityFactory.Factory}}
 
         /// Retrieves a list of Types supported by contained Factories
         ///
