@@ -423,12 +423,18 @@ access(all) contract HybridCustody {
         ///
         access(Manage) fun removeOwned(addr: Address) {
             if let acct = self.ownedAccounts.remove(key: addr) {
+                // Capture uuid before seal() rotates the auth account capability
+                let id: UInt64? = acct.borrow()?.uuid
                 if acct.check() {
                     acct.borrow()!.seal()
                 }
-                let id: UInt64? = acct.borrow()?.uuid ?? nil
-
-                emit OwnershipUpdated(id: id!, child: addr, previousOwner: self.owner!.address, owner: nil, active: false)
+                emit OwnershipUpdated(
+                    id: id ?? panic("Could not determine id of owned account being removed"),
+                    child: addr,
+                    previousOwner: self.owner!.address,
+                    owner: nil,
+                    active: false
+                )
             }
             // Don't emit an event if nothing was removed
         }
@@ -1022,8 +1028,9 @@ access(all) contract HybridCustody {
         /// minimize access vectors.
         ///
         access(Owner) fun giveOwnership(to: Address) {
+            let previousOwner = self.getOwner()
             self.seal()
-            
+
             let acct = self.borrowAccount()
 
             // Link a Capability for the new owner, retrieve & publish
@@ -1038,7 +1045,7 @@ access(all) contract HybridCustody {
             self.pendingOwner = to
             self.currentlyOwned = true
 
-            emit OwnershipGranted(ownedAcctID: self.uuid, child: self.acct.address, previousOwner: self.getOwner(), pendingOwner: to)
+            emit OwnershipGranted(ownedAcctID: self.uuid, child: self.acct.address, previousOwner: previousOwner, pendingOwner: to)
         }
 
         /// Revokes all keys on the underlying account
