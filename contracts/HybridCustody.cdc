@@ -800,13 +800,13 @@ access(all) contract HybridCustody {
         access(self) var acct: Capability<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>
 
         /// Mapping of current and pending parents, true and false respectively
-        access(all) let parents: {Address: Bool}
+        access(self) let parents: {Address: Bool}
         /// Address of the pending owner, if one exists
-        access(all) var pendingOwner: Address?
+        access(self) var pendingOwner: Address?
         /// Address of the current owner, if one exists
-        access(all) var acctOwner: Address?
+        access(self) var acctOwner: Address?
         /// Owned status of this account
-        access(all) var currentlyOwned: Bool
+        access(self) var currentlyOwned: Bool
 
         /// A bucket of structs so that the OwnedAccount resource can be easily extended with new functionality.
         access(self) let data: {String: AnyStruct}
