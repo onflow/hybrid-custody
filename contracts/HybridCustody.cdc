@@ -603,27 +603,23 @@ access(all) contract HybridCustody {
         access(Child) view fun getCapability(controllerID: UInt64, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
 
-            let f = self.factory.borrow()!.getFactory(type)
-            if f == nil {
-                return nil
+            if let factory = self.factory.borrow() {
+                if let f = factory.getFactory(type) {
+                    let acct = child._borrowAccount()
+                    if let cap = f.getCapability(acct: acct, controllerID: controllerID) {
+                        // The child's own filter is always enforced; an invalid filter fails closed
+                        let childAllows = self.filter.borrow()?.allowed(cap: cap) ?? false
+                        // The manager filter is optionally set by the parent account; if absent, default to allow
+                        let managerAllows = self.getManagerCapabilityFilter()?.allowed(cap: cap) ?? true
+                        if !childAllows || !managerAllows {
+                            return nil
+                        }
+                        return cap
+                    }
+                }
             }
 
-            let acct = child._borrowAccount()
-            let tmp = f!.getCapability(acct: acct, controllerID: controllerID)
-            if tmp == nil {
-                return nil
-            }
-
-            let cap = tmp!
-            // The child's own filter is always enforced
-            let childAllows = self.filter.borrow()!.allowed(cap: cap)
-            // The manager filter is optionally set by the parent account; if absent, default to allow
-            let managerAllows = self.getManagerCapabilityFilter()?.allowed(cap: cap) ?? true
-            if !childAllows || !managerAllows {
-                return nil
-            }
-
-            return cap
+            return nil
         }
 
         /// Retrieves a private Capability from the Delegator or nil none is found of the given type. Useful for
@@ -653,13 +649,14 @@ access(all) contract HybridCustody {
         access(all) view fun getPublicCapability(path: PublicPath, type: Type): Capability? {
             let child = self.childCap.borrow() ?? panic("failed to borrow child account")
 
-            let f = self.factory.borrow()!.getFactory(type)
-            if f == nil {
-                return nil
+            if let factory = self.factory.borrow() {
+                if let f = factory.getFactory(type) {
+                    let acct = child._borrowAccount()
+                    return f.getPublicCapability(acct: acct, path: path)
+                }
             }
 
-            let acct = child._borrowAccount()
-            return f!.getPublicCapability(acct: acct, path: path)
+            return nil
         }
 
         /// Returns a reference to the stored managerCapabilityFilter if one exists
